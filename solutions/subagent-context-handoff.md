@@ -82,10 +82,32 @@ flowchart TD
 | CrewAI | MIT | Structured task+context handoff between roles |
 | Shared filesystem / artifact stores (S3, MinIO, memory stores) | Various (MinIO AGPL) | The artifact side-channel that keeps bulk out of every transcript — works identically for every agent |
 
+## When *not* to delegate (the 15× warning)
+
+Multi-agent fan-out is expensive by construction: Anthropic reports
+multi-agent systems use roughly **15× the tokens of a single chat**. That
+multiplier only pays off when the work genuinely decomposes into
+**independent, parallel** directions and the answer is worth a lot of tokens
+(open-ended research is the canonical fit). It is the *wrong* tool when:
+
+- **Subtasks are dependent** — if worker B needs worker A's output,
+  "parallelism" degenerates into serial execution with extra overhead.
+- **The task is coding/debugging/most workflows** — these are chained by
+  nature; a single agent, or a deterministic pipeline with small agents
+  inside it, wins on cost *and* reliability.
+- **The task is small** — the main agent handling it directly is cheaper
+  than the spawn + briefing + report-back round trip.
+
+Rule of thumb: delegate for **parallel context isolation**, not to
+"organize" inherently sequential work. Give the orchestrator explicit
+spawn/don't-spawn guidance so it doesn't reach for subagents reflexively.
+
 ## Trade-offs
 
 - Briefings cost parent output tokens — trivial vs re-discovery, but real;
   keep them dense.
+- The 15× multiplier above is the dominant risk: a wrongly-parallelized
+  workflow can cost far more than the single-agent baseline it replaced.
 - Artifact passing requires shared storage and disciplined path/ID
   conventions.
 - Summaries can omit what the parent later needs (same lossiness as

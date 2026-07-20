@@ -9,6 +9,17 @@ so the prompt cache survives.
 
 ---
 
+## Why this is now urgent (the MCP-bloat numbers)
+
+The problem scaled with MCP adoption. A typical stack of **seven MCP servers
+consumes ~67,300 tokens of tool definitions — ~34% of a 200K context
+window — before the user types anything**; enterprise stacks of 5–10 servers
+routinely burn 100–200K tokens of pure schema overhead. It's not only cost:
+as tool menus balloon, **tool-selection accuracy has been measured
+collapsing from ~43% to under ~14%** — the model picks the wrong tool most
+of the time. Cost and quality degrade together, which is why the fix ships
+natively now.
+
 ## How to apply
 
 1. **Provider-native tool search** — *Anthropic*: declare a search tool
@@ -30,6 +41,15 @@ so the prompt cache survives.
 4. **Trim the schemas themselves** — descriptions are prompt text: tighten
    verbose descriptions, collapse redundant enum docs, strip example
    payloads into a skill/doc the model can read on demand.
+5. **Or expose the catalog as code, not schemas ("Code Mode").** Instead of
+   listing hundreds of tools, give the model *one* code-execution tool plus a
+   typed API it can call programmatically; it writes a script against the API
+   surface rather than picking from an inflated JSON menu. On very large APIs
+   (e.g. 2,500+ endpoints) this has cut tool-definition input by **~99.9%**,
+   and it composes multiple calls in one pass — see
+   [`tool-composition.md`](tool-composition.md). Deferred loading and Code
+   Mode are complementary: defer what stays as tools, code-ify the giant
+   API surfaces.
 
 ```mermaid
 flowchart LR

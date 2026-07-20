@@ -71,7 +71,13 @@ big and mis-tuned.
 
 Static "how to handle situation X" sections that apply to 2% of requests
 belong in progressively-disclosed resources (skills/playbooks/files the
-model loads when relevant), not in every request's system prompt.
+model loads when relevant), not in every request's system prompt. The
+saving is large and concrete: with progressive disclosure, only each
+resource's *name + short description* (a few dozen tokens) sits in context
+until it's triggered — so **10 skills cost ~1K tokens up front instead of
+the ~50K** they would if their full bodies were always loaded. Structure
+long guidance the same way: a short SKILL.md/playbook that points to
+detail files loaded on demand.
 
 ## SOTA tools
 

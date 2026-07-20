@@ -64,6 +64,7 @@ prioritize them for your longest-running agents.
 | Provider / agent | Feature | Notes |
 | --- | --- | --- |
 | Anthropic API | Structured outputs (`output_config.format`) | Hard ceiling on output shape; the strongest lever for non-prose routes |
+| Anthropic API | Token-efficient tool use (beta header) | Compacts the *tool-call* output format — up to ~70% fewer output tokens on tool-heavy turns, ~14% average; available on API/Bedrock/Vertex |
 | OpenAI API | Structured outputs + `verbosity` parameter | Native length dial on supported models |
 | Google Gemini API | `responseSchema` | Schema-constrained output |
 | Claude Code | Output styles / `CLAUDE.md` conventions | Persistent output contract for the harness without per-prompt surgery |
