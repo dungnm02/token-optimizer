@@ -49,6 +49,12 @@ coding-agent setups on **Claude, GPT, and Gemini**: access routes and their
 feature trade-offs, harness choice, caching configuration, model/effort
 maps, and mixed-fleet guidance.
 
+For the harness we use day-to-day, see
+[`coding-setup-cline.md`](coding-setup-cline.md) — the same tiering applied
+to **Cline** (VS Code extension): provider/caching choice, Plan/Act model
+split, `/smol`–`/newtask` context discipline, `.clinerules`/`.clineignore`/
+MCP overhead trimming, and fleet telemetry via a gateway.
+
 ## Index
 
 All 22 solutions are written, mapped to the causes in
