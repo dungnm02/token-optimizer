@@ -29,30 +29,66 @@ token consumption. Each solution should map back to one or more causes listed in
 
 ## Index
 
-_No solutions written yet. The following documents are planned, referenced
-from the causes in [`../CAUSE.md`](../CAUSE.md):_
+All 22 solutions are written, mapped to the causes in
+[`../CAUSE.md`](../CAUSE.md). Each includes SOTA tool recommendations and an
+expected-impact assessment; several include mermaid diagrams of the
+mechanism.
 
-| Planned document | Addresses (cause #) |
-| --- | --- |
-| `prompt-caching.md` | 1.1, 1.2, 1.3, 1.4, 6.1 |
-| `stable-prompt-architecture.md` | 1.3 |
-| `compaction.md` | 2.1 |
-| `context-editing.md` | 2.1, 2.2 |
-| `context-hygiene.md` | 2.3 |
-| `tool-output-budgets.md` | 3.1 |
-| `tool-composition.md` | 3.2 |
-| `event-driven-waiting.md` | 3.3 |
-| `tool-search.md` | 3.4 |
-| `image-downsampling.md` | 4.1 |
-| `document-reuse.md` | 4.2 |
-| `retrieval-tuning.md` | 4.2 |
-| `token-counting.md` | 4.3 |
-| `reasoning-effort-tuning.md` | 5.1 |
-| `concise-output-prompting.md` | 5.2 |
-| `diff-based-edits.md` | 5.2 |
-| `output-cap-sizing.md` | 5.3 |
-| `subagent-context-handoff.md` | 6.1 |
-| `model-routing.md` | 6.2 |
-| `batch-processing.md` | 6.2 |
-| `fan-out-warming.md` | 6.3 |
-| `prompt-de-scaffolding.md` | 6.4 |
+### Category 1 — Caching failures
+
+| Document | Addresses | Headline impact |
+| --- | --- | --- |
+| [`prompt-caching.md`](prompt-caching.md) | 1.1–1.4, 6.1 | Up to ~90% off cached input; 5–10× effective input reduction in long sessions |
+| [`stable-prompt-architecture.md`](stable-prompt-architecture.md) | 1.3 | Makes mid-session cache rebuilds structurally impossible; sustains 80–95% cache-hit share |
+
+### Category 2 — Context accumulation
+
+| Document | Addresses | Headline impact |
+| --- | --- | --- |
+| [`compaction.md`](compaction.md) | 2.1 | Quadratic → linear session cost; 3–10× on long runs |
+| [`context-editing.md`](context-editing.md) | 2.1, 2.2 | 2–5× steady-state context shrink with no summarization loss |
+| [`context-hygiene.md`](context-hygiene.md) | 2.3 | Removes the 20–40% of history commonly wasted on duplicates |
+
+### Category 3 — Tool usage patterns
+
+| Document | Addresses | Headline impact |
+| --- | --- | --- |
+| [`tool-output-budgets.md`](tool-output-budgets.md) | 3.1 | 2–5× per-session input cut in tool-heavy workloads |
+| [`tool-composition.md`](tool-composition.md) | 3.2 | K round-trips → ~1 context pass; intermediates never billed |
+| [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Waiting cost O(polls × context) → ~0 |
+| [`tool-search.md`](tool-search.md) | 3.4 | 10–50× reduction in per-request tool-schema overhead |
+
+### Category 4 — Expensive content types
+
+| Document | Addresses | Headline impact |
+| --- | --- | --- |
+| [`image-downsampling.md`](image-downsampling.md) | 4.1 | 3–5× vision input cut; 50–80% on screenshot loops |
+| [`document-reuse.md`](document-reuse.md) | 4.2 | doc×questions → doc×1 + cheap cached reads |
+| [`retrieval-tuning.md`](retrieval-tuning.md) | 4.2 | ~5× retrieval-share cut via reranked small-k; quality improves too |
+| [`token-counting.md`](token-counting.md) | 4.3 (+ all) | The measurement layer — turns every other fix into an enforced invariant |
+
+### Category 5 — Generation-side spend
+
+| Document | Addresses | Headline impact |
+| --- | --- | --- |
+| [`reasoning-effort-tuning.md`](reasoning-effort-tuning.md) | 5.1 | 2–10× output-token spread captured by per-route effort |
+| [`concise-output-prompting.md`](concise-output-prompting.md) | 5.2 | 30–60% output cut on chat/agent routes; 3–10× via structured output |
+| [`diff-based-edits.md`](diff-based-edits.md) | 5.2 | 10–50× per-edit output cut for coding agents |
+| [`output-cap-sizing.md`](output-cap-sizing.md) | 5.3 | Eliminates 2–3× truncate-retry waste; continuation salvages partials |
+
+### Category 6 — Architectural choices
+
+| Document | Addresses | Headline impact |
+| --- | --- | --- |
+| [`subagent-context-handoff.md`](subagent-context-handoff.md) | 6.1 | 50–90% of subagent re-discovery eliminated; artifact handoff keeps parents lean |
+| [`model-routing.md`](model-routing.md) | 6.2 | 50–80% of volume moved to 5–25× cheaper tiers; RouteLLM/FrugalGPT-class results |
+| [`batch-processing.md`](batch-processing.md) | 6.2 | Flat 2× on latency-insensitive traffic; 5–20× stacked with caching |
+| [`fan-out-warming.md`](fan-out-warming.md) | 6.3 | N cold passes → 1 write + (N−1) cache reads (~85–90% off fan-out input) |
+| [`prompt-de-scaffolding.md`](prompt-de-scaffolding.md) | 6.4 | 30–70% system-prompt cut + induced-output savings, often with quality gains |
+
+### Suggested adoption order
+
+1. **Measure first** — `token-counting.md` (you can't rank the rest without it)
+2. **Free wins** — `prompt-caching.md` + `stable-prompt-architecture.md`, `batch-processing.md`
+3. **Biggest structural levers** — `tool-output-budgets.md`, `compaction.md`/`context-editing.md`, `model-routing.md`
+4. **Route-specific tuning** — the remaining docs, prioritized by what your telemetry attributes the spend to
