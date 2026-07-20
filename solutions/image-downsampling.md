@@ -53,13 +53,21 @@ Two consequences:
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| sharp (Node) / Pillow-SIMD (Python) / libvips | Processing | Fast resize/crop at the harness boundary |
-| OpenAI `detail: low\|high\|auto` | API | Per-image fidelity dial; `low` is a flat ~85 tokens |
-| Playwright / CDP accessibility tree, `browser-use` DOM extraction | Browser agents | Text-first page representation; screenshots only as fallback |
-| Screenshot diff/hash (pixelmatch, perceptual hash) | Harness | Skip unchanged frames in loops |
-| Provider `count_tokens` on representative images | Measurement | Re-baseline after model upgrades — image token formulas change between generations |
+| OpenAI API | `detail: low\|high\|auto` per-image dial | `low` is a flat ~85 tokens — the cheapest presence-check mode anywhere |
+| All providers | `count_tokens` on representative images | Re-baseline after model upgrades — image token formulas change between generations |
+| Anthropic / OpenAI computer-use tools | Documented resolution guidance | Follow the vendor's recommended capture resolution rather than native screen size |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| sharp (Node) / Pillow-SIMD (Python) / libvips | Apache-2.0 / PIL / LGPL | Fast resize/crop at the harness boundary, before any provider sees the image |
+| Playwright accessibility tree / `browser-use` DOM extraction | Apache-2.0 / MIT | Text-first page representation for browser agents; screenshots only as fallback |
+| pixelmatch / perceptual hashing | ISC / MIT | Skip unchanged frames in screenshot loops |
 
 ## Trade-offs
 

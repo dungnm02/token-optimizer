@@ -44,12 +44,19 @@ flowchart LR
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic tool search (`tool_search_tool_regex/bm25` + `defer_loading`) | API | Append-only discovery; preserves prompt cache; regex and BM25 variants |
-| Claude Code deferred MCP tools (`ToolSearch`) | Harness | Reference implementation for MCP catalogs |
-| MCP `tools/list` lazy clients | Framework | Load server catalogs into a local index, expose search — not the raw union |
-| Route-scoped tool registries (LangGraph node-scoped tools) | Framework | Deterministic subsetting per workflow node |
+| Anthropic API | Tool search (`tool_search_tool_regex/bm25`) + `defer_loading` | Append-only discovery; preserves prompt cache; regex and BM25 variants |
+| Claude Code | Deferred MCP tools (`ToolSearch`) | Reference implementation for MCP catalogs |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| MCP `tools/list` lazy clients | MIT (SDKs, open standard) | Load server catalogs into a local index, expose search — not the raw union; works with any MCP-capable agent |
+| Route-scoped tool registries (LangGraph node-scoped tools) | MIT | Deterministic subsetting per workflow node |
 
 ## Trade-offs
 

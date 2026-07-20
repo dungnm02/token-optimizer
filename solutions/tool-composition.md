@@ -63,13 +63,21 @@ context at all — they live and die inside the sandbox.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic programmatic tool calling (`code_execution` + `allowed_callers`) | API | Intermediates return to the running code, not to context; token cost scales with final output |
-| Hugging Face smolagents `CodeAgent` | Framework | Code-as-action; multi-call snippets per step; ~30% fewer steps reported vs JSON tool-calling |
-| OpenAI code interpreter + function calling | API | Sandbox-side composition on the Responses API |
-| LangGraph | Framework | Express deterministic chains as graph edges (code), reserving the model for genuine decisions |
-| E2B / Modal / Daytona sandboxes | Infra | Self-hosted execution environments for code-as-action agents |
+| Anthropic API | Programmatic tool calling (`code_execution` + `allowed_callers`) | Intermediates return to the running code, not to context; token cost scales with final output |
+| OpenAI API · Codex | Code interpreter + function calling on the Responses API | Sandbox-side composition |
+| Claude Code / Codex CLI / Gemini CLI | Shell-native composition (`Bash` pipelines, scripts) | Coding agents already compose via the shell — pipe/filter in bash instead of round-tripping raw output |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Hugging Face smolagents `CodeAgent` | Apache-2.0 | Code-as-action as the *default* action format; ~30% fewer steps reported vs JSON tool-calling |
+| LangGraph | MIT | Express deterministic chains as graph edges (code), reserving the model for genuine decisions |
+| E2B | Apache-2.0 | Self-hostable sandbox for code-as-action agents; Modal / Daytona are commercial/hosted alternatives |
 
 ## Trade-offs
 

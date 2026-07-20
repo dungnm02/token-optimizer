@@ -96,13 +96,21 @@ the bug.
 
 ## SOTA tools
 
-| Tool / mechanism | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic `cache_control` | API | Explicit breakpoints, 5m/1h TTL, `max_tokens: 0` pre-warm, cache-diagnostics beta |
-| OpenAI prefix caching | API | Automatic ≥1,024 tokens, 50–75% discount on cached tokens, `prompt_cache_key` routing |
-| Gemini context caching | API | Implicit + explicit `CachedContent` with TTL; explicit mode fits huge shared corpora |
-| vLLM APC / SGLang RadixAttention | Self-hosted | KV-cache prefix reuse; SGLang's radix tree shares partial prefixes across concurrent requests |
-| Langfuse / Helicone / OpenLLMetry | Observability | Track cached-vs-uncached token ratios per route to catch silent invalidation regressions |
+| Anthropic API · Claude Code / Agent SDK | `cache_control` breakpoints, 5m/1h TTL, `max_tokens: 0` pre-warm, cache-diagnostics beta | The harnesses place breakpoints automatically — zero configuration when you run inside them |
+| OpenAI API · Codex | Automatic prefix caching (≥1,024 tokens), `prompt_cache_key` routing | 50–75% discount on cached tokens; no opt-in, but the prefix-stability rules still decide whether it hits |
+| Google Gemini API · Gemini CLI | Implicit caching + explicit `CachedContent` with TTL | Explicit mode fits huge shared corpora |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| vLLM APC / SGLang RadixAttention | Apache-2.0 | Self-hosted KV-cache prefix reuse; SGLang's radix tree shares partial prefixes across concurrent requests |
+| Langfuse / Helicone / OpenLLMetry | MIT / Apache-2.0 | Cached-vs-uncached ratio tracking per route to catch silent invalidation — sits in front of any agent, any provider |
+| LiteLLM | MIT | Gateway-level cache-usage telemetry and TTL/key passthrough uniform across providers |
 
 ## Trade-offs
 

@@ -76,12 +76,19 @@ sequenceDiagram
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic `max_tokens: 0` pre-warm | API | Purpose-built cache-write-only request |
-| Streaming first-token hooks (SDK stream events) | Harness | The warm-completion signal to gate on |
-| SGLang RadixAttention / vLLM APC | Self-hosted | Runtime-level prefix sharing across concurrent requests — the same idea enforced by the scheduler |
-| Provider batch APIs | API | Cache-friendly + discounted alternative for non-interactive fan-outs |
+| Anthropic API | `max_tokens: 0` pre-warm | Purpose-built cache-write-only request |
+| Anthropic / OpenAI / Gemini SDKs | Streaming first-token events | The warm-completion signal to gate the fan-out on |
+| Provider batch APIs | Batch-internal cache sharing | Cache-friendly + discounted alternative for non-interactive fan-outs |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| SGLang RadixAttention / vLLM APC | Apache-2.0 | Runtime-level prefix sharing across concurrent requests — the same idea enforced by the scheduler, for self-hosted fleets |
 
 ## Trade-offs
 

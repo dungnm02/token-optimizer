@@ -56,12 +56,21 @@ flowchart LR
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic Message Batches / OpenAI Batch / Gemini Batch | API | The discount itself; 100K-requests-scale per batch |
-| LiteLLM batch support | Gateway | Uniform batch submission across providers |
-| Airflow / Dagster / Temporal | Orchestration | Schedule, poll, retry, and fan-out around batch jobs |
-| vLLM / SGLang offline mode | Self-hosted | Throughput-optimized bulk inference for open models |
+| Anthropic API | Message Batches API | The 50% discount itself; 100K-requests-scale per batch; stacks with cache-read pricing |
+| OpenAI API | Batch API | 50%, 24h target window |
+| Google Gemini API | Batch mode | 50%, 24h target window |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| LiteLLM batch support | MIT | Uniform batch submission across providers |
+| Airflow / Dagster / Temporal | Apache-2.0 / Apache-2.0 / MIT | Schedule, poll, retry, and fan-out around batch jobs |
+| vLLM / SGLang offline mode | Apache-2.0 | Throughput-optimized bulk inference for open models — effectively more than 50% off via max GPU utilization |
 
 ## Trade-offs
 

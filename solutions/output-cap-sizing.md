@@ -69,12 +69,20 @@ shift — fix the cap, don't let the retry loop absorb it silently.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Provider streaming APIs + SDK `finalMessage`/`get_final_message` helpers | API | Long outputs without timeout-driven cap lowering |
-| Instructor (Python/TS) / OpenAI structured outputs + Zod | SDK | Validation-aware minimal retries for schema routes |
-| Stop-reason dashboards (Langfuse/Helicone custom metric) | Observability | Truncation-rate alerting per route |
-| Continuation prompts (harness pattern) | Harness | Salvage partial output instead of discarding it |
+| Anthropic / OpenAI / Gemini SDKs | Streaming + `finalMessage`/`get_final_message` helpers | Long outputs without timeout-driven cap lowering |
+| All providers | `stop_reason` in every response | The signal the whole recovery flow keys on — length-stop vs natural stop |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Instructor (Python/TS) / Zod validation | MIT | Validation-aware minimal retries for schema routes, portable across providers |
+| Langfuse / Helicone stop-reason dashboards | MIT / Apache-2.0 | Truncation-rate alerting per route for any agent behind the proxy/SDK wrapper |
+| Continuation prompts (harness pattern) | — | Salvage partial output instead of discarding it — implementable in any loop |
 
 ## Trade-offs
 

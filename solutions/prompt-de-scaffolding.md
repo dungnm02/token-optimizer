@@ -75,12 +75,19 @@ model loads when relevant), not in every request's system prompt.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| DSPy (MIPROv2 / GEPA optimizers) | Optimization | Metric-driven instruction+demo search; routinely finds shorter, better prompts |
-| promptfoo / Braintrust / Langfuse experiments | Evals | The ablation harness: side-by-side variants, quality + token cost per variant |
-| Anthropic/OpenAI migration guides | Reference | Authoritative lists of which scaffolding each model generation obsoletes |
-| Skills / progressive-disclosure patterns (Claude skills, tool-loaded playbooks) | Architecture | Where evicted situational instruction should live |
+| Anthropic / OpenAI migration guides | Reference docs | Authoritative lists of which scaffolding each model generation obsoletes |
+| Claude Code / Agent SDK skills | Progressive disclosure | Where evicted situational instruction should live — loaded on demand, not carried in every request |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| DSPy (MIPROv2 / GEPA optimizers) | MIT | Metric-driven instruction+demo search; routinely finds shorter, better prompts on any provider |
+| promptfoo / Langfuse experiments | MIT | The ablation harness: side-by-side variants, quality + token cost per variant; Braintrust is the commercial alternative |
 
 ## Trade-offs
 

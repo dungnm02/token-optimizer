@@ -55,14 +55,23 @@ flowchart TD
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| RouteLLM (LMSYS) | OSS router | Trained routers; reported up to ~85% cost reduction while retaining ~95% of frontier quality on mixed benchmarks |
-| NotDiamond / Martian / Portkey / OpenRouter | Hosted routing | Managed multi-provider routing + fallbacks |
-| FrugalGPT (research pattern) | Cascade | LLM cascades reported up to ~98% cost reduction matching frontier accuracy on QA benchmarks — the canonical cascade reference |
-| LiteLLM | Gateway | Uniform API across providers — the plumbing that makes routing/cascades deployable |
-| Provider tiers (Anthropic Haiku↔Sonnet↔Opus, OpenAI mini/nano↔full, Gemini Flash↔Pro) | Models | The actual price ladder (~5–25× spread per token) |
-| Distillation stacks (OpenAI fine-tuning, Together, open-weight SFT) | Training | Lock in savings on stable high-volume routes |
+| Anthropic / OpenAI / Gemini model tiers | Haiku↔Sonnet↔Opus · mini/nano↔full · Flash↔Pro | The actual price ladder (~5–25× spread per token) — the thing being routed across |
+| Claude Code / Codex CLI / Gemini CLI | Per-session and per-subagent model selection (`/model`, agent-definition model fields) | The harness-native way to implement the static role map |
+| OpenAI fine-tuning / distillation | Training API | Lock in savings on stable high-volume routes |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| RouteLLM (LMSYS) | Apache-2.0 | Trained routers; reported up to ~85% cost reduction while retaining ~95% of frontier quality on mixed benchmarks |
+| LiteLLM | MIT | Uniform API across providers — the plumbing that makes routing/cascades deployable for any agent |
+| Portkey gateway | MIT (gateway) | Self-hostable routing + fallbacks; NotDiamond / Martian / OpenRouter are hosted commercial options |
+| FrugalGPT (research pattern) | Research | LLM cascades reported up to ~98% cost reduction matching frontier accuracy on QA benchmarks — the canonical cascade reference |
+| Open-weight SFT stacks (Together, Axolotl, etc.) | Apache-2.0 (tooling) | Distill stable routes onto models you control |
 
 ## Trade-offs
 

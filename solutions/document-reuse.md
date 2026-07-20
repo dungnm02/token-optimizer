@@ -52,13 +52,20 @@ flowchart TD
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic Files API + `cache_control` on the document block | API | Upload-once + cached processing |
-| Gemini explicit context caching (`CachedContent`) | API | Purpose-built for shared-corpus Q&A; TTL-controlled |
-| OpenAI vector stores + file search | API | Managed chunk/index/retrieve for slice-access patterns |
-| unstructured.io / Marker / Docling | Extraction | High-quality PDF → text/markdown, run once in the harness |
-| LlamaIndex / LangChain document stores | Framework | Index-once pipelines with per-query retrieval |
+| Anthropic API | Files API + `cache_control` on the document block | Upload-once + cached processing |
+| Google Gemini API | Explicit context caching (`CachedContent`) | Purpose-built for shared-corpus Q&A; TTL-controlled |
+| OpenAI API | Vector stores + file search | Managed chunk/index/retrieve for slice-access patterns |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Docling / unstructured.io | MIT / Apache-2.0 | High-quality PDF → text/markdown, run once in the harness; Marker (GPL-3.0) is a strong alternative |
+| LlamaIndex / LangChain document stores | MIT | Index-once pipelines with per-query retrieval, portable across providers |
 
 ## Trade-offs
 

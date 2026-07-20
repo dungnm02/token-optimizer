@@ -22,6 +22,14 @@ token consumption. Each solution should map back to one or more causes listed in
 
 **How to apply:** Concrete, actionable steps.
 
+**SOTA tools:** Two subsections, always in this order:
+  - "Native — coding agents & provider APIs" — features built into the
+    agents/vendors you already use (Claude Code/Anthropic, Codex/OpenAI,
+    Gemini CLI/Google).
+  - "Third-party — agent-agnostic (open source preferred)" — tools that
+    work with *any* agent, with license noted; list open-source options
+    first and name commercial alternatives inline.
+
 **Trade-offs:** Costs, limitations, or risks to be aware of.
 
 **Expected impact:** Rough sense of the token savings.
@@ -44,9 +52,10 @@ maps, and mixed-fleet guidance.
 ## Index
 
 All 22 solutions are written, mapped to the causes in
-[`../CAUSE.md`](../CAUSE.md). Each includes SOTA tool recommendations and an
-expected-impact assessment; several include mermaid diagrams of the
-mechanism.
+[`../CAUSE.md`](../CAUSE.md). Each includes SOTA tool recommendations —
+split into **agent/provider-native APIs** vs **third-party agent-agnostic
+tools (open source preferred, licenses noted)** — and an expected-impact
+assessment; several include mermaid diagrams of the mechanism.
 
 ### Category 1 — Caching failures
 

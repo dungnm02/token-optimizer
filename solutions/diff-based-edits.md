@@ -57,13 +57,21 @@ anchors.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Claude Code `Edit` tool / Anthropic `text_editor_20250728` | Harness/API | Anchor-verified search/replace; the reference implementation |
-| Aider edit formats (`diff`, `udiff`) + polyglot benchmark | Harness | Public benchmark data on edit-format reliability per model — use it to pick formats |
-| Morph / Relace fast-apply models | Apply-model | Specialized high-speed merge of loose edits (~thousands of tokens/s) |
-| OpenAI predicted outputs | API | Speeds/discounts regeneration when most of the file is unchanged — a mitigation when whole-file output is unavoidable |
-| tree-sitter-based patch validators | Harness | Syntax-check hunks before writing to disk |
+| Claude Code · Anthropic API | `Edit` tool / `text_editor_20250728` | Anchor-verified search/replace; the reference implementation |
+| Codex CLI · OpenAI API | `apply_patch` edit format; predicted outputs | Codex's native diff format; predicted outputs speed/discount regeneration when whole-file output is unavoidable |
+| Gemini CLI | `replace` (edit) tool | Anchor-based partial edits in the harness |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Aider edit formats (`diff`, `udiff`) + polyglot benchmark | Apache-2.0 | Public benchmark data on edit-format reliability per model — use it to pick formats for any harness |
+| tree-sitter-based patch validators | MIT | Syntax-check hunks before writing to disk, regardless of which agent emitted them |
+| Morph / Relace fast-apply models | Commercial | Specialized high-speed merge of loose edits (~thousands of tokens/s) behind any frontier model |
 
 ## Trade-offs
 

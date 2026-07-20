@@ -54,13 +54,21 @@ are a strict prefix of turn N+1's.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic mid-conversation system messages | API | Operator-authority instruction appended to `messages[]` — the canonical "change behavior without touching the head" channel |
-| Anthropic tool search / `defer_loading` | API | Discovered tool schemas are *appended*, preserving the existing prefix |
-| Langfuse / PromptLayer / Braintrust prompt registry | Tooling | Versioned, immutable prompt artifacts with deploy gating |
-| DSPy / promptfoo | Tooling | Eval harnesses so prompt-version rolls are measured, not vibes-based |
-| Snapshot tests (pytest + syrupy, Jest snapshots) | CI | Cheapest way to enforce byte-stable rendering |
+| Anthropic API | Mid-conversation system messages | Operator-authority instruction appended to `messages[]` — the canonical "change behavior without touching the head" channel |
+| Anthropic API | Tool search / `defer_loading` | Discovered tool schemas are *appended*, preserving the existing prefix |
+| Claude Code / Codex CLI / Gemini CLI | Frozen per-session heads | The major harnesses already keep system + tools byte-stable within a session — inherit this, don't rebuild it |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Langfuse prompt registry | MIT | Versioned, immutable prompt artifacts with deploy gating; PromptLayer / Braintrust are commercial alternatives |
+| DSPy / promptfoo | MIT | Eval harnesses so prompt-version rolls are measured, not vibes-based |
+| pytest + syrupy / Jest snapshots | MIT | Cheapest way to enforce byte-stable rendering in CI — works on any prompt builder in any stack |
 
 ## Trade-offs
 

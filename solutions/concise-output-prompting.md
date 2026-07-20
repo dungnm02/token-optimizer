@@ -59,12 +59,22 @@ prioritize them for your longest-running agents.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Provider structured outputs (Anthropic `output_config.format`, OpenAI structured outputs, Gemini `responseSchema`) | API | Hard ceiling on output shape; the strongest lever for non-prose routes |
-| OpenAI `verbosity` parameter | API | Native length dial on supported models |
-| promptfoo / Braintrust / Langfuse evals | Evals | Regression-test that concision edits don't cut *content*; track output tokens per route |
-| Instructor / Zod-typed outputs | SDK | Typed schemas that double as verbosity contracts |
+| Anthropic API | Structured outputs (`output_config.format`) | Hard ceiling on output shape; the strongest lever for non-prose routes |
+| OpenAI API | Structured outputs + `verbosity` parameter | Native length dial on supported models |
+| Google Gemini API | `responseSchema` | Schema-constrained output |
+| Claude Code | Output styles / `CLAUDE.md` conventions | Persistent output contract for the harness without per-prompt surgery |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Caveman (`wilpel/caveman-compression`) | MIT | Semantic output compression — strips predictable grammar, keeps facts. Ships as a prompt skill usable across Claude Code, Codex, Gemini CLI, Cursor, Cline and other agents (skill variant claims up to ~75% output cut; the library's measured modes run 15–58%). Internal/agent traffic only — not for user-facing prose where tone matters |
+| Instructor / Zod-typed outputs | MIT | Typed schemas that double as verbosity contracts, portable across providers |
+| promptfoo / Langfuse evals | MIT | Regression-test that concision edits don't cut *content*; track output tokens per route; Braintrust is the commercial option |
 
 ## Trade-offs
 

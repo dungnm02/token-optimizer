@@ -66,13 +66,21 @@ its readable-text token count).
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Claude Code tool design (`Read` offset/limit, `Grep` head_limit/output modes, background Bash with log files) | Harness | Reference implementation of budgeted, sliceable tools |
-| Anthropic MCP large-output offload | Platform | MCP tool outputs >100K tokens auto-offload to a sandbox file with preview + path |
-| Trafilatura / Readability / Jina Reader | Content | HTML → clean text before it enters context |
-| `jq` / GraphQL field selection at the tool boundary | Content | Deterministic field filtering, zero model cost |
-| OpenAI structured tool outputs + file citations | API | Keep bulky artifacts in files, cite spans |
+| Claude Code | Budgeted tool design: `Read` offset/limit, `Grep` head_limit/output modes, background Bash with log files | Reference implementation of budgeted, sliceable tools |
+| Anthropic platform | MCP large-output offload | MCP tool outputs >100K tokens auto-offload to a sandbox file with preview + path |
+| OpenAI API · Codex | Structured tool outputs + file citations | Keep bulky artifacts in files, cite spans |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Trafilatura / mozilla-readability | Apache-2.0 | HTML → clean text before it enters any agent's context (5–20× smaller); Jina Reader is a hosted alternative |
+| `jq` / GraphQL field selection at the tool boundary | MIT | Deterministic field filtering, zero model cost, works in front of any tool |
+| MCP servers with pagination/slicing parameters | MIT (SDKs) | Budget at the MCP-server boundary once → every MCP-capable agent benefits |
 
 ## Trade-offs
 

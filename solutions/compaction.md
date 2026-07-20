@@ -64,14 +64,22 @@ Key design decisions:
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Anthropic server-side compaction (`compact-2026-01-12`) | API | Automatic near-threshold summarization; compaction block round-trip |
-| Claude Agent SDK / Claude Code auto-compact | Harness | Zero-config; compaction is triggered and applied inside the harness |
-| OpenAI Responses API (`truncation: "auto"`, `previous_response_id`) | API | Server-managed conversation state |
-| LangGraph `SummarizationNode` | Framework | Composable trigger + summarizer + keep-tail policy |
-| LlamaIndex `ChatSummaryMemoryBuffer` | Framework | Token-budgeted summary memory |
-| mem0 / Zep | Memory layer | Extract durable facts out of the transcript so the transcript itself can shrink |
+| Anthropic API | Server-side compaction (`compact-2026-01-12`) | Automatic near-threshold summarization; compaction block round-trip |
+| Claude Code / Claude Agent SDK | Auto-compact + `/compact` command | Zero-config; compaction is triggered and applied inside the harness |
+| OpenAI API · Codex CLI | Responses API (`truncation: "auto"`, `previous_response_id`); Codex `/compact` | Server-managed conversation state; harness-level compaction command |
+| Gemini CLI | `/compress` command + auto-compression threshold | Harness-level history summarization |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| LangGraph `SummarizationNode` | MIT | Composable trigger + summarizer + keep-tail policy for custom loops |
+| LlamaIndex `ChatSummaryMemoryBuffer` | MIT | Token-budgeted summary memory |
+| mem0 | Apache-2.0 | Extract durable facts out of the transcript so the transcript itself can shrink; Zep is a commercial alternative with an OSS community edition |
 
 ## Trade-offs
 

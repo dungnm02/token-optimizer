@@ -56,14 +56,22 @@ they let you cut k by 3–5× at equal-or-better answer quality.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Cohere Rerank 3.5 / Voyage rerank-2 / Jina Reranker v2 | Rerankers (hosted) | Cross-encoder quality, drop-in API |
-| BGE-reranker-v2 / mxbai-rerank | Rerankers (open) | Self-hosted SOTA-class reranking |
-| Anthropic contextual retrieval recipe | Indexing | Chunk-context generation; published ~49% retrieval-failure reduction (67% with reranking) |
-| Voyage-3 / OpenAI text-embedding-3 / BGE-M3 | Embeddings | Better first-stage recall lets you rerank from a smaller pool |
-| LLMLingua-2 | Compression | Prompt/context compression 2–5× for QA-style tasks |
-| RAGAS / promptfoo / Braintrust | Evals | Measure the k/chunk/rerank sweeps instead of guessing |
+| Anthropic | Contextual retrieval recipe | Chunk-context generation at indexing time; published ~49% retrieval-failure reduction (67% with reranking) |
+| OpenAI API | `text-embedding-3` + vector stores / file search | Managed first-stage retrieval inside the OpenAI stack |
+| Coding agents' repo search (Claude Code `Grep`/`Glob`, Codex/Gemini CLI search tools) | Agentic retrieval | For codebases, bounded on-demand search often beats a pre-stuffed RAG pipeline entirely |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| BGE-reranker-v2 / mxbai-rerank | Apache-2.0 | Self-hosted SOTA-class cross-encoder reranking; Cohere Rerank 3.5 / Voyage rerank-2 / Jina Reranker v2 are hosted commercial equivalents |
+| BGE-M3 embeddings | MIT | Strong open first-stage recall; Voyage-3 is the hosted commercial option |
+| LLMLingua-2 | MIT | Prompt/context compression 2–5× for QA-style tasks — eval before adopting |
+| RAGAS / promptfoo | Apache-2.0 / MIT | Measure the k/chunk/rerank sweeps instead of guessing; Braintrust is the commercial alternative |
 
 ## Trade-offs
 

@@ -36,12 +36,19 @@ referenced — not re-pasted — afterwards.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Claude Code / Claude Agent SDK file-state tracking | Harness | Tracks read/edit state; discourages redundant re-reads ("file state is current in your context") |
-| Anthropic Files API / OpenAI Files / Gemini File API | API | Upload-once, reference-by-ID |
-| LlamaIndex / LangChain retrieval with query-similarity gating | Framework | Re-retrieve only on topic drift |
-| Content-hash registry (custom, ~50 LOC) | Harness | The core mechanism; trivially implementable in any stack |
+| Claude Code / Claude Agent SDK | File-state tracking | Tracks read/edit state; discourages redundant re-reads ("file state is current in your context") |
+| Anthropic Files API / OpenAI Files / Gemini File API | Upload-once, reference-by-ID | Removes byte re-transmission; pair with caching for processing cost |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| LlamaIndex / LangChain query-similarity gating | MIT | Re-retrieve only on topic drift; provider-independent |
+| Content-hash registry (custom, ~50 LOC) | — | The core mechanism; trivially implementable in any stack, any agent |
 
 ## Trade-offs
 

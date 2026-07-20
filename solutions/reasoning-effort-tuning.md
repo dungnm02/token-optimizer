@@ -48,6 +48,24 @@ of one global setting.
    visible_response_tokens` per route is the reasoning spend; alert on
    creep.
 
+## SOTA tools
+
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
+| --- | --- | --- |
+| Anthropic API · Claude Code | `output_config.effort` + adaptive thinking; per-model effort selection in the harness | Effort decides *how much*, adaptive thinking decides *when* |
+| OpenAI API · Codex CLI | `reasoning_effort` param; `model_reasoning_effort` in Codex config | Reasoning tokens reported in `usage.completion_tokens_details` |
+| Google Gemini API · Gemini CLI | `thinkingConfig` / `thinking_budget` | Token-count budget incl. `0` (off, where supported) and dynamic |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| LiteLLM | MIT | Normalizes the effort/budget dials across providers so one route→effort config drives any backend |
+| promptfoo / RAGAS-style eval harnesses | MIT / Apache-2.0 | Run the quality-vs-effort sweeps that make the map evidence-based |
+| Langfuse / Helicone | MIT / Apache-2.0 | Track the hidden-reasoning gap (`output − visible`) per route and alert on creep |
+
 ## Trade-offs
 
 - Under-provisioned reasoning on hard tasks costs more than it saves:

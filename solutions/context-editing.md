@@ -58,6 +58,24 @@ approaches the limit.
    hooks, LlamaIndex memory buffers with token limits, OpenAI Agents SDK
    session trimming.
 
+## SOTA tools
+
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
+| --- | --- | --- |
+| Anthropic API | `context_management` edits (`clear_tool_uses`, `clear_thinking`) | Server-side clearing of stale tool results and spent thinking blocks; no client bookkeeping |
+| Claude Code / Claude Agent SDK | Built-in stale-tool-result pruning (microcompaction) | Applied inside the harness automatically |
+| OpenAI Agents SDK | Session trimming hooks | Part of the OpenAI/Codex stack |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| LangGraph `trim_messages` / message-filtering hooks | MIT | Composable pruning rules for custom loops on any provider |
+| LlamaIndex token-limited memory buffers | MIT | Budget-enforced history for any backend |
+| Supersession/TTL pruning rules (custom, ~100 LOC) | — | The harness-level rules in §2 are trivially implementable in any stack |
+
 ## Trade-offs
 
 - Pruning heuristics can drop something the model still needed — the model

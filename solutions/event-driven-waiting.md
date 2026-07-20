@@ -61,13 +61,21 @@ nothing. The event-driven version burns ~0 while waiting.
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Temporal / Inngest / Restate | Workflow | Durable sleep + signals; LLM invoked only at decision points |
-| Anthropic Managed Agents webhooks & events | Platform | Session state transitions pushed to your endpoint; no polling |
-| GitHub webhooks / PR-event subscriptions | Dev-agents | CI results and review comments wake the agent instead of it polling |
-| Harness wake-up schedulers (Claude Code `ScheduleWakeup`, cron-triggered sessions) | Harness | Self-scheduled check-ins sized to the awaited process |
-| Message queues (SQS, Pub/Sub, NATS) | Infra | Buffer completion events; harness consumes and resumes |
+| Anthropic Managed Agents | Webhooks & session events | State transitions pushed to your endpoint; no polling |
+| Claude Code | `ScheduleWakeup`, cron-triggered sessions, PR-activity subscriptions | Self-scheduled check-ins sized to the awaited process; CI/review events wake the session |
+| GitHub Actions integrations (Claude Code Action, Codex cloud tasks, Gemini CLI GitHub Action) | Event-triggered agent runs | The agent is *started by* the event instead of waiting for it |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Temporal | MIT | Durable sleep + signals; LLM invoked only at decision points; Inngest / Restate are alternatives with partly-open cores |
+| GitHub / GitLab webhooks | Platform (free) | CI results and review comments wake any agent instead of it polling |
+| NATS | Apache-2.0 | Message queue buffering completion events; SQS / Pub/Sub are the managed equivalents |
 
 ## Trade-offs
 

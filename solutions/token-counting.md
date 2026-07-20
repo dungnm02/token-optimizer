@@ -73,13 +73,22 @@ flowchart LR
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Langfuse | Observability (OSS) | Traces + per-request usage/cost, prompt versions, evals |
-| Helicone | Observability (proxy) | One-line proxy integration; cost & cache analytics |
-| OpenLLMetry / OTel GenAI conventions | Standard | Vendor-neutral instrumentation for any backend (Datadog, Grafana, Honeycomb) |
-| Braintrust / W&B Weave | Evals + tracing | Tie token cost to quality scores per experiment |
-| Provider dashboards + `count_tokens` endpoints | Baseline | Ground truth for billing reconciliation and pre-flight counts |
+| Anthropic / OpenAI / Gemini APIs | `count_tokens` endpoints, per-response `usage` objects, billing dashboards | Ground truth for pre-flight counts and billing reconciliation; `tiktoken` (MIT) is OpenAI's official offline counter |
+| Claude Code | `/cost`, `/context` commands + OTel metrics export | In-session spend and context-composition visibility |
+| Codex CLI / Gemini CLI | `/status` · `/stats` commands | Per-session token usage in the harness |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| Langfuse | MIT | Traces + per-request usage/cost, prompt versions, evals — self-hostable |
+| Helicone | Apache-2.0 | One-line proxy integration in front of any agent; cost & cache analytics |
+| OpenLLMetry / OTel GenAI conventions | Apache-2.0 | Vendor-neutral instrumentation for any backend (Datadog, Grafana, Honeycomb) |
+| Braintrust / W&B Weave | Commercial | Tie token cost to quality scores per experiment |
 
 ## Trade-offs
 

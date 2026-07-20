@@ -66,13 +66,21 @@ flowchart TD
 
 ## SOTA tools
 
-| Tool | Scope | Notes |
+### Native — coding agents & provider APIs
+
+| Provider / agent | Feature | Notes |
 | --- | --- | --- |
-| Claude Code / Claude Agent SDK subagents | Harness | Isolated-context workers with per-agent model/effort config; `SendMessage` continues an existing agent instead of respawning |
-| Anthropic Managed Agents multiagent (threads) | Platform | Persistent per-subagent threads sharing a filesystem — retained context across follow-ups |
-| LangGraph | Framework | Explicit state channels between nodes — the briefing/summary contract as typed graph state |
-| CrewAI / OpenAI Agents SDK handoffs | Framework | Structured task+context handoff between roles |
-| Shared filesystem / artifact stores (session outputs, S3, memory stores) | Infra | The artifact side-channel that keeps bulk out of every transcript |
+| Claude Code / Claude Agent SDK | Subagents with per-agent model/effort config; `SendMessage` continuation | Isolated-context workers; continuing an existing agent beats respawning cold |
+| Anthropic Managed Agents | Multiagent threads sharing a filesystem | Persistent per-subagent context across follow-ups |
+| OpenAI Agents SDK · Codex | Handoffs with structured context passing | The briefing contract as a first-class primitive in the OpenAI stack |
+
+### Third-party — agent-agnostic (open source preferred)
+
+| Tool | License | Notes |
+| --- | --- | --- |
+| LangGraph | MIT | Explicit state channels between nodes — the briefing/summary contract as typed graph state, any provider |
+| CrewAI | MIT | Structured task+context handoff between roles |
+| Shared filesystem / artifact stores (S3, MinIO, memory stores) | Various (MinIO AGPL) | The artifact side-channel that keeps bulk out of every transcript — works identically for every agent |
 
 ## Trade-offs
 
