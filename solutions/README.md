@@ -35,6 +35,12 @@ Not every solution is worth its setup cost for every system.
 from the harness, the four pieces of custom work that matter, and what to
 explicitly skip.
 
+For concrete vendor instantiations, see
+[`coding-setup-enterprise.md`](coding-setup-enterprise.md) — enterprise
+coding-agent setups on **Claude, GPT, and Gemini**: access routes and their
+feature trade-offs, harness choice, caching configuration, model/effort
+maps, and mixed-fleet guidance.
+
 ## Index
 
 All 22 solutions are written, mapped to the causes in
