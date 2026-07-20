@@ -177,6 +177,83 @@ the best effort-to-payoff ratio in the entire catalog.
 
 ---
 
+## Concrete reference stack (specific tools)
+
+One opinionated instantiation of the tiers above, with real tools. Swap any
+piece for its listed alternative — the *shape* is what matters.
+
+| Piece | Pick | Alternative | Why this pick |
+| --- | --- | --- | --- |
+| Tier 0 harness | **Claude Code / Claude Agent SDK** | Codex CLI, Gemini CLI, OpenHands (MIT) | Ships all five Tier 0 capabilities enabled by default (caching, auto-compact + pruning, budgeted tools, anchor-verified edits, deferred MCP loading) |
+| Tier 1.1 telemetry | **Langfuse self-hosted (MIT)** fed by **OpenLLMetry (Apache-2.0)** | Helicone proxy (Apache-2.0); plain OTel GenAI → your existing Grafana/Datadog | Self-hostable, per-request usage + cost, prompt versions, and evals in one place |
+| Tier 1.2 CI byte-test | **pytest + syrupy** (or Jest snapshots) | Any snapshot test runner | ~30 lines; enforces the prefix invariant forever |
+| Tier 1.3 handoff contracts | **Harness subagent definitions + shared filesystem** | LangGraph typed state (MIT) for custom loops | Briefing template lives in the orchestrator prompt; artifacts on disk |
+| Tier 1.4 model/effort map | **A checked-in config file** (harness agent definitions or LiteLLM router config, MIT) | Portkey gateway (MIT) | A config edit, not a service |
+| Tier 2 batch | Provider batch API via **LiteLLM** | Direct SDK calls | Uniform submission if you're multi-provider |
+| Tier 2 event-driven CI | **Harness PR subscriptions + GitHub webhooks** | Temporal (MIT) when workflows outgrow the harness | Zero new infra at first |
+| Tier 2 de-scaffolding | **promptfoo (MIT)** ablation runs | DSPy (MIT) once eval infra matures | Side-by-side variants with token cost per variant |
+| Optional output squeeze | **Caveman (MIT)** skill on chatty internal agents | Prompt-level output contracts only | Drop-in skill; output-token cut on agent traffic — internal routes only |
+
+### Tier 1.1 — telemetry wiring
+
+```bash
+# Langfuse self-hosted + OpenLLMetry instrumentation in the harness
+docker compose up  # langfuse/langfuse
+pip install traceloop-sdk  # emits OTel GenAI spans (gen_ai.usage.*)
+```
+
+Tag every span with `agent_role`, `session_id`, `turn`. Define the three
+alerts on these exact expressions:
+
+1. `cache_read_tokens / (input + cache_read + cache_creation)` per
+   `agent_role` — alert on a step-drop (silent invalidator).
+2. Slope of `input_tokens` vs `turn` per `session_id` — alert when
+   super-linear (compaction/pruning broke).
+3. `sum(cost) / count(tasks_completed)` per route — alert on step-change.
+
+### Tier 1.2 — the CI byte-test
+
+```python
+def test_prompt_prefix_stability():
+    a = render_request(session_state, turn=5)
+    b = render_request(session_state, turn=5)
+    assert a == b                        # deterministic
+    c = render_request(session_state, turn=6)
+    assert c.startswith(a[: len(a)])     # append-only prefix
+```
+
+Plus one lint rule: ban `now()`, `uuid`, and unsorted serialization in any
+module that feeds the prompt head.
+
+### Tier 1.3 — briefing + artifact conventions
+
+Checked into the orchestrator's prompt/agent definition:
+
+```markdown
+Every subagent spawn MUST include: goal, constraints, exact file paths/IDs,
+findings so far, definition of done.
+Every subagent MUST write full results to artifacts/<task-id>/ and return
+only the path + a ≤300-token summary.
+```
+
+### Tier 1.4 — the model/effort map (example, mid-2026 tiers)
+
+```yaml
+# roles.yaml — the entire "router"
+orchestrator:      {model: claude-opus-4-8,  effort: high}
+coding_subagent:   {model: claude-opus-4-8,  effort: high}   # sweep sonnet on evals
+explore_subagent:  {model: claude-haiku-4-5, effort: low}
+summarizer:        {model: claude-haiku-4-5, effort: low}
+classifier:        {model: claude-haiku-4-5, effort: none}
+```
+
+Equivalent ladders elsewhere: GPT-5.x ↔ mini/nano with `reasoning_effort`;
+Gemini 3 Pro ↔ Flash/Flash-Lite with `thinking_budget`. Multi-provider
+fleets: express the same map once as a LiteLLM router config and point every
+agent at the gateway.
+
+---
+
 ## Expected result of the necessary stack
 
 Order-of-magnitude, for a fleet that currently has none of it:
