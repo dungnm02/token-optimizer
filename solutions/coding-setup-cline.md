@@ -126,10 +126,19 @@ Everything below rides in **every single request** of every task:
 
 | Tool | License | What it does for Cline |
 | --- | --- | --- |
+| RTK (`rtk-ai/rtk`) | Apache-2.0 | Compresses shell/CLI output 60–90% before it hits context; **native Cline project-config integration**; keeps test failures/diffs (`tool-output-compression.md`) |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Proxy/MCP that compresses tool results (JSON 60–95%, logs ~94%) and stabilizes prefixes for caching; **Cline is in its support matrix** (`tool-output-compression.md`) |
+| Repomix (`yamadashy/repomix`) / Codesight | MIT | Generate a compact repo map / context pack so Cline skips 25–60K tokens of cold-start exploration — feed it via `@file` or a rule (`code-maps.md`) |
 | Caveman (`wilpel/caveman-compression`) | MIT | Output-compression rules/skill — Cline is a supported agent; cuts response verbosity on internal work (`concise-output-prompting.md`) |
+| GPTCache (`zilliztech/GPTCache`) | MIT | Response-level cache for repetitive read-only prompts — via a LiteLLM gateway in front of Cline; keep off coding-edit routes (`semantic-caching.md`) |
 | LiteLLM + Langfuse/Helicone | MIT / Apache-2.0 | Fleet telemetry + uniform provider routing (above) |
 | promptfoo | MIT | Ablate your `.clinerules` like any prompt — delete blocks, verify task quality holds (`prompt-de-scaffolding.md`) |
 | vLLM / SGLang | Apache-2.0 | Prefix caching for local-model Cline setups |
+
+The **RTK + Headroom + Caveman** trio is the community's "token-saving
+stack" for VS Code agents — input-side CLI compression, API-layer tool-result
+compression, and output-side response compression respectively; all three
+list Cline as supported.
 
 ## Setup checklist
 

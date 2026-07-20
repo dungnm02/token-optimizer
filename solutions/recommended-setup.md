@@ -157,6 +157,9 @@ the best effort-to-payoff ratio in the entire catalog.
 | Map-reduce fan-outs over shared context appear | Warm-one-then-fan gate | `fan-out-warming.md` |
 | Agents start consuming screenshots (browser/computer use) | Resolution budgeting + stale-screenshot pruning | `image-downsampling.md` |
 | A docs/Q&A workload joins the fleet | Document reuse + retrieval tuning | `document-reuse.md`, `retrieval-tuning.md` |
+| Telemetry shows noisy tool/CLI output (build logs, test runs, JSON) dominating input | Drop-in tool-output compression proxy/hook (RTK/Headroom) — no tool redesign | `tool-output-compression.md` |
+| Agents spend most tokens exploring the repo to orient (the 67–76% file-finding tax) | Checked-in code map / context pack; grep-first just-in-time reads | `code-maps.md` |
+| A high-repeat, read-only Q&A/analytics endpoint joins the fleet | Response-level (semantic) cache at the gateway — keep off coding-edit routes | `semantic-caching.md` |
 
 ## Tier 3 — Explicitly skip (for this profile, until proven otherwise)
 

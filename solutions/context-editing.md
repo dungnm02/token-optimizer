@@ -95,4 +95,12 @@ approaches the limit.
 - Anthropic reports context editing extends effective task length
   substantially while *improving* quality on long tasks (stale context is
   distraction, not just cost).
+- **This is a quality lever, not only a cost one — "context rot."**
+  Controlled studies across 18 frontier models find every one degrades as
+  input grows, and *before* the window is anywhere near full: practical
+  high-accuracy budgets land around 150–400K tokens even on 2M-token
+  models, and accuracy drops fastest when the accumulated noise is
+  *semantically similar* to the answer (exactly the case in a coding
+  session full of near-miss exploration). Pruning that noise buys accuracy
+  as well as tokens.
 - Zero additional model-call cost, unlike compaction.

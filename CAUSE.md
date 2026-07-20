@@ -72,6 +72,14 @@ All of them share the same core mechanic: the cache matches a **prefix** of
 the request, and cached tokens are billed at a steep discount. These causes
 are about failing to earn that discount.
 
+> **Prefix caching is not the only caching layer.** It makes a *repeated
+> request* cheaper, but still runs the model. A separate, orthogonal waste
+> is answering **near-identical requests repeatedly across a fleet** (the
+> same support question, the same analytic query, the same eval prompt) —
+> each one a full model call that a *response-level* (semantic) cache could
+> skip entirely. That's a distinct opportunity from the prefix discount
+> below; see `solutions/semantic-caching.md`.
+
 ### 1.1 No prompt caching at all
 
 **Summary:** Requests with a large, stable prefix (system prompt, tool
@@ -150,6 +158,15 @@ TTLs, pre-warming, keep-alive traffic)
 ---
 
 ## 2. Context Accumulation
+
+> **This category is a quality problem, not only a cost problem.**
+> Controlled studies ("context rot") across 18 frontier models find every
+> one degrades as input grows — and well *before* the window fills:
+> practical high-accuracy budgets land around 150–400K tokens even on
+> 2M-token models, and accuracy falls fastest when the accumulated noise is
+> *semantically similar* to the answer (exactly the case in a long coding
+> session full of near-miss exploration). So trimming history (below) buys
+> accuracy as well as tokens — the two motivations point the same way.
 
 ### 2.1 Unbounded conversation history
 
