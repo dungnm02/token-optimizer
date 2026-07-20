@@ -34,25 +34,25 @@ from the causes in [`../CAUSE.md`](../CAUSE.md):_
 
 | Planned document | Addresses (cause #) |
 | --- | --- |
-| `prompt-caching.md` | 1.1, 1.2, 1.3, 1.4, 3.4, 6.1 |
+| `prompt-caching.md` | 1.1, 1.2, 1.3, 1.4, 6.1 |
 | `stable-prompt-architecture.md` | 1.3 |
 | `compaction.md` | 2.1 |
 | `context-editing.md` | 2.1, 2.2 |
 | `context-hygiene.md` | 2.3 |
 | `tool-output-budgets.md` | 3.1 |
-| `programmatic-tool-calling.md` | 3.2 |
-| `batching.md` / `batch-api.md` | 3.2, 6.2 |
+| `tool-composition.md` | 3.2 |
 | `event-driven-waiting.md` | 3.3 |
 | `tool-search.md` | 3.4 |
 | `image-downsampling.md` | 4.1 |
-| `files-api-and-caching.md` | 4.2 |
+| `document-reuse.md` | 4.2 |
 | `retrieval-tuning.md` | 4.2 |
 | `token-counting.md` | 4.3 |
-| `effort-tuning.md` | 5.1 |
+| `reasoning-effort-tuning.md` | 5.1 |
 | `concise-output-prompting.md` | 5.2 |
 | `diff-based-edits.md` | 5.2 |
-| `max-tokens-sizing.md` | 5.3 |
+| `output-cap-sizing.md` | 5.3 |
 | `subagent-context-handoff.md` | 6.1 |
 | `model-routing.md` | 6.2 |
+| `batch-processing.md` | 6.2 |
 | `fan-out-warming.md` | 6.3 |
 | `prompt-de-scaffolding.md` | 6.4 |
