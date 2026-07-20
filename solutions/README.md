@@ -27,6 +27,14 @@ token consumption. Each solution should map back to one or more causes listed in
 **Expected impact:** Rough sense of the token savings.
 ```
 
+## Start Here
+
+Not every solution is worth its setup cost for every system.
+[`recommended-setup.md`](recommended-setup.md) distills the catalog into a
+**necessary stack for a large codebase with many agents** — what to inherit
+from the harness, the four pieces of custom work that matter, and what to
+explicitly skip.
+
 ## Index
 
 All 22 solutions are written, mapped to the causes in
