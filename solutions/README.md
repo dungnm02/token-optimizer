@@ -43,19 +43,19 @@ token.
 ## Bắt đầu từ đâu
 
 Không phải giải pháp nào cũng đáng công thiết lập cho mọi hệ thống.
-[`recommended-setup.md`](recommended-setup.md) chắt lọc danh mục thành
+[`recommended-setup.md`](../setups/recommended-setup.md) chắt lọc danh mục thành
 **bộ công cụ cần thiết cho một codebase lớn với nhiều agent** — cái gì nên
 kế thừa từ harness, bốn phần việc tùy chỉnh thực sự quan trọng, và cái gì
 nên bỏ qua một cách rõ ràng.
 
 Để xem các thiết lập cụ thể theo từng nhà cung cấp, xem
-[`coding-setup-enterprise.md`](coding-setup-enterprise.md) — các thiết lập
+[`coding-setup-enterprise.md`](../setups/coding-setup-enterprise.md) — các thiết lập
 coding-agent cấp doanh nghiệp trên **Claude, GPT, và Gemini**: các tuyến
 truy cập và đánh đổi tính năng của chúng, lựa chọn harness, cấu hình
 caching, bản đồ model/effort, và hướng dẫn cho đội hình đa nhà cung cấp.
 
 Đối với harness chúng ta dùng hàng ngày, xem
-[`coding-setup-cline.md`](coding-setup-cline.md) — cùng cách phân tầng áp
+[`coding-setup-cline.md`](../setups/coding-setup-cline.md) — cùng cách phân tầng áp
 dụng cho **Cline** (tiện ích mở rộng VS Code): lựa chọn nhà cung cấp/caching,
 tách model Plan/Act, kỷ luật context `/smol`–`/newtask`, cắt gọt chi phí
 `.clinerules`/`.clineignore`/MCP, và đo lường toàn đội qua một gateway.
@@ -175,19 +175,19 @@ token consumption. Each solution should map back to one or more causes listed in
 ## Start Here
 
 Not every solution is worth its setup cost for every system.
-[`recommended-setup.md`](recommended-setup.md) distills the catalog into a
+[`recommended-setup.md`](../setups/recommended-setup.md) distills the catalog into a
 **necessary stack for a large codebase with many agents** — what to inherit
 from the harness, the four pieces of custom work that matter, and what to
 explicitly skip.
 
 For concrete vendor instantiations, see
-[`coding-setup-enterprise.md`](coding-setup-enterprise.md) — enterprise
+[`coding-setup-enterprise.md`](../setups/coding-setup-enterprise.md) — enterprise
 coding-agent setups on **Claude, GPT, and Gemini**: access routes and their
 feature trade-offs, harness choice, caching configuration, model/effort
 maps, and mixed-fleet guidance.
 
 For the harness we use day-to-day, see
-[`coding-setup-cline.md`](coding-setup-cline.md) — the same tiering applied
+[`coding-setup-cline.md`](../setups/coding-setup-cline.md) — the same tiering applied
 to **Cline** (VS Code extension): provider/caching choice, Plan/Act model
 split, `/smol`–`/newtask` context discipline, `.clinerules`/`.clineignore`/
 MCP overhead trimming, and fleet telemetry via a gateway.
