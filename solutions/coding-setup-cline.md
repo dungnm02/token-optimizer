@@ -122,23 +122,75 @@ Everything below rides in **every single request** of every task:
   Cline usage — the caveat is that gateway routes must still be
   caching-capable, so validate cache metrics after inserting the proxy.
 
-## 6. Agent-agnostic add-ons that work with Cline
+## 6. Agent-agnostic add-ons, by the cause they attack
 
-| Tool | License | What it does for Cline |
+Each add-on below maps to a numbered cause in [`../CAUSE.md`](../CAUSE.md)
+and a solution doc that explains the mechanism. The list is deliberately
+gap-shaped: Cline already covers compaction, diff edits, and caching
+natively (§Tier 0), so third-party tools are only worth adding where Cline
+has a gap.
+
+### Tool-output bloat — causes 3.1, 2.1 → [`tool-output-compression.md`](tool-output-compression.md)
+
+Cline's biggest native gap: file reads and command output enter context
+unsliced.
+
+| Tool | License | How it plugs into Cline |
 | --- | --- | --- |
-| RTK (`rtk-ai/rtk`) | Apache-2.0 | Compresses shell/CLI output 60–90% before it hits context; **native Cline project-config integration**; keeps test failures/diffs (`tool-output-compression.md`) |
-| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Proxy/MCP that compresses tool results (JSON 60–95%, logs ~94%) and stabilizes prefixes for caching; **Cline is in its support matrix** (`tool-output-compression.md`) |
-| Repomix (`yamadashy/repomix`) / Codesight | MIT | Generate a compact repo map / context pack so Cline skips 25–60K tokens of cold-start exploration — feed it via `@file` or a rule (`code-maps.md`) |
-| Caveman (`wilpel/caveman-compression`) | MIT | Output-compression rules/skill — Cline is a supported agent; cuts response verbosity on internal work (`concise-output-prompting.md`) |
-| GPTCache (`zilliztech/GPTCache`) | MIT | Response-level cache for repetitive read-only prompts — via a LiteLLM gateway in front of Cline; keep off coding-edit routes (`semantic-caching.md`) |
-| LiteLLM + Langfuse/Helicone | MIT / Apache-2.0 | Fleet telemetry + uniform provider routing (above) |
-| promptfoo | MIT | Ablate your `.clinerules` like any prompt — delete blocks, verify task quality holds (`prompt-de-scaffolding.md`) |
-| vLLM / SGLang | Apache-2.0 | Prefix caching for local-model Cline setups |
+| RTK (`rtk-ai/rtk`) | Apache-2.0 | Compresses 100+ dev commands' output 60–90% before it hits context; **native Cline project-scoped config**; preserves test failures/diffs/errors |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Local proxy or MCP server compressing tool results in-flight (JSON 60–95%, build logs ~94%); `CacheAligner` keeps the prefix cache hitting; **Cline in its support matrix** |
+
+### Cold starts & repo orientation — causes 6.5, 4.2 → [`code-maps.md`](code-maps.md)
+
+Every new Cline task re-explores the repo (the 25–60K-token cold-start tax).
+
+| Tool | License | How it plugs into Cline |
+| --- | --- | --- |
+| Repomix (`yamadashy/repomix`) | MIT | Pack/compress the repo (`--compress` = signatures only) into a checked-in file; reference it with `@file` at task start |
+| Codesight (`Houseofmvps/codesight`) | MIT | Generates a `.codesight/` context pack agents read instead of re-scanning |
+| TokenSave (`aovestdipaperino/tokensave`) | OSS | Local MCP code-graph server — Cline queries the pre-built symbol graph instead of grep/read loops (mind cause 3.4: it adds tool schemas) |
+| OpenMemory MCP (mem0) | Apache-2.0 | Local-first memory MCP server, **Cline officially supported** — decisions/facts persist across tasks so `/newtask` handoffs and new sessions start warm |
+
+Cline-native alternative for memory: the community **Memory Bank** pattern
+(structured `.clinerules` files the agent maintains) — zero new
+infrastructure, but it rides in every request, so keep it lean (cause 6.4).
+
+### Output verbosity — cause 5.2 → [`concise-output-prompting.md`](concise-output-prompting.md)
+
+| Tool | License | How it plugs into Cline |
+| --- | --- | --- |
+| Caveman (`wilpel/caveman-compression`) | MIT | Output-compression rules/skill, Cline supported; strips narration/filler while keeping code and facts — internal work only, not user-facing prose |
+
+### Fleet-level: duplicates, telemetry, routing — causes 6.6, 4.3, 6.2
+
+| Tool | License | How it plugs into Cline |
+| --- | --- | --- |
+| LiteLLM gateway + Langfuse / Helicone | MIT / Apache-2.0 | Point Cline's OpenAI-compatible provider at the gateway → per-engineer usage, the three alerts, uniform routing (`token-counting.md`, `model-routing.md`) |
+| GPTCache (`zilliztech/GPTCache`) | MIT | Response-level cache at the gateway for repetitive read-only prompts; **keep off coding-edit routes** (`semantic-caching.md`) |
+
+### Prompt overhead — cause 6.4 → [`prompt-de-scaffolding.md`](prompt-de-scaffolding.md)
+
+| Tool | License | How it plugs into Cline |
+| --- | --- | --- |
+| promptfoo | MIT | Ablate `.clinerules` blocks like any prompt: delete a block, run your eval tasks, keep the deletion if quality holds |
+
+### Local-model serving — cause 1.1 → [`prompt-caching.md`](prompt-caching.md)
+
+| Tool | License | How it plugs into Cline |
+| --- | --- | --- |
+| vLLM / SGLang | Apache-2.0 | Front Ollama/LM Studio-style setups with APC/RadixAttention so Cline's re-sent history gets prefix reuse a bare local server won't give |
 
 The **RTK + Headroom + Caveman** trio is the community's "token-saving
-stack" for VS Code agents — input-side CLI compression, API-layer tool-result
-compression, and output-side response compression respectively; all three
-list Cline as supported.
+stack" for VS Code agents — input-side CLI compression, API-layer
+tool-result compression, and output-side response compression respectively;
+all three list Cline as supported. Add **OpenMemory or a checked-in
+Repomix map** on top and the two remaining structural gaps (tool-output
+bloat and cold starts) are both covered.
+
+What you should **not** add: LLMLingua-style context compressors (fidelity
+risk on code — `recommended-setup.md` Tier 3), a second compaction layer
+(Cline's Auto Compact + `/smol` already covers cause 2.1), or a dynamic
+model router (the Plan/Act split *is* the router for this profile).
 
 ## Setup checklist
 
@@ -151,6 +203,9 @@ list Cline as supported.
 5. ☐ Habits: one task = one goal, `/smol` at pauses, `/newtask` at
    transitions, Focus Chain on
 6. ☐ (Team) LiteLLM gateway + Langfuse with the three alerts
+7. ☐ Gap add-ons where telemetry justifies them: RTK/Headroom for tool-output
+   bloat, Repomix map or OpenMemory MCP for cold starts, Caveman for verbose
+   internal routes
 
 ## Expected impact
 
