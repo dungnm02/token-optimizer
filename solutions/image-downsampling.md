@@ -1,3 +1,100 @@
+# Giảm độ phân giải Ảnh & Ngân sách Thị giác (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 4.1 trong [`../CAUSE.md`](../CAUSE.md)
+
+**Ý tưởng:** Đặt kích thước mọi hình ảnh về độ phân giải nhỏ nhất mà tác vụ
+thực sự cần trước khi nó vào request — chi phí token thị giác tỷ lệ với
+diện tích pixel/tile trên mọi nhà cung cấp lớn, nên độ phân giải là một nút
+điều chỉnh chi phí trực tiếp.
+
+---
+
+## Mô hình chi phí (biết công thức của nhà cung cấp bạn dùng)
+
+| Nhà cung cấp | Mô hình chi phí (xấp xỉ) | Đòn bẩy thực tế |
+| --- | --- | --- |
+| Anthropic | ~`(chiều rộng × chiều cao) / 750` token; các model độ phân giải cao chấp nhận tới cạnh dài 2576px (tới ~4.784 token/ảnh) | Giảm cạnh dài; 1568px khớp với giới hạn cũ (~1.600 token) |
+| OpenAI | Dựa trên tile: chi phí gốc + chi phí mỗi tile 512px ở `detail: high`; cố định ~85 token ở `detail: low` | `detail: low` cho kiểm tra phân loại/hiện diện; resize để giảm số tile |
+| Gemini | Dạng tile: ~258 token mỗi tile 768×768 | Vừa trong ít tile hơn |
+
+Hai hệ quả:
+
+1. Một screenshot gửi ở 4K so với 1080p có thể chênh lệch **3–5×** số token
+   cho cùng nội dung *đọc được*.
+2. Hình ảnh tồn tại lâu trong lịch sử (nguyên nhân 2.1) — một screenshot
+   quá khổ sẽ bị tính phí lại trên mọi lượt sau đó cho đến khi bị cắt tỉa.
+
+## Cách áp dụng
+
+1. **Luôn giảm độ phân giải tại ranh giới harness.** Cho mọi hình ảnh đi
+   qua một bước resize trước khi lắp ráp request:
+   - Screenshot chung / vòng lặp computer-use: **1080p** là điểm cân bằng
+     hiệu năng/chi phí trên các model hiện tại; **720p / 1366×768** cho các
+     vòng lặp nhạy cảm về chi phí.
+   - Tài liệu nhiều văn bản: giữ đủ DPI để OCR đọc được (~1.500px cạnh dài
+     thường là đủ); kiểm tra trên các font khó đọc nhất.
+   - Phân loại / "có hộp thoại trên màn hình không": chế độ chi tiết thấp
+     của nhà cung cấp (OpenAI `detail: low` ≈ 85 token) hoặc giảm độ phân
+     giải mạnh tay.
+2. **Cắt (crop) trước khi gửi.** Nếu vùng quan tâm đã biết (bounding box
+   của một phần tử, một vùng diff), hãy cắt vào đó — một crop 300×200 chỉ
+   ~80 token so với hàng nghìn cho toàn màn hình. Các model thị giác
+   agentic cũng có thể được cho một tool crop/zoom và một bản tổng quan
+   toàn khung nhỏ thay vì một ảnh khổng lồ.
+3. **Cắt tỉa screenshot cũ khỏi lịch sử.** Trong các vòng lặp computer-use,
+   thay các screenshot cũ hơn 2–3 bước bằng một stub ("[screenshot bước
+   12 — đã bị thay thế]") — trạng thái màn hình hiện tại mới là điều quan
+   trọng. Đây là trường hợp thị giác của `context-editing.md`.
+4. **Đừng gửi lại hình ảnh không đổi.** Hash các khung hình; nếu màn hình
+   không đổi, hãy nói điều đó bằng văn bản thay vì đính kèm một screenshot
+   giống hệt (`context-hygiene.md`).
+5. **Ưu tiên văn bản khi có văn bản tồn tại.** Trích xuất DOM/cây trợ năng
+   cho các agent trình duyệt, lớp văn bản PDF cho tài liệu — văn bản có
+   cấu trúc thường rẻ hơn 5–20× so với pixel của cùng nội dung, và được
+   phân tích đáng tin cậy hơn. Dùng thị giác khi bố cục/hình thức mới là
+   trọng tâm.
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| OpenAI API | Nút `detail: low\|high\|auto` theo từng ảnh | `low` cố định ~85 token — chế độ kiểm tra hiện diện rẻ nhất ở mọi nơi |
+| Mọi nhà cung cấp | `count_tokens` trên các ảnh đại diện | Hiệu chỉnh lại sau khi nâng cấp model — công thức token ảnh thay đổi giữa các thế hệ |
+| Tool computer-use của Anthropic / OpenAI | Hướng dẫn độ phân giải đã ghi tài liệu | Tuân theo độ phân giải chụp được nhà cung cấp khuyến nghị thay vì kích thước màn hình gốc |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| sharp (Node) / Pillow-SIMD (Python) / libvips | Apache-2.0 / PIL / LGPL | Resize/crop nhanh tại ranh giới harness, trước khi bất kỳ nhà cung cấp nào thấy ảnh |
+| Cây trợ năng Playwright / trích xuất DOM của `browser-use` | Apache-2.0 / MIT | Biểu diễn trang ưu tiên văn bản cho agent trình duyệt; screenshot chỉ dùng dự phòng |
+| pixelmatch / băm tri giác (perceptual hashing) | ISC / MIT | Bỏ qua các khung hình không đổi trong vòng lặp screenshot |
+
+## Đánh đổi
+
+- Giảm độ phân giải quá mạnh phá hỏng OCR và việc định vị phần tử UI nhỏ;
+  độ chính xác tọa độ cho các click computer-use suy giảm dưới ~720p. Hiệu
+  chỉnh trên UI thực tế của bạn.
+- Bước resize thêm vài ms mỗi ảnh và một phụ thuộc xử lý.
+- Các luồng dựa trên crop cần theo dõi vùng chính xác; một lần crop sai
+  buộc phải chụp lại (thêm một lượt qua lại).
+
+## Tác động dự kiến
+
+- Giảm độ phân giải screenshot 4K/gốc xuống 1080p thường cắt giảm input
+  thị giác **3–5×** với mất mát độ chính xác tác vụ không đáng kể trên các
+  UI tiêu chuẩn.
+- Trong các vòng lặp computer-use chụp mỗi bước, kết hợp chụp 1080p + cắt
+  tỉa screenshot cũ thường xuyên giảm tổng input phiên **50–80%**, vì
+  screenshot chiếm phần lớn các transcript đó.
+- Chuyển các agent trình duyệt từ ưu tiên screenshot sang ưu tiên DOM cắt
+  giảm chi phí mỗi bước **cả một bậc độ lớn** trên các trang nhiều văn
+  bản.
+
+---
+
 # Image Downsampling & Vision Budgeting
 
 **Addresses:** Cause 4.1 in [`../CAUSE.md`](../CAUSE.md)

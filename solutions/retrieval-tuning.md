@@ -1,3 +1,105 @@
+# Tinh chỉnh Truy xuất (Ưu tiên Độ chính xác hơn Đổ-recall) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 4.2 trong [`../CAUSE.md`](../CAUSE.md) (cùng với
+`document-reuse.md`)
+
+**Ý tưởng:** Làm cho giai đoạn truy xuất làm đúng việc của nó — cung cấp một
+ngữ cảnh *nhỏ, chính xác* — thay vì đẩy gánh nặng lọc sang cho model bằng
+cách đổ một top-k lớn. Mỗi chunk không liên quan đều bị trả tiền trên
+request này và trên mọi lượt sau đó mà nó còn tồn tại.
+
+---
+
+## Cách áp dụng
+
+### 1. Thêm một giai đoạn rerank
+
+Truy xuất giai đoạn đầu (BM25/embedding) hướng đến recall; hãy rerank các
+ứng viên và chỉ gửi những cái sống sót:
+
+```
+truy xuất top-50 (rẻ) → rerank → gửi top-3..5 (chính xác)
+```
+
+Reranker cross-encoder là bản nâng cấp truy xuất có đòn bẩy cao nhất: chúng
+cho phép bạn cắt giảm k 3–5× với chất lượng câu trả lời bằng hoặc tốt hơn.
+
+### 2. Đặt đúng kích thước k và chunk — đo lường, không đoán
+
+- Quét k trên bộ đánh giá của bạn; chất lượng câu trả lời thường bão hòa ở
+  k=3–8 cho các pipeline được rerank tốt trong khi chi phí tăng tuyến tính
+  theo k.
+- Kích thước chunk: các chunk nhỏ hơn (200–500 token) với **tiêu đề ngữ
+  cảnh** (breadcrumb tiêu đề/mục, hoặc ngữ cảnh sinh ra kiểu công thức
+  contextual-retrieval của Anthropic) đánh bại các chunk lớn 2K token —
+  bạn gửi đoạn văn liên quan, không phải cả khu vực xung quanh nó.
+- Loại bỏ trùng lặp các chunk gần giống hệt nhau (phổ biến với các cửa sổ
+  chồng lấn) trước khi gửi.
+
+### 3. Truy xuất khi cần, không phải luôn luôn
+
+- **Kiểm soát truy xuất (gate)**: phân loại xem lượt này có thực sự cần
+  truy xuất hay không (nhiều lượt là câu hỏi tiếp nối có thể trả lời từ
+  ngữ cảnh sẵn có). Một bộ phân loại rẻ hoặc ngưỡng tương đồng embedding
+  ("truy vấn có trôi dạt khỏi những gì đã có trong ngữ cảnh?") ngăn việc
+  gắn kèm theo phản xạ mỗi lượt — xem `context-hygiene.md`.
+- **Truy xuất agentic**: cho model một tool `search(query)` và để nó tự
+  lấy những gì nó quyết định cần (1–2 lệnh gọi có mục tiêu), thay vì nhồi
+  sẵn vào mọi request. Điều này biến chi phí truy xuất cố định mỗi lượt
+  thành chi phí theo yêu cầu.
+
+### 4. Nén những gì bạn gửi
+
+- Gửi các đoạn trích trích xuất (đoạn khớp ± một câu) thay vì toàn bộ
+  chunk khi tác vụ cho phép.
+- Loại bỏ markup/boilerplate khỏi chunk tại thời điểm index, không phải
+  tại thời điểm truy vấn.
+- Các reranker nén ngữ cảnh (kiểu LLMLingua) có thể ép ngữ cảnh truy xuất
+  2–5× cho các tác vụ hỏi-đáp, với một chút rủi ro về độ trung thực — hãy
+  đánh giá trước khi áp dụng.
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| Anthropic | Công thức contextual retrieval | Sinh ngữ cảnh cho chunk tại thời điểm index; công bố giảm ~49% thất bại truy xuất (67% khi kết hợp rerank) |
+| OpenAI API | `text-embedding-3` + vector store / file search | Truy xuất giai đoạn đầu được quản lý trong stack OpenAI |
+| Tìm kiếm repo của coding agent (`Grep`/`Glob` của Claude Code, tool tìm kiếm của Codex/Gemini CLI) | Truy xuất agentic | Với codebase, tìm kiếm theo yêu cầu có giới hạn thường thắng hoàn toàn một pipeline RAG nhồi sẵn |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| BGE-reranker-v2 / mxbai-rerank | Apache-2.0 | Rerank cross-encoder tự host cấp SOTA; Cohere Rerank 3.5 / Voyage rerank-2 / Jina Reranker v2 là các lựa chọn thương mại host sẵn tương đương |
+| Embedding BGE-M3 | MIT | Recall giai đoạn đầu mã nguồn mở mạnh; Voyage-3 là lựa chọn thương mại host sẵn |
+| LLMLingua / LLMLingua-2 / LongLLMLingua | MIT | Họ nén prompt của Microsoft — nén tới ~20× với mức giảm chất lượng ~1,5 điểm trên các benchmark hỏi-đáp/suy luận (một trường hợp SaaS được báo cáo: $42K→$2,1K/tháng); LongLLMLingua cắt ~94% chi phí RAG trên LooGLE. **Lưu ý mạnh về độ trung thực trên code/văn bản có cấu trúc** — hãy đánh giá trước khi áp dụng, và ưu tiên loại bỏ ở Tier-0/1 cho các đội hình coding (`recommended-setup.md` Tier 3) |
+| RAGAS / promptfoo | Apache-2.0 / MIT | Đo lường các phép quét k/chunk/rerank thay vì đoán; Braintrust là lựa chọn thương mại thay thế |
+
+## Đánh đổi
+
+- Rerank thêm một bước (~50–300ms) và một khoản phí mỗi truy vấn — hầu
+  như luôn được hoàn trả bởi k nhỏ hơn.
+- Tinh chỉnh độ chính xác quá mạnh tay có nguy cơ thất bại recall trên các
+  câu hỏi đa bước; giữ một lối thoát (truy xuất tiếp nối agentic).
+- Các kỹ thuật nén nhạy cảm với tác vụ — kiểm chứng trên đánh giá của bạn,
+  không chỉ dựa trên benchmark.
+
+## Tác động dự kiến
+
+- k=20 không rerank → k=4 đã rerank cắt giảm tỷ trọng truy xuất trong
+  input **~5×** mỗi request, cộng dồn qua mọi lượt mà các chunk lẽ ra sẽ
+  tồn tại.
+- Số liệu contextual-retrieval của Anthropic (−49% thất bại truy xuất,
+  −67% khi kết hợp rerank) cho thấy tinh chỉnh độ chính xác *cải thiện
+  chất lượng trong khi cắt giảm token* — các chunk không liên quan đang
+  làm hại cả hai.
+- Kiểm soát truy xuất thường loại bỏ 30–70% việc gắn kèm truy xuất trong
+  các phiên hội thoại (hầu hết các lượt là câu hỏi tiếp nối).
+
+---
+
 # Retrieval Tuning (Precision Over Recall-Dumping)
 
 **Addresses:** Cause 4.2 in [`../CAUSE.md`](../CAUSE.md) (with `document-reuse.md`)

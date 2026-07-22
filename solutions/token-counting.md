@@ -1,3 +1,118 @@
+# Đếm Token & Đo lường Sử dụng (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 4.3 trong [`../CAUSE.md`](../CAUSE.md) — và
+*lớp đo lường* mà mọi giải pháp khác phụ thuộc vào
+
+**Ý tưởng:** Bạn không thể tối ưu thứ bạn không đo lường. Đếm token bằng
+bộ đếm riêng của nhà cung cấp cho đúng model mục tiêu, ghi lại metadata sử
+dụng của mỗi request một cách tập trung, và quy chi tiêu về các
+route/nguyên nhân — để các hồi quy (cache trượt âm thầm, thay đổi
+tokenizer, dài dòng leo thang) hiện ra thành cảnh báo thay vì hóa đơn bất
+ngờ.
+
+---
+
+## Cách áp dụng
+
+### 1. Đếm bằng bộ đếm đúng
+
+| Nhà cung cấp | Bộ đếm đúng | Bộ đếm sai |
+| --- | --- | --- |
+| Anthropic | `POST /v1/messages/count_tokens` (theo từng model) | `tiktoken` (tokenizer của OpenAI — đếm thiếu Claude ~15–20%+, tệ hơn với code) |
+| OpenAI | `tiktoken` với encoding *đúng* model | Encoding của model khác |
+| Gemini | API `countTokens` | Ước lượng chars/4 |
+| Model mở | Tokenizer HF riêng của model (`AutoTokenizer`) | Tokenizer của bất kỳ model nào khác |
+
+Các quy tắc:
+
+- **Hiệu chỉnh lại trên mỗi lần di chuyển model.** Thay đổi tokenizer qua
+  các thế hệ đã làm dịch chuyển số đếm hơn 30% cho cùng văn bản — ngân
+  sách, `max_tokens`, và ngưỡng kích hoạt nén được hiệu chỉnh trên model cũ
+  sẽ sai trên model mới.
+- Đếm trước (pre-flight) các input lớn (`count_tokens` trước khi gửi) để
+  tránh các thất bại tràn ngữ cảnh thay vì phát hiện ra chúng tại thời
+  điểm request.
+
+### 2. Ghi lại metadata sử dụng trên mỗi phản hồi
+
+Ghi lại toàn bộ đối tượng usage (input không cache, input đã cache, ghi
+cache, output kể cả reasoning) cùng metadata request: route/tính năng,
+model, session ID, số lượt. Bảng phân tích bốn đại lượng trong Cẩm nang Đo
+lường của `CAUSE.md` chính là schema này.
+
+### 3. Quy trách nhiệm và cảnh báo
+
+Dashboard/cảnh báo ánh xạ trực tiếp vào danh mục nguyên nhân:
+
+| Chỉ số | Phát hiện |
+| --- | --- |
+| Tỷ trọng cache-hit của input, theo từng route | Nguyên nhân 1.1–1.4 (vô hiệu hóa âm thầm hiện ra như một cú sụt bậc) |
+| Đường cong token input theo số lượt, mỗi phiên | Nguyên nhân 2.1 (tăng trưởng không giới hạn = đường cong siêu tuyến tính) |
+| Kích thước kết quả tool P95, theo từng tool | Nguyên nhân 3.1 |
+| Số request mỗi tác vụ người dùng; các đợt request gần trùng lặp | Nguyên nhân 3.2 / 3.3 |
+| Token output so với độ dài phản hồi hiển thị | Nguyên nhân 5.1 / 5.2 (reasoning + dài dòng) |
+| Tỷ lệ dừng do `max_tokens` | Nguyên nhân 5.3 |
+| Chi phí mỗi tác vụ hoàn thành, theo model/route | Nguyên nhân 6.2 và ROI tổng thể của mọi giải pháp |
+
+**Chi phí mỗi tác vụ hoàn thành** là chỉ số ngôi sao dẫn đường — số token
+thô có thể tăng trong khi chi phí-trên-kết-quả lại giảm (ví dụ effort
+reasoning cao hơn nhưng hoàn thành trong ít lượt hơn).
+
+### 4. Chuẩn hóa pipeline
+
+Phát ra các span theo quy ước ngữ nghĩa OpenTelemetry GenAI
+(`gen_ai.usage.*`) từ harness để bất kỳ backend nào cũng có thể tiêu thụ
+chúng; hoặc áp dụng một nền tảng đo lường LLM-native tự động thu thập usage
+qua SDK wrapper hoặc proxy.
+
+```mermaid
+flowchart LR
+    A[Harness / SDK wrapper] -->|"usage + metadata<br/>(span OTel GenAI)"| B[(Kho đo lường)]
+    B --> C[Dashboard:<br/>% cache-hit, đường cong tăng trưởng,<br/>chi phí mỗi tác vụ]
+    B --> D[Cảnh báo:<br/>sụt cache-hit, dài dòng leo thang,<br/>tăng vọt tỷ lệ cắt bớt]
+    D --> E[Sửa qua tài liệu<br/>solutions/ tương ứng]
+```
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| API Anthropic / OpenAI / Gemini | Endpoint `count_tokens`, đối tượng `usage` mỗi phản hồi, dashboard billing | Sự thật nền tảng cho đếm trước và đối soát billing; `tiktoken` (MIT) là bộ đếm offline chính thức của OpenAI |
+| Claude Code | Lệnh `/cost`, `/context` + xuất chỉ số OTel | Khả năng thấy chi tiêu trong phiên và thành phần ngữ cảnh |
+| Codex CLI / Gemini CLI | Lệnh `/status` · `/stats` | Sử dụng token mỗi phiên trong harness |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| Langfuse | MIT | Trace + usage/chi phí mỗi request, phiên bản prompt, đánh giá — có thể tự host |
+| Helicone | Apache-2.0 | Tích hợp proxy một dòng trước bất kỳ agent nào; phân tích chi phí & cache |
+| OpenLLMetry / quy ước OTel GenAI | Apache-2.0 | Đo lường trung lập với nhà cung cấp cho mọi backend (Datadog, Grafana, Honeycomb) |
+| Braintrust / W&B Weave | Thương mại | Gắn chi phí token với điểm chất lượng theo từng thí nghiệm |
+
+## Đánh đổi
+
+- Chi phí công cụ đo lường và lưu trữ telemetry (nhỏ so với chi tiêu LLM —
+  metadata usage chỉ vài trăm byte mỗi request).
+- Proxy thêm một chặng mạng và một phụ thuộc tin cậy; đo lường phía SDK
+  tránh cả hai nhưng tốn công tích hợp hơn một chút.
+- Quá tải chỉ số: bắt đầu với tỷ trọng cache-hit, đường cong tăng trưởng,
+  và chi phí mỗi tác vụ — ba chỉ số bắt được các hồi quy tốn kém.
+
+## Tác động dự kiến
+
+- Gián tiếp nhưng nền tảng: các đội thường phát hiện **nguồn lãng phí lớn
+  nhất trong vòng vài ngày** sau khi có dashboard cache/tăng trưởng (thường
+  nhất là một yếu tố vô hiệu hóa cache âm thầm hoặc một tool chạy loạn).
+- Biến mọi giải pháp khác trong thư mục này từ một lần sửa đơn lẻ thành một
+  *bất biến được thực thi* — các hồi quy sẽ cảnh báo thay vì tích tụ.
+- Đếm trước loại bỏ hoàn toàn một lớp lỗi (tràn ngữ cảnh trên input lớn) mà
+  nếu không sẽ lãng phí toàn bộ request phát hiện ra nó.
+
+---
+
 # Token Counting & Usage Observability
 
 **Addresses:** Cause 4.3 in [`../CAUSE.md`](../CAUSE.md) — and the

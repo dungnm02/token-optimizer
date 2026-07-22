@@ -1,3 +1,98 @@
+# Tái sử dụng Tài liệu (Tải lên một lần, Tham chiếu nhiều lần) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 4.2 trong [`../CAUSE.md`](../CAUSE.md) (cùng với
+`retrieval-tuning.md`)
+
+**Ý tưởng:** Ngừng việc truyền lại và tính phí lại cùng một tài liệu lớn
+trên mỗi request. Tải nó lên một lần và tham chiếu bằng ID, gắn nó dưới một
+prefix đã cache, hoặc — khi chỉ một số phần là liên quan — truy xuất từng
+phần thay vì đính kèm toàn bộ.
+
+---
+
+## Hướng dẫn ra quyết định
+
+```mermaid
+flowchart TD
+    A[Tài liệu lớn trong vòng lặp] --> B{Nhiều request sẽ<br/>dùng CÙNG một tài liệu?}
+    B -- không, một lần --> C[Đính kèm một lần, xong —<br/>không cần tối ưu]
+    B -- có --> D{Mỗi request có cần<br/>TOÀN BỘ tài liệu?}
+    D -- có --> E["Gắn dưới một prefix đã cache<br/>(prompt caching / context cache<br/>tường minh) + tham chiếu bằng file ID"]
+    D -- không, từng phần --> F["RAG: index một lần,<br/>truy xuất các chunk liên quan<br/>(xem retrieval-tuning.md)"]
+    E --> G{Hỏi-đáp qua nhiều phiên/người dùng?}
+    G -- có --> H[Gộp các câu hỏi lại trên<br/>cùng một ngữ cảnh đã cache —<br/>xem batch-processing.md]
+```
+
+## Cách áp dụng
+
+1. **Tham chiếu bằng ID thay vì nhúng lại byte**
+   - *Anthropic Files API*: tải lên một lần → `file_id` → tham chiếu trong
+     bất kỳ số lượng tin nhắn nào. Tải lên/lưu trữ miễn phí; nội dung được
+     tính phí như input khi sử dụng — nên kết hợp với caching (bên dưới).
+   - *OpenAI*: Files + vector store (tool file search) hoặc tham chiếu file
+     input trên Responses API.
+   - *Gemini File API*: tải lên một lần, tham chiếu qua nhiều request (giữ
+     48 giờ).
+2. **Kết hợp tài liệu với một breakpoint cache.** Tham chiếu bằng ID loại
+   bỏ sự dư thừa *truyền tải* nhưng các token vẫn được xử lý theo từng
+   request trừ khi được cache. Đặt tài liệu trong prefix ổn định với một
+   breakpoint cache sau nó (`prompt-caching.md`); trên Gemini,
+   `CachedContent` tường minh được thiết kế chính xác cho việc này ("cache
+   ngữ liệu, thay đổi câu hỏi") và giảm giá token đã cache ~4×.
+3. **Sắp xếp các luồng hỏi-đáp để chia sẻ prefix.** `[tài liệu][câu hỏi]`
+   cache tài liệu qua các câu hỏi; `[câu hỏi][tài liệu]` không cache gì
+   cả. Luôn đặt ngữ liệu chung trước truy vấn thay đổi.
+4. **Trích xuất một lần, tái sử dụng bản trích xuất.** Với các PDF chỉ có
+   văn bản là quan trọng, chạy trích xuất (lớp văn bản/OCR) một lần trong
+   harness và nạp văn bản sạch — một trang PDF quét dưới dạng ảnh tốn kém
+   gấp nhiều lần nội dung văn bản của nó, mỗi request.
+5. **Chia các kho ngữ liệu rất lớn thành RAG** thay vì nhồi nhét vào ngữ
+   cảnh: trên vài trăm nghìn token, truy xuất thắng "đính kèm mọi thứ" cả
+   về chi phí lẫn chất lượng câu trả lời (recall ngữ cảnh dài suy giảm; xem
+   `retrieval-tuning.md`).
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| Anthropic API | Files API + `cache_control` trên khối tài liệu | Tải một lần + xử lý được cache |
+| Google Gemini API | Caching ngữ cảnh tường minh (`CachedContent`) | Được thiết kế riêng cho hỏi-đáp kho ngữ liệu chung; kiểm soát bằng TTL |
+| OpenAI API | Vector store + file search | Chunk/index/truy xuất được quản lý cho các mẫu hình truy cập từng phần |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| Docling / unstructured.io | MIT / Apache-2.0 | PDF → text/markdown chất lượng cao, chạy một lần trong harness; Marker (GPL-3.0) là lựa chọn thay thế mạnh |
+| Kho tài liệu LlamaIndex / LangChain | MIT | Pipeline index-một-lần với truy xuất theo từng truy vấn, di động qua các nhà cung cấp |
+
+## Đánh đổi
+
+- Cache tường minh và kho file có TTL/hạn ngạch lưu trữ cần quản lý; một
+  kho ngữ liệu cache đã hết hạn sẽ âm thầm quay về giá đầy đủ (theo dõi
+  metadata sử dụng).
+- RAG đưa vào rủi ro chất lượng truy xuất — một chunk bị bỏ sót là một câu
+  trả lời sai; toàn bộ tài liệu + cache an toàn hơn khi tài liệu vừa vặn
+  thoải mái.
+- Tham chiếu file-ID ràng buộc bạn với lưu trữ của nhà cung cấp (cân nhắc
+  về xuất dữ liệu/tuân thủ cho tài liệu nhạy cảm).
+
+## Tác động dự kiến
+
+- Các luồng nhiều câu hỏi trên một tài liệu chuyển từ `token_tài_liệu ×
+  số_câu_hỏi` thành `token_tài_liệu × 1 (+ các lần đọc cache ở
+  ~0.1–0.25×)` — với một báo cáo 100K token và 50 câu hỏi, đó là **~5M
+  token input → ~600K** hiệu dụng.
+- Trích xuất một lần (văn bản thay vì ảnh trang) thường cắt giảm chi phí
+  tài liệu mỗi request **3–10×** cho các PDF quét/nhiều đồ họa.
+- Chuyển các kho ngữ liệu >500K token từ nhồi ngữ cảnh sang RAG đã tinh
+  chỉnh thường giảm input mỗi truy vấn **10–100×** trong khi cải thiện độ
+  chính xác câu trả lời.
+
+---
+
 # Document Reuse (Upload Once, Reference Many)
 
 **Addresses:** Cause 4.2 in [`../CAUSE.md`](../CAUSE.md) (with `retrieval-tuning.md`)
