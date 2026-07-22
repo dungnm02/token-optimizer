@@ -53,7 +53,7 @@ sequenceDiagram
     H-->>M: "3 lỗi. Xem trước (2K token) + đường dẫn: /out/test.log"
     M->>H: read_file("/out/test.log", around_line=1042)
     H-->>M: 60 dòng liên quan
-    Note over M: Ngữ cảnh chỉ giữ ~3K token<br/>thay vì 80K — mãi mãi
+    Note over M: Context chỉ giữ ~3K token<br/>thay vì 80K — mãi mãi
 ```
 
 ### 4. Xử lý trước khi model nhìn thấy
@@ -77,13 +77,13 @@ stack-frame, cảnh báo lặp lại, HTML → markdown/text (một trang HTML t
 
 | Công cụ | Giấy phép | Ghi chú |
 | --- | --- | --- |
-| Trafilatura / mozilla-readability | Apache-2.0 | HTML → văn bản sạch trước khi vào ngữ cảnh của bất kỳ agent nào (nhỏ hơn 5–20×); Jina Reader là lựa chọn thay thế được host sẵn |
+| Trafilatura / mozilla-readability | Apache-2.0 | HTML → văn bản sạch trước khi vào context của bất kỳ agent nào (nhỏ hơn 5–20×); Jina Reader là lựa chọn thay thế được host sẵn |
 | `jq` / chọn trường GraphQL tại ranh giới tool | MIT | Lọc trường tất định, không tốn chi phí model, hoạt động trước mọi tool |
 | MCP server có tham số phân trang/cắt lát | MIT (SDK) | Đặt ngân sách tại ranh giới MCP-server một lần → mọi agent hỗ trợ MCP đều hưởng lợi |
 
 ## Đánh đổi
 
-- Ngân sách quá chặt gây thêm các lượt qua lại lấy-thêm — mỗi lượt là một
+- Ngân sách quá chặt gây thêm các round-trip lấy-thêm — mỗi lượt là một
   request đầy đủ. Đặt ngân sách rộng rãi cho các tool mà model gần như
   luôn cần đầy đủ output.
 - Offload đòi hỏi một hệ thống file (hoặc kho artifact) trong vòng lặp và

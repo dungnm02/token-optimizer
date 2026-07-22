@@ -3,7 +3,7 @@
 **Giải quyết:** Nguyên nhân 3.1 và 2.1 trong [`../CAUSE.md`](../CAUSE.md) —
 bổ sung cho [`tool-output-budgets.md`](tool-output-budgets.md)
 
-**Ý tưởng:** Đặt một giai đoạn nén *giữa tool và ngữ cảnh* để loại bỏ nhiễu
+**Ý tưởng:** Đặt một giai đoạn nén *giữa tool và context* để loại bỏ nhiễu
 có thể đoán trước khỏi output lệnh, log, và dữ liệu có cấu trúc trước khi
 model nhìn thấy — giữ lại tín hiệu (lỗi, diff, thất bại test, giá trị cụ
 thể) và loại bỏ boilerplate.
@@ -24,7 +24,7 @@ bạn không sở hữu.
 ```mermaid
 flowchart LR
     A[Chạy Shell / MCP / tool] --> C["Giai đoạn nén<br/>(hook, proxy, hoặc MCP wrapper)"]
-    C -->|"giữ lại tín hiệu:<br/>lỗi, diff, thất bại"| M[Ngữ cảnh model]
+    C -->|"giữ lại tín hiệu:<br/>lỗi, diff, thất bại"| M[Context model]
     C -.->|"loại bỏ nhiễu:<br/>thanh tiến trình, cảnh báo<br/>lặp lại, boilerplate, khoảng trắng"| X[/bị loại bỏ/]
 ```
 
@@ -33,7 +33,7 @@ flowchart LR
 1. **Ưu tiên tất định, chỉ dùng model khi cần.** Hầu hết nhiễu tool có thể
    loại bỏ bằng quy tắc, với chi phí token bằng 0: loại bỏ mã ANSI, thanh
    tiến trình, cảnh báo lặp lại, spam giải quyết dependency, nhiễu
-   stack-frame; thu gọn khoảng trắng; giữ lại các dòng lỗi và ngữ cảnh của
+   stack-frame; thu gọn khoảng trắng; giữ lại các dòng lỗi và context của
    chúng. Dành việc tóm tắt bằng model cho khối lượng thực sự không có cấu
    trúc.
 2. **Bảo toàn tín hiệu một cách tường minh.** Quy tắc giữ cho việc nén an
@@ -65,7 +65,7 @@ flowchart LR
 
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
-| Claude Code | Hook `PreToolUse` / `PostToolUse` | Điểm chặn có sẵn — viết lại lệnh Bash hoặc lọc output trước khi vào ngữ cảnh |
+| Claude Code | Hook `PreToolUse` / `PostToolUse` | Điểm chặn có sẵn — viết lại lệnh Bash hoặc lọc output trước khi vào context |
 | Nền tảng Anthropic | Offload output lớn của MCP | Output tool >100K token tự động offload ra file kèm xem trước + đường dẫn (trường hợp nén cực đoan) |
 | Mọi harness | Bộ xử lý hậu kỳ tất định tại ranh giới tool | Loại bỏ ANSI/boilerplate chỉ vài dòng code và miễn phí |
 
@@ -75,7 +75,7 @@ flowchart LR
 | --- | --- | --- |
 | RTK (Rust Token Killer, `rtk-ai/rtk`) | Apache-2.0 | Proxy/hook CLI nén 100+ lệnh dev (git, trình chạy test, công cụ build, `kubectl`, `aws`) 60–90%; giữ nguyên thất bại/diff; tích hợp có sẵn với Claude Code / Cline / Codex / Gemini |
 | Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Thư viện / proxy / MCP / agent-wrap; JSON 60–95%, shell ~85%, build log ~94%; `CacheAligner` giữ prefix ổn định cho cache; ma trận hỗ trợ gồm Claude Code, Codex, Cline, Aider, Cursor |
-| Trafilatura / mozilla-readability | Apache-2.0 | HTML → văn bản sạch (nhỏ hơn 5–20×) trước khi vào ngữ cảnh của bất kỳ agent nào |
+| Trafilatura / mozilla-readability | Apache-2.0 | HTML → văn bản sạch (nhỏ hơn 5–20×) trước khi vào context của bất kỳ agent nào |
 | `jq` / định dạng lại có cấu trúc tại ranh giới | MIT | Chọn trường tất định và làm phẳng mảng→bảng, không tốn chi phí model |
 | Caveman (`wilpel/caveman-compression`) | MIT | Nén *output mà model viết ra* — người anh em của việc nén phía input (`concise-output-prompting.md`) |
 

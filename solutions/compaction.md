@@ -16,14 +16,14 @@ flowchart TD
     A[Lượt N đến] --> B{Token lịch sử<br/>> ngưỡng kích hoạt?}
     B -- không --> M[Gửi toàn bộ lịch sử cho model]
     B -- có --> S[Tóm tắt đoạn cũ hơn:<br/>mục tiêu, quyết định, việc còn dang dở,<br/>tham chiếu file/trạng thái]
-    S --> R["Xây lại ngữ cảnh:<br/>phần đầu cố định + khối tóm tắt<br/>+ đuôi gần đây (giữ nguyên văn)"]
+    S --> R["Xây lại context:<br/>phần đầu cố định + khối tóm tắt<br/>+ đuôi gần đây (giữ nguyên văn)"]
     R --> M
     M --> O[Phản hồi] --> A
 ```
 
 Các quyết định thiết kế then chốt:
 
-- **Ngưỡng kích hoạt**: thường 60–80% ngân sách ngữ cảnh thực tế (ví dụ
+- **Ngưỡng kích hoạt**: thường 60–80% ngân sách context thực tế (ví dụ
   150K trên cửa sổ 1M cho triển khai phía server, hoặc thấp hơn nhiều nếu
   bạn muốn giới hạn chi phí thay vì chỉ tránh tràn).
 - **Giữ đuôi**: K lượt gần nhất được giữ nguyên văn — model cần trạng thái
@@ -48,7 +48,7 @@ Các quyết định thiết kế then chốt:
      theo. Các harness được quản lý (Claude Code, Claude Agent SDK, các
      phiên Managed Agents) tự động nén mà không cần code phía client.
    - *OpenAI*: Responses API với `previous_response_id` + truncation
-     `auto` quản lý ngữ cảnh phía server; Agents SDK cung cấp bộ nhớ phiên
+     `auto` quản lý context phía server; Agents SDK cung cấp bộ nhớ phiên
      với các chiến lược tóm tắt.
 2. **Phía client, dùng bộ nhớ tóm tắt của framework của bạn** thay vì tự
    viết tay: LangGraph `SummarizationNode` / LangChain
@@ -69,7 +69,7 @@ Các quyết định thiết kế then chốt:
 
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
-| Anthropic API | Nén phía server (`compact-2026-01-12`) | Tự động tóm tắt gần ngưỡng; vòng lặp khối nén qua lại |
+| Anthropic API | Nén phía server (`compact-2026-01-12`) | Tự động tóm tắt gần ngưỡng; vòng lặp khối nén round-trip |
 | Claude Code / Claude Agent SDK | Auto-compact + lệnh `/compact` | Không cần cấu hình; việc nén được kích hoạt và áp dụng bên trong harness |
 | OpenAI API · Codex CLI | Responses API (`truncation: "auto"`, `previous_response_id`); Codex `/compact` | Trạng thái hội thoại quản lý bởi server; lệnh nén cấp harness |
 | Gemini CLI | Lệnh `/compress` + ngưỡng tự nén | Tóm tắt lịch sử cấp harness |

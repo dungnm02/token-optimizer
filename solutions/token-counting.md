@@ -30,7 +30,7 @@ Các quy tắc:
   sách, `max_tokens`, và ngưỡng kích hoạt nén được hiệu chỉnh trên model cũ
   sẽ sai trên model mới.
 - Đếm trước (pre-flight) các input lớn (`count_tokens` trước khi gửi) để
-  tránh các thất bại tràn ngữ cảnh thay vì phát hiện ra chúng tại thời
+  tránh các thất bại tràn context thay vì phát hiện ra chúng tại thời
   điểm request.
 
 ### 2. Ghi lại metadata sử dụng trên mỗi phản hồi
@@ -80,7 +80,7 @@ flowchart LR
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
 | API Anthropic / OpenAI / Gemini | Endpoint `count_tokens`, đối tượng `usage` mỗi phản hồi, dashboard billing | Sự thật nền tảng cho đếm trước và đối soát billing; `tiktoken` (MIT) là bộ đếm offline chính thức của OpenAI |
-| Claude Code | Lệnh `/cost`, `/context` + xuất chỉ số OTel | Khả năng thấy chi tiêu trong phiên và thành phần ngữ cảnh |
+| Claude Code | Lệnh `/cost`, `/context` + xuất chỉ số OTel | Khả năng thấy chi tiêu trong phiên và thành phần context |
 | Codex CLI / Gemini CLI | Lệnh `/status` · `/stats` | Sử dụng token mỗi phiên trong harness |
 
 ### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
@@ -108,7 +108,7 @@ flowchart LR
   nhất là một yếu tố vô hiệu hóa cache âm thầm hoặc một tool chạy loạn).
 - Biến mọi giải pháp khác trong thư mục này từ một lần sửa đơn lẻ thành một
   *bất biến được thực thi* — các hồi quy sẽ cảnh báo thay vì tích tụ.
-- Đếm trước loại bỏ hoàn toàn một lớp lỗi (tràn ngữ cảnh trên input lớn) mà
+- Đếm trước loại bỏ hoàn toàn một lớp lỗi (tràn context trên input lớn) mà
   nếu không sẽ lãng phí toàn bộ request phát hiện ra nó.
 
 ---

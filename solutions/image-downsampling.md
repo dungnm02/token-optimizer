@@ -79,7 +79,7 @@ Hai hệ quả:
   chỉnh trên UI thực tế của bạn.
 - Bước resize thêm vài ms mỗi ảnh và một phụ thuộc xử lý.
 - Các luồng dựa trên crop cần theo dõi vùng chính xác; một lần crop sai
-  buộc phải chụp lại (thêm một lượt qua lại).
+  buộc phải chụp lại (thêm một round-trip).
 
 ## Tác động dự kiến
 

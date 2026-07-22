@@ -2,10 +2,10 @@
 
 **Giải quyết:** Nguyên nhân 3.2 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Thay thế các chuỗi lượt qua lại tool được trung gian bởi model
+**Ý tưởng:** Thay thế các chuỗi round-trip tool được trung gian bởi model
 bằng một bước duy nhất trong đó model **viết code kết hợp các tool**; code
 chạy trong sandbox, kết quả trung gian chảy giữa các lệnh gọi tool bên
-trong runtime, và chỉ câu trả lời cô đọng cuối cùng quay lại ngữ cảnh của
+trong runtime, và chỉ câu trả lời cô đọng cuối cùng quay lại context của
 model.
 
 ---
@@ -17,13 +17,13 @@ sequenceDiagram
     participant M as Model
     participant T as Tool
     rect rgb(255, 235, 235)
-    Note over M,T: ❌ Kiểu qua lại — 3 lượt xử lý ngữ cảnh đầy đủ
+    Note over M,T: ❌ Round-trip — 3 lượt xử lý context đầy đủ
     M->>T: get_profile(user)
-    T-->>M: profile 4K token → vào ngữ cảnh
+    T-->>M: profile 4K token → vào context
     M->>T: get_orders(profile.id)
-    T-->>M: danh sách đơn hàng 12K token → vào ngữ cảnh
+    T-->>M: danh sách đơn hàng 12K token → vào context
     M->>T: check_inventory(order_ids)
-    T-->>M: kết quả 6K token → vào ngữ cảnh
+    T-->>M: kết quả 6K token → vào context
     end
     rect rgb(235, 255, 235)
     Note over M,T: ✅ Kết hợp — 1 lượt, dữ liệu trung gian không bao giờ bị tính phí
@@ -32,9 +32,9 @@ sequenceDiagram
     end
 ```
 
-Mỗi lượt qua lại gửi lại toàn bộ lịch sử (đang lớn dần); kết hợp chỉ gửi
+Mỗi round-trip gửi lại toàn bộ lịch sử (đang lớn dần); kết hợp chỉ gửi
 một lần. Payload trung gian (thường là phần lớn dữ liệu) không bao giờ vào
-ngữ cảnh — chúng sinh ra và mất đi bên trong sandbox.
+context — chúng sinh ra và mất đi bên trong sandbox.
 
 ## Cách áp dụng
 
@@ -42,14 +42,14 @@ ngữ cảnh — chúng sinh ra và mất đi bên trong sandbox.
    PTC*: khai báo tool thực thi code và đánh dấu các tool tùy chỉnh của bạn
    với `allowed_callers: ["code_execution_20260120"]`; Claude viết một
    script gọi các tool của bạn như các hàm bên trong sandbox, và chỉ stdout
-   của script quay lại ngữ cảnh. *OpenAI*: code interpreter + kết hợp
+   của script quay lại context. *OpenAI*: code interpreter + kết hợp
    function-calling trên Responses API.
 2. **Framework agent code-as-action** — **smolagents** của Hugging Face
    (`CodeAgent`) biến code thành định dạng hành động *mặc định*: thay vì
    phát một lệnh gọi tool JSON mỗi bước, model phát ra một đoạn Python có
    thể lặp, rẽ nhánh, và gọi nhiều tool. Dòng nghiên cứu CodeAct đứng sau
    điều này báo cáo giảm tới ~30% số bước so với agent gọi-tool-JSON trên
-   các benchmark nhiều tool — ít bước hơn = ít lượt xử lý ngữ cảnh đầy đủ
+   các benchmark nhiều tool — ít bước hơn = ít lượt xử lý context đầy đủ
    hơn.
 3. **Kết hợp trước một cách tất định** — nếu chuỗi *luôn luôn* giống nhau
    (profile → đơn hàng → tồn kho), đó hoàn toàn không phải là một quyết
@@ -59,7 +59,7 @@ ngữ cảnh — chúng sinh ra và mất đi bên trong sandbox.
 4. **Gộp các lệnh gọi độc lập trong một lượt** — khi không có kết hợp, ít
    nhất hãy tận dụng việc dùng tool song song: N lệnh gọi độc lập trong
    một lượt assistant + toàn bộ kết quả trong một lượt user là một lượt xử
-   lý ngữ cảnh thay vì N.
+   lý context thay vì N.
 5. **Lọc bên trong sandbox** — script kết hợp nên kết thúc bằng một bước
    `summarize`/`select` để giá trị trả về là câu trả lời, không phải dữ
    liệu thô (kết hợp với `tool-output-budgets.md`).
@@ -70,9 +70,9 @@ ngữ cảnh — chúng sinh ra và mất đi bên trong sandbox.
 
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
-| Anthropic API | Gọi tool theo chương trình (`code_execution` + `allowed_callers`) | Dữ liệu trung gian quay lại code đang chạy, không vào ngữ cảnh; chi phí token tỷ lệ với output cuối cùng |
+| Anthropic API | Gọi tool theo chương trình (`code_execution` + `allowed_callers`) | Dữ liệu trung gian quay lại code đang chạy, không vào context; chi phí token tỷ lệ với output cuối cùng |
 | OpenAI API · Codex | Code interpreter + gọi hàm trên Responses API | Kết hợp phía sandbox |
-| Claude Code / Codex CLI / Gemini CLI | Kết hợp có sẵn qua shell (pipeline `Bash`, script) | Các coding agent đã kết hợp qua shell — pipe/lọc trong bash thay vì qua lại với output thô |
+| Claude Code / Codex CLI / Gemini CLI | Kết hợp có sẵn qua shell (pipeline `Bash`, script) | Các coding agent đã kết hợp qua shell — pipe/lọc trong bash thay vì round-trip với output thô |
 
 ### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
 
@@ -98,11 +98,11 @@ ngữ cảnh — chúng sinh ra và mất đi bên trong sandbox.
 
 ## Tác động dự kiến
 
-- Chi phí token của một chuỗi K bước giảm từ **K lượt xử lý ngữ cảnh đầy đủ
-  xuống ~1**; với ngữ cảnh 100K token và K=5, đó là ~500K token input →
+- Chi phí token của một chuỗi K bước giảm từ **K lượt xử lý context đầy đủ
+  xuống ~1**; với context 100K token và K=5, đó là ~500K token input →
   ~100K.
 - Kết quả trung gian (thường lớn gấp 10–100× câu trả lời cuối cùng) được
-  loại bỏ khỏi ngữ cảnh *vĩnh viễn* — cộng dồn với việc lịch sử tồn tại
+  loại bỏ khỏi context *vĩnh viễn* — cộng dồn với việc lịch sử tồn tại
   lâu.
 - Giảm số bước (~30% trong các đánh giá kiểu CodeAct) cũng cắt giảm độ trễ
   và bề mặt lỗi, không chỉ token.

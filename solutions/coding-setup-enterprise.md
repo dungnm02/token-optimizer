@@ -22,7 +22,7 @@ model/effort, và các kết nối batch + đo lường.
 | Giảm giá input đã cache | ~90% (đọc ~0.1×) | 50–90% tùy dòng model (GPT-5.x: ~90%) | ~75% trên token đã cache |
 | Nút điều chỉnh reasoning | `output_config.effort` (low→max) + adaptive thinking | `reasoning_effort` (minimal→high) + `verbosity` | `thinking_level` / `thinking_budget` |
 | Tier batch | Message Batches −50% | Batch API −50% (+ tier Flex trên một số model) | Batch Vertex/Gemini −50% |
-| Hàng đầu/mid/nhỏ cho bản đồ model | Opus 4.8 / Sonnet 5 / Haiku 4.5 | GPT-5.x-Codex / GPT-5.x / GPT-5-mini·nano | Gemini 3 Pro / Gemini 2.5 Flash / Flash-Lite |
+| Frontier/mid/nhỏ cho bản đồ model | Opus 4.8 / Sonnet 5 / Haiku 4.5 | GPT-5.x-Codex / GPT-5.x / GPT-5-mini·nano | Gemini 3 Pro / Gemini 2.5 Flash / Flash-Lite |
 
 ---
 
@@ -57,7 +57,7 @@ Files API (cả hai đều liên quan trực tiếp đến hóa đơn token).
   trên backend 1P, Bedrock, hoặc Vertex. Nó có sẵn toàn bộ stack Tier-0:
   phần đầu prompt ổn định đã cache, tự động nén, tool có ngân sách (`Read`
   offset/limit, `Grep` head_limit, bash nền với file log), `Edit` xác minh
-  mỏ neo, tải tool MCP trì hoãn.
+  anchor, tải tool MCP trì hoãn.
 - **Hệ thống agent tùy chỉnh:** **Claude Agent SDK** (cùng harness nhưng
   dưới dạng thư viện) thay vì một vòng lặp Messages-API trần; bạn kế thừa
   nén, subagent, hook, và phân quyền thay vì tự xây lại chúng.
@@ -85,9 +85,9 @@ Files API (cả hai đều liên quan trực tiếp đến hóa đơn token).
 3. **Batch:** định tuyến bộ đánh giá, quét refactor hàng đêm, và phân
    loại hàng loạt qua Message Batches (−50%, cộng dồn với đọc cache) — chỉ
    trên 1P và Claude Platform trên AWS.
-4. **Vệ sinh phiên dài:** nén phía server / chỉnh sửa ngữ cảnh
-   (`clear_tool_uses`) đi kèm với harness; xác minh vòng lặp khối nén qua
-   lại nếu bạn điều khiển API trực tiếp.
+4. **Vệ sinh phiên dài:** nén phía server / chỉnh sửa context
+   (`clear_tool_uses`) đi kèm với harness; xác minh round-trip của khối nén
+   (compaction block) nếu bạn điều khiển API trực tiếp.
 5. **Đo lường:** `usage` mang đủ bốn đại lượng bao gồm
    `cache_creation_input_tokens` — kết nối vào Langfuse/OTel với thẻ
    `agent_role`; cảnh báo khi tỷ trọng cache-hit sụt theo từng vai trò.
@@ -150,7 +150,7 @@ Files API (cả hai đều liên quan trực tiếp đến hóa đơn token).
    `usage.completion_tokens_details.reasoning_tokens` — cảnh báo khi tỷ
    trọng reasoning leo thang theo từng route; đó là mục tương đương phía
    GPT của dòng token thinking.
-5. **Quản lý ngữ cảnh là việc của bạn (hoặc của SDK):** các vòng lặp kiểu
+5. **Quản lý context là việc của bạn (hoặc của SDK):** các vòng lặp kiểu
    chat-completions không có nén phía server — dùng cắt tỉa/tóm tắt phiên
    của Agents SDK, hoặc `truncation: "auto"` của Responses API, và áp dụng
    các heuristic của `context-editing.md` trong các harness tùy chỉnh.
@@ -186,14 +186,14 @@ Files API (cả hai đều liên quan trực tiếp đến hóa đơn token).
    - *Caching ngầm định*: tự động trên các model 2.5+/3, giảm giá ~75%
      trên token đã cache, cùng kỷ luật ổn định prefix như mọi nơi khác
      (theo dõi `cached_content_token_count`).
-   - *`CachedContent` tường minh*: gắn một kho ngữ liệu lớn (tài liệu
+   - *`CachedContent` tường minh*: gắn một corpus lớn (tài liệu
      monorepo, tóm tắt bề mặt API, hướng dẫn phong cách) một lần với TTL
      đã chọn. **Nó tính phí lưu trữ theo token-giờ** — đặt TTL theo cửa sổ
      sử dụng và xóa khi rảnh, nếu không bản thân cache trở thành một
      dòng chi phí. Đây là cơ chế tốt nhất trong ba nhà cung cấp cho "nhiều
-     agent chia sẻ một kho ngữ liệu khổng lồ", và là cơ chế duy nhất bạn
+     agent chia sẻ một corpus khổng lồ", và là cơ chế duy nhất bạn
      có thể *quên tắt đi*.
-2. **Chú ý các bậc giá ngữ cảnh dài.** Các cửa sổ khổng lồ của Gemini
+2. **Chú ý các bậc giá context dài.** Các cửa sổ khổng lồ của Gemini
    (1–2M) mang **giá mỗi token cao hơn trên một ngưỡng** (ví dụ >200K
    input trên các tier Pro). "Cứ nhồi cả monorepo vào" sẽ vượt qua vào
    bậc giá cao cấp — truy xuất/cắt lát (`retrieval-tuning.md`,
@@ -210,7 +210,7 @@ Files API (cả hai đều liên quan trực tiếp đến hóa đơn token).
    cách cảnh báo theo route như hai nhà cung cấp kia.
 4. **Batch:** batch prediction của Vertex ở mức −50% cho đánh giá/backfill/
    biến đổi hàng loạt; kết hợp với caching tường minh cho hỏi-đáp hàng loạt
-   trên kho ngữ liệu chung.
+   trên shared corpus.
 5. **Đo lường:** `usageMetadata` (số token prompt/candidate/cached/thoughts)
    vào cùng pipeline Langfuse/OTel — giữ một schema dashboard duy nhất qua
    cả ba nhà cung cấp (mô hình bốn đại lượng từ
@@ -252,10 +252,10 @@ theo nhà cung cấp là:
   âm thầm mất các công cụ batch/caching.
 - **GPT:** caching ít công sức nhất (tự động, không phụ phí ghi) và các
   nút điều chỉnh `verbosity`/`reasoning_effort` có sẵn — nhanh nhất để đạt
-  trạng thái "tốt"; quản lý ngữ cảnh là phần bạn phải tự lo.
+  trạng thái "tốt"; quản lý context là phần bạn phải tự lo.
 - **Gemini:** kinh tế kho-ngữ-liệu-chung mạnh nhất (cache tường minh) và
-  tier chân tay rẻ nhất — phù hợp nhất cho các hệ thống nặng về ngữ liệu;
-  chủ động quản lý lưu trữ cache và các bậc giá ngữ cảnh dài nếu không mức
+  tier chân tay rẻ nhất — phù hợp nhất cho các hệ thống nặng về corpus;
+  chủ động quản lý lưu trữ cache và các bậc giá context dài nếu không mức
   tiết kiệm sẽ đảo ngược.
 
 ---

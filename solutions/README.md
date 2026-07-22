@@ -57,7 +57,7 @@ caching, bản đồ model/effort, và hướng dẫn cho đội hình đa nhà 
 Đối với harness chúng ta dùng hàng ngày, xem
 [`coding-setup-cline.md`](coding-setup-cline.md) — cùng cách phân tầng áp
 dụng cho **Cline** (tiện ích mở rộng VS Code): lựa chọn nhà cung cấp/caching,
-tách model Plan/Act, kỷ luật ngữ cảnh `/smol`–`/newtask`, cắt gọt chi phí
+tách model Plan/Act, kỷ luật context `/smol`–`/newtask`, cắt gọt chi phí
 `.clinerules`/`.clineignore`/MCP, và đo lường toàn đội qua một gateway.
 
 ## Mục lục
@@ -76,12 +76,12 @@ mermaid minh họa cơ chế.
 | [`prompt-caching.md`](prompt-caching.md) | 1.1–1.4, 6.1 | Giảm tới ~90% giá input đã cache; giảm 5–10× input hiệu dụng trong các phiên dài |
 | [`stable-prompt-architecture.md`](stable-prompt-architecture.md) | 1.3 | Khiến việc làm mới cache giữa phiên trở nên bất khả thi về mặt cấu trúc; duy trì tỷ lệ cache-hit 80–95% |
 
-### Danh mục 2 — Tích lũy ngữ cảnh
+### Danh mục 2 — Tích lũy context
 
 | Tài liệu | Giải quyết | Tác động nổi bật |
 | --- | --- | --- |
 | [`compaction.md`](compaction.md) | 2.1 | Chi phí phiên từ bậc hai → tuyến tính; giảm 3–10× trên các phiên chạy dài |
-| [`context-editing.md`](context-editing.md) | 2.1, 2.2 | Thu nhỏ ngữ cảnh ổn định 2–5× mà không mất mát do tóm tắt |
+| [`context-editing.md`](context-editing.md) | 2.1, 2.2 | Thu nhỏ context ổn định 2–5× mà không mất mát do tóm tắt |
 | [`context-hygiene.md`](context-hygiene.md) | 2.3 | Loại bỏ 20–40% lịch sử thường bị lãng phí vào trùng lặp |
 
 ### Danh mục 3 — Cách dùng tool
@@ -90,8 +90,8 @@ mermaid minh họa cơ chế.
 | --- | --- | --- |
 | [`tool-output-budgets.md`](tool-output-budgets.md) | 3.1 | Giảm 2–5× input mỗi phiên trong khối lượng công việc nặng về tool |
 | [`tool-output-compression.md`](tool-output-compression.md) | 3.1, 2.1 | Giảm 60–90% output CLI/log/JSON nhiễu, không cần thiết kế lại tool |
-| [`tool-composition.md`](tool-composition.md) | 3.2 | K lượt qua lại → ~1 lượt xử lý ngữ cảnh; dữ liệu trung gian không bao giờ bị tính phí |
-| [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Chi phí chờ đợi O(số lần poll × ngữ cảnh) → ~0 |
+| [`tool-composition.md`](tool-composition.md) | 3.2 | K round-trip → ~1 lượt xử lý context; dữ liệu trung gian không bao giờ bị tính phí |
+| [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Chi phí chờ đợi O(số lần poll × context) → ~0 |
 | [`tool-search.md`](tool-search.md) | 3.4 | Giảm 10–50× chi phí schema tool mỗi request; Code Mode giảm ~99.9% trên các API lớn |
 
 ### Danh mục 4 — Loại nội dung đắt đỏ
@@ -101,7 +101,7 @@ mermaid minh họa cơ chế.
 | [`image-downsampling.md`](image-downsampling.md) | 4.1 | Giảm 3–5× input thị giác; 50–80% trên các vòng lặp screenshot |
 | [`document-reuse.md`](document-reuse.md) | 4.2 | doc×số câu hỏi → doc×1 + các lần đọc cache rẻ |
 | [`retrieval-tuning.md`](retrieval-tuning.md) | 4.2 | Giảm ~5× tỷ trọng truy xuất nhờ rerank với k nhỏ; chất lượng cũng cải thiện |
-| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Xóa bỏ chi phí 67–76% dành cho việc tìm file; tiết kiệm 25–60K token khởi động lạnh |
+| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Xóa bỏ chi phí 67–76% dành cho việc tìm file; tiết kiệm 25–60K token cold-start |
 | [`token-counting.md`](token-counting.md) | 4.3 (+ tất cả) | Lớp đo lường — biến mọi giải pháp khác thành một bất biến được thực thi |
 
 ### Danh mục 5 — Chi tiêu phía sinh (generation)

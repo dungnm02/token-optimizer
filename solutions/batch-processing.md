@@ -33,7 +33,7 @@ về theo thứ tự tùy ý.
    API trong một vòng for đang trả giá 2× cho độ trễ tương tác mà không ai
    quan sát. Thu thập các mục, gửi một lô, poll/webhook để chờ hoàn tất,
    phân phối kết quả trở lại theo `custom_id`.
-3. **Chồng các mức giảm giá.** Chia sẻ một prefix đã cache (ngữ liệu, bộ
+3. **Chồng các mức giảm giá.** Chia sẻ một prefix đã cache (corpus, bộ
    few-shot, system prompt) trên mọi request trong lô — giá cache-read
    *và* mức giảm giá batch 50% kết hợp (trên Anthropic, token cache-read
    trong một lô chỉ ~5% giá input cơ bản).

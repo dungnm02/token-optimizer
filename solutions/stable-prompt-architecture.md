@@ -76,7 +76,7 @@ Thêm một kiểm thử CI: render hai request cho cùng trạng thái phiên v
 
 - Chi phí kỷ luật: mỗi lần "chỉ chỉnh nhẹ system prompt" trở thành một thay
   đổi có phiên bản với việc triển khai tại ranh giới phiên.
-- Ngữ cảnh được chèn muộn mang thẩm quyền hơi thấp hơn system prompt trên
+- Context được chèn muộn mang thẩm quyền hơi thấp hơn system prompt trên
   một số model — dùng kênh vai trò system của nhà cung cấp khi có sẵn.
 - Serialize tất định có thể xung đột với các framework xây lại schema tool
   một cách động (một số MCP client); hãy pin và sắp xếp tại ranh giới.

@@ -3,7 +3,7 @@
 **Giải quyết:** Nguyên nhân 3.4 trong [`../CAUSE.md`](../CAUSE.md)
 
 **Ý tưởng:** Chỉ gửi một tool tìm kiếm/khám phá nhỏ xíu trong mỗi request;
-toàn bộ danh mục schema tool nằm ngoài ngữ cảnh, và model chỉ tải những
+toàn bộ danh mục schema tool nằm ngoài context, và model chỉ tải những
 schema nó thực sự cần, theo yêu cầu — với các schema được khám phá **nối
 thêm** để cache prompt còn nguyên vẹn.
 
@@ -12,7 +12,7 @@ thêm** để cache prompt còn nguyên vẹn.
 ## Tại sao điều này đang cấp bách (số liệu về sự phình to của MCP)
 
 Vấn đề này tăng theo quy mô áp dụng MCP. Một stack điển hình gồm **bảy MCP
-server tiêu tốn ~67.300 token định nghĩa tool — ~34% của cửa sổ ngữ cảnh
+server tiêu tốn ~67.300 token định nghĩa tool — ~34% của context window
 200K — trước khi người dùng gõ bất cứ điều gì**; các stack doanh nghiệp
 5–10 server thường xuyên đốt 100–200K token chi phí schema thuần túy. Đây
 không chỉ là vấn đề chi phí: khi menu tool phình to, **độ chính xác chọn
@@ -80,7 +80,7 @@ flowchart LR
 
 ## Đánh đổi
 
-- Thêm một lượt qua lại khám phá khi cần một tool chưa tải (một lần tìm
+- Thêm một round-trip khám phá khi cần một tool chưa tải (một lần tìm
   kiếm + một schema được nối thêm). Với các danh mục dưới ~10 tool, việc
   trì hoãn tiết kiệm quá ít để đáng làm.
 - Chất lượng tìm kiếm rất quan trọng: tên/mô tả tool tệ → khám phá thất

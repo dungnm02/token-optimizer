@@ -44,7 +44,7 @@ nối thêm mới bị tính giá đầy đủ.
 
 1. **Phân loại mọi input vào prompt theo độ ổn định**
    - Không bao giờ đổi → đầu (tool, system prompt cốt lõi)
-   - Theo phiên → giữa (hồ sơ người dùng, tài liệu đã tải)
+   - Theo phiên → giữa (profile người dùng, tài liệu đã tải)
    - Theo lượt → cuối (tin nhắn mới nhất, trạng thái được chèn vào)
    - Theo request (timestamp, UUID) → **loại bỏ, hoặc chuyển xuống cuối
      cùng**
@@ -57,8 +57,7 @@ nối thêm mới bị tính giá đầy đủ.
      không. `prompt_cache_key` cải thiện định tuyến hit cho các prefix lưu
      lượng cao.
    - *Google Gemini*: caching ngầm định (tự động) cộng với đối tượng
-     `CachedContent` tường minh với TTL có thể kiểm soát cho các kho ngữ
-     liệu chung lớn.
+     `CachedContent` tường minh với TTL có thể kiểm soát cho các shared corpus lớn.
    - *Tự host*: vLLM **Automatic Prefix Caching (APC)**, SGLang
      **RadixAttention** — cùng các quy tắc ổn định prefix áp dụng cho tái sử
      dụng KV-cache.
@@ -66,7 +65,7 @@ nối thêm mới bị tính giá đầy đủ.
    - Không dùng `datetime.now()` / `Date.now()` trong system prompt.
    - Serialize tất định: `json.dumps(..., sort_keys=True)`, danh sách tool
      đã sắp xếp, không lặp qua set/map.
-   - Chèn ngữ cảnh động (ngày tháng, chế độ, trạng thái người dùng) *muộn*
+   - Chèn context động (ngày tháng, chế độ, trạng thái người dùng) *muộn*
      — như một tin nhắn, không phải sửa system prompt. Các tin nhắn
      `role: "system"` giữa hội thoại của Anthropic tồn tại chính xác cho
      mục đích này.
@@ -108,7 +107,7 @@ sánh (diff) các byte request đã render đầy đủ của hai lệnh gọi l
 | --- | --- | --- |
 | Anthropic API · Claude Code / Agent SDK | Breakpoint `cache_control`, TTL 5 phút/1 giờ, pre-warm `max_tokens: 0`, beta chẩn đoán cache | Các harness tự động đặt breakpoint — không cần cấu hình gì khi bạn chạy bên trong chúng |
 | OpenAI API · Codex | Caching prefix tự động (≥1.024 token), định tuyến `prompt_cache_key` | Giảm giá 50–75% trên token đã cache; không cần bật, nhưng các quy tắc ổn định prefix vẫn quyết định việc có trúng hay không |
-| Google Gemini API · Gemini CLI | Caching ngầm định + `CachedContent` tường minh có TTL | Chế độ tường minh phù hợp cho các kho ngữ liệu chung khổng lồ |
+| Google Gemini API · Gemini CLI | Caching ngầm định + `CachedContent` tường minh có TTL | Chế độ tường minh phù hợp cho các shared corpus khổng lồ |
 
 ### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
 

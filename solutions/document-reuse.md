@@ -20,7 +20,7 @@ flowchart TD
     D -- có --> E["Gắn dưới một prefix đã cache<br/>(prompt caching / context cache<br/>tường minh) + tham chiếu bằng file ID"]
     D -- không, từng phần --> F["RAG: index một lần,<br/>truy xuất các chunk liên quan<br/>(xem retrieval-tuning.md)"]
     E --> G{Hỏi-đáp qua nhiều phiên/người dùng?}
-    G -- có --> H[Gộp các câu hỏi lại trên<br/>cùng một ngữ cảnh đã cache —<br/>xem batch-processing.md]
+    G -- có --> H[Gộp các câu hỏi lại trên<br/>cùng một context đã cache —<br/>xem batch-processing.md]
 ```
 
 ## Cách áp dụng
@@ -38,17 +38,16 @@ flowchart TD
    request trừ khi được cache. Đặt tài liệu trong prefix ổn định với một
    breakpoint cache sau nó (`prompt-caching.md`); trên Gemini,
    `CachedContent` tường minh được thiết kế chính xác cho việc này ("cache
-   ngữ liệu, thay đổi câu hỏi") và giảm giá token đã cache ~4×.
+   corpus, thay đổi câu hỏi") và giảm giá token đã cache ~4×.
 3. **Sắp xếp các luồng hỏi-đáp để chia sẻ prefix.** `[tài liệu][câu hỏi]`
    cache tài liệu qua các câu hỏi; `[câu hỏi][tài liệu]` không cache gì
-   cả. Luôn đặt ngữ liệu chung trước truy vấn thay đổi.
+   cả. Luôn đặt shared corpus trước truy vấn thay đổi.
 4. **Trích xuất một lần, tái sử dụng bản trích xuất.** Với các PDF chỉ có
    văn bản là quan trọng, chạy trích xuất (lớp văn bản/OCR) một lần trong
    harness và nạp văn bản sạch — một trang PDF quét dưới dạng ảnh tốn kém
    gấp nhiều lần nội dung văn bản của nó, mỗi request.
-5. **Chia các kho ngữ liệu rất lớn thành RAG** thay vì nhồi nhét vào ngữ
-   cảnh: trên vài trăm nghìn token, truy xuất thắng "đính kèm mọi thứ" cả
-   về chi phí lẫn chất lượng câu trả lời (recall ngữ cảnh dài suy giảm; xem
+5. **Chia các corpus rất lớn thành RAG** thay vì nhồi nhét vào context: trên vài trăm nghìn token, truy xuất thắng "đính kèm mọi thứ" cả
+   về chi phí lẫn chất lượng câu trả lời (recall context dài suy giảm; xem
    `retrieval-tuning.md`).
 
 ## Công cụ hiện đại nhất (SOTA)
@@ -58,7 +57,7 @@ flowchart TD
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
 | Anthropic API | Files API + `cache_control` trên khối tài liệu | Tải một lần + xử lý được cache |
-| Google Gemini API | Caching ngữ cảnh tường minh (`CachedContent`) | Được thiết kế riêng cho hỏi-đáp kho ngữ liệu chung; kiểm soát bằng TTL |
+| Google Gemini API | Caching context tường minh (`CachedContent`) | Được thiết kế riêng cho hỏi-đáp shared corpus; kiểm soát bằng TTL |
 | OpenAI API | Vector store + file search | Chunk/index/truy xuất được quản lý cho các mẫu hình truy cập từng phần |
 
 ### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
@@ -71,7 +70,7 @@ flowchart TD
 ## Đánh đổi
 
 - Cache tường minh và kho file có TTL/hạn ngạch lưu trữ cần quản lý; một
-  kho ngữ liệu cache đã hết hạn sẽ âm thầm quay về giá đầy đủ (theo dõi
+  corpus cache đã hết hạn sẽ âm thầm quay về giá đầy đủ (theo dõi
   metadata sử dụng).
 - RAG đưa vào rủi ro chất lượng truy xuất — một chunk bị bỏ sót là một câu
   trả lời sai; toàn bộ tài liệu + cache an toàn hơn khi tài liệu vừa vặn
@@ -87,7 +86,7 @@ flowchart TD
   token input → ~600K** hiệu dụng.
 - Trích xuất một lần (văn bản thay vì ảnh trang) thường cắt giảm chi phí
   tài liệu mỗi request **3–10×** cho các PDF quét/nhiều đồ họa.
-- Chuyển các kho ngữ liệu >500K token từ nhồi ngữ cảnh sang RAG đã tinh
+- Chuyển các corpus >500K token từ nhồi context sang RAG đã tinh
   chỉnh thường giảm input mỗi truy vấn **10–100×** trong khi cải thiện độ
   chính xác câu trả lời.
 

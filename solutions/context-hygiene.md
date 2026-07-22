@@ -1,4 +1,4 @@
-# Vệ sinh Ngữ cảnh (Loại bỏ chèn trùng lặp) (Tiếng Việt)
+# Vệ sinh Context (Loại bỏ chèn trùng lặp) (Tiếng Việt)
 
 **Giải quyết:** Nguyên nhân 2.3 trong [`../CAUSE.md`](../CAUSE.md)
 
@@ -10,17 +10,17 @@ liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**
 
 ## Cách áp dụng
 
-1. **Theo dõi những gì đã có trong ngữ cảnh.** Harness giữ một registry
+1. **Theo dõi những gì đã có trong context.** Harness giữ một registry
    các artifact đã chèn (đường dẫn/URL/doc-ID → hash nội dung + lượt đã
    chèn). Trước khi chèn, kiểm tra registry:
    - Cùng hash đã có sẵn → chèn một tham chiếu thay thế: *"`schema.sql` đã
-     có trong ngữ cảnh (lượt 4, không đổi)."*
+     có trong context (lượt 4, không đổi)."*
    - Có mặt nhưng đã thay đổi trên đĩa → chèn một **diff** so với phiên
-     bản trong ngữ cảnh, không phải toàn bộ file.
+     bản trong context, không phải toàn bộ file.
 2. **Sửa các pipeline truy xuất tự động gắn lại mỗi lượt.** RAG ngây thơ
    dán top-k chunk vào *mọi* tin nhắn người dùng; trong một phiên về một
    chủ đề, đó là cùng các chunk bị tính phí lại mỗi lượt. Truy xuất một lần
-   cho mỗi lần đổi chủ đề, giữ kết quả như một khối ngữ cảnh ổn định (có
+   cho mỗi lần đổi chủ đề, giữ kết quả như một khối context ổn định (có
    thể cache), và chỉ chạy lại truy xuất khi truy vấn trôi dạt (dùng ngưỡng
    khoảng cách embedding).
 3. **Tham chiếu bằng định danh khi nhà cung cấp hỗ trợ.** Tải lên một lần
@@ -42,7 +42,7 @@ liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**
 
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
-| Claude Code / Claude Agent SDK | Theo dõi trạng thái file | Theo dõi trạng thái đọc/sửa; hạn chế việc đọc lại dư thừa ("trạng thái file hiện đang cập nhật trong ngữ cảnh của bạn") |
+| Claude Code / Claude Agent SDK | Theo dõi trạng thái file | Theo dõi trạng thái đọc/sửa; hạn chế việc đọc lại dư thừa ("trạng thái file hiện đang cập nhật trong context của bạn") |
 | Anthropic Files API / OpenAI Files / Gemini File API | Tải lên một lần, tham chiếu bằng ID | Loại bỏ việc truyền lại byte; kết hợp với caching để giảm chi phí xử lý |
 
 ### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
@@ -55,7 +55,7 @@ liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**
 ## Đánh đổi
 
 - Registry phải được vô hiệu hóa đúng cách khi artifact gốc thay đổi — một
-  tham chiếu "đã có trong ngữ cảnh" đã cũ là một lỗi về tính đúng đắn,
+  tham chiếu "đã có trong context" đã cũ là một lỗi về tính đúng đắn,
   không chỉ là lỗi về token. Hash các byte hiện tại, đừng tin tưởng
   timestamp.
 - Chèn dạng diff giả định rằng model có thể áp dụng diff trong đầu; với các

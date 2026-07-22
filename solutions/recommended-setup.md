@@ -1,11 +1,11 @@
 # Thiết lập Đề xuất: Codebase Lớn, Nhiều Agent (Tiếng Việt)
 
-Một khuyến nghị ưu tiên chắt lọc từ toàn bộ danh mục, cho một hồ sơ cụ thể
+Một khuyến nghị ưu tiên chắt lọc từ toàn bộ danh mục, cho một profile cụ thể
 (và phổ biến): **một codebase lớn được làm việc bởi nhiều coding/dev
-agent** — orchestrator sinh subagent, các phiên dài, dùng tool nặng, MCP
+agent** — orchestrator spawn subagent, các phiên dài, dùng tool nặng, MCP
 server, tương tác CI.
 
-Bộ lọc được áp dụng: *chi phí thiết lập so với lợi ích cho hồ sơ này*.
+Bộ lọc được áp dụng: *chi phí thiết lập so với lợi ích cho profile này*.
 Nhiều mục trong danh mục là tùy tình huống (tinh chỉnh RAG, ngân sách thị
 giác, router động) — trang này nói rõ cái gì là **cần thiết**, cái gì
 **miễn phí nếu bạn chọn đúng harness**, và cái gì nên **bỏ qua một cách rõ
@@ -15,7 +15,7 @@ ràng cho đến khi đo lường chứng minh nhu cầu**.
 
 ## Nhận định cốt lõi
 
-Với hồ sơ này, phần lớn cỗ máy cần thiết không nên được xây dựng — nó nên
+Với profile này, phần lớn cỗ máy cần thiết không nên được xây dựng — nó nên
 được **kế thừa từ một harness agent trưởng thành**. Một harness hiện đại
 (Claude Code / Claude Agent SDK, hoặc một cái tương đương có cùng đặc
 điểm) đã có sẵn caching prompt, tự động nén, tool có ngân sách, chỉnh sửa
@@ -30,9 +30,9 @@ model/effort tĩnh.**
 flowchart TD
     subgraph T0["Tier 0 — kế thừa từ harness (không xây gì cả)"]
         H1[Caching prompt trên system/tool/lịch sử]
-        H2[Tự động nén + chỉnh sửa ngữ cảnh]
+        H2[Tự động nén + chỉnh sửa context]
         H3["Tool có ngân sách, cắt lát được<br/>(read offset/limit, grep head_limit, offload log)"]
-        H4["Tool chỉnh sửa dựa trên diff (xác minh mỏ neo)"]
+        H4["Tool chỉnh sửa dựa trên diff (xác minh anchor)"]
         H5[Tải tool MCP trì hoãn / tool search]
     end
     subgraph T1["Tier 1 — công việc tùy chỉnh cần thiết (~tổng vài ngày)"]
@@ -44,7 +44,7 @@ flowchart TD
     subgraph T2["Tier 2 — có điều kiện (áp dụng khi có yếu tố kích hoạt)"]
         D1[Tier batch cho đánh giá/backfill]
         D2[Chờ đợi hướng sự kiện cho CI/PR]
-        D3[Lượt gỡ khung sườn khi di chuyển model]
+        D3[Lượt gỡ scaffolding khi di chuyển model]
     end
     T0 --> T1 --> T2
 ```
@@ -57,12 +57,12 @@ flowchart TD
 chọn harness. Dù bạn chạy gì (Claude Code / Agent SDK, OpenHands, Aider,
 một vòng lặp LangGraph tùy chỉnh), hãy xác minh nó cung cấp:
 
-| Năng lực | Tài liệu trong danh mục | Tại sao nó không thể thương lượng cho hồ sơ này |
+| Năng lực | Tài liệu trong danh mục | Tại sao nó không thể thương lượng cho profile này |
 | --- | --- | --- |
 | Caching prompt qua các lượt (phần đầu ổn định, lịch sử chỉ-nối-thêm) | `prompt-caching.md` | Các phiên agent dài có 80–95% là lịch sử gửi lại; không có lịch sử thường trú trong cache, hóa đơn cao hơn 5–10× — không có gì khác bạn làm quan trọng bằng điều này |
-| Tự động nén + cắt tỉa kết quả tool cũ | `compaction.md`, `context-editing.md` | Các phiên nhiều lượt trên một repo lớn liên tục chạm giới hạn ngữ cảnh; nếu không thì chi phí bậc hai |
+| Tự động nén + cắt tỉa kết quả tool cũ | `compaction.md`, `context-editing.md` | Các phiên nhiều lượt trên một repo lớn liên tục chạm giới hạn context; nếu không thì chi phí bậc hai |
 | Tool có ngân sách: `read(offset,limit)`, tìm kiếm có giới hạn, offload output lớn ra file | `tool-output-budgets.md` | Codebase lớn = file lớn, log lớn. Đọc không giới hạn là lãng phí #1 trong coding agent |
-| Tool chỉnh sửa xác minh mỏ neo (str-replace/diff), không bao giờ viết lại toàn bộ file | `diff-based-edits.md` | Tiết kiệm output 10–50× mỗi lần chỉnh sửa; cũng ít hồi quy hơn |
+| Tool chỉnh sửa xác minh anchor (str-replace/diff), không bao giờ viết lại toàn bộ file | `diff-based-edits.md` | Tiết kiệm output 10–50× mỗi lần chỉnh sửa; cũng ít hồi quy hơn |
 | Tải schema MCP/tool trì hoãn | `tool-search.md` | Nhiều agent ⇒ nhiều MCP server; phình to schema là chi phí cố định trên mỗi request của mỗi agent |
 
 Nếu thiết lập hiện tại của bạn thiếu một trong những điều này, **chuyển
@@ -128,7 +128,7 @@ nhân toàn hệ thống, và chỉ kỷ luật + kiểm thử CI mới ngăn đ
 *Tại sao cần thiết:* trên một codebase lớn, việc khám phá lại cực kỳ tốn
 kém (khám phá repo là rất nhiều lệnh gọi tool lớn), và với nhiều agent nó
 xảy ra N lần. Quy ước này thường loại bỏ 50–90% chi tiêu tool của subagent
-và giữ ngữ cảnh orchestrator không phình to (nếu không sẽ bị tính phí lại
+và giữ context orchestrator không phình to (nếu không sẽ bị tính phí lại
 trên mọi lượt sau).
 
 ### 4. Bản đồ model & effort tĩnh theo vai trò agent (~nửa ngày) — `model-routing.md`, `reasoning-effort-tuning.md`
@@ -137,15 +137,15 @@ Một file config, không phải một router:
 
 | Vai trò agent | Tier model | Effort reasoning |
 | --- | --- | --- |
-| Orchestrator/lập kế hoạch | Hàng đầu | high |
-| Subagent coding | Hàng đầu hoặc mid mạnh | high (quét xhigh trên đánh giá) |
+| Orchestrator/lập kế hoạch | Frontier | high |
+| Subagent coding | Frontier hoặc mid mạnh | high (quét xhigh trên đánh giá) |
 | Subagent tìm kiếm/khám phá | Tier nhỏ–mid | low |
 | Summarizer, compactor, verifier, viết commit message | Tier nhỏ | low/off |
 | Bộ phân loại, phân luồng, định dạng | Tier nhỏ | off |
 
 *Tại sao cần thiết:* các vai trò công việc chân tay chiếm phần lớn khối
 lượng request trong một hệ thống nhiều agent và không cần bất kỳ năng lực
-nào của tier hàng đầu. Đây là 50–80% khối lượng chuyển sang rẻ hơn 5–25×
+nào của tier frontier. Đây là 50–80% khối lượng chuyển sang rẻ hơn 5–25×
 với chi phí chỉ là chỉnh một file config — tỷ lệ chi phí-trên-lợi-ích tốt
 nhất trong toàn bộ danh mục.
 
@@ -157,22 +157,22 @@ nhất trong toàn bộ danh mục.
 | --- | --- | --- |
 | Bạn chạy bộ đánh giá, backfill, hoặc job đêm trên codebase | Tier batch (giảm cố định 2×, gần như không đổi code cho công việc dạng job) | `batch-processing.md` |
 | Agent trông chừng CI/PR và bạn bắt gặp chúng polling | Chờ đợi hướng sự kiện qua webhook (ưu tiên đăng ký cấp harness trước; chưa cần workflow engine) | `event-driven-waiting.md` |
-| Một lần di chuyển model diễn ra | Một lượt loại bỏ khung sườn trên các prompt của toàn hệ thống | `prompt-de-scaffolding.md` |
+| Một lần di chuyển model diễn ra | Một lượt loại bỏ scaffolding trên các prompt của toàn hệ thống | `prompt-de-scaffolding.md` |
 | Đo lường cho thấy đọc file trùng lặp chi phối lịch sử | Registry hash nội dung trong harness | `context-hygiene.md` |
-| Xuất hiện các fan-out map-reduce trên ngữ cảnh chung | Cổng làm-ấm-một-rồi-fan | `fan-out-warming.md` |
+| Xuất hiện các fan-out map-reduce trên context chung | Cổng làm-ấm-một-rồi-fan | `fan-out-warming.md` |
 | Agent bắt đầu tiêu thụ screenshot (browser/computer use) | Ngân sách độ phân giải + cắt tỉa screenshot cũ | `image-downsampling.md` |
 | Một khối lượng công việc tài liệu/hỏi-đáp gia nhập hệ thống | Tái sử dụng tài liệu + tinh chỉnh truy xuất | `document-reuse.md`, `retrieval-tuning.md` |
 | Đo lường cho thấy output tool/CLI nhiễu (build log, chạy test, JSON) chi phối input | Proxy/hook nén output tool lắp trực tiếp (RTK/Headroom) — không cần thiết kế lại tool | `tool-output-compression.md` |
-| Agent tốn phần lớn token khám phá repo để định hướng (chi phí 67–76% tìm file) | Bản đồ code/gói ngữ cảnh đã check-in; đọc theo yêu cầu ưu tiên grep | `code-maps.md` |
+| Agent tốn phần lớn token khám phá repo để định hướng (chi phí 67–76% tìm file) | Bản đồ code/gói context đã check-in; đọc theo yêu cầu ưu tiên grep | `code-maps.md` |
 | Một endpoint hỏi-đáp/phân tích chỉ-đọc, lặp lại cao gia nhập hệ thống | Cache cấp phản hồi (ngữ nghĩa) tại gateway — tránh xa các route chỉnh sửa code | `semantic-caching.md` |
 
-## Tier 3 — Bỏ qua một cách rõ ràng (cho hồ sơ này, cho đến khi có bằng chứng ngược lại)
+## Tier 3 — Bỏ qua một cách rõ ràng (cho profile này, cho đến khi có bằng chứng ngược lại)
 
 - **Router model động/đã học và cascade** (kiểu RouteLLM, kiểu FrugalGPT):
   có lợi ích thực sự, nhưng với các hệ thống dev-agent nội bộ, bản đồ vai
   trò tĩnh nắm bắt phần lớn giá trị với ~1% chi phí thiết lập và bảo trì.
   Chỉ xem lại nếu đo lường cho thấy một route duy nhất có khối lượng khổng
-  lồ *và* tỷ trọng model hàng đầu cao.
+  lồ *và* tỷ trọng model frontier cao.
 - **Pipeline nén/tóm tắt tự viết tay**: nén có sẵn từ harness đã được tinh
   chỉnh và bảo trì; tự xây của bạn là hàng tuần công sức để cho ra kết quả
   tệ hơn.
@@ -180,7 +180,7 @@ nhất trong toàn bộ danh mục.
   sau này, nhưng chúng giả định trước hạ tầng đánh giá mà bạn chưa có; đo
   lường Tier 1 + một lượt loại bỏ tại thời điểm di chuyển đáp ứng nhu cầu
   gần hạn.
-- **Nén ngữ cảnh kiểu LLMLingua**: rủi ro độ trung thực trên code cao và
+- **Nén context kiểu LLMLingua**: rủi ro độ trung thực trên code cao và
   Tier 0/1 loại bỏ sự phình to an toàn hơn.
 
 ---
@@ -193,14 +193,14 @@ dạng* mới là điều quan trọng.
 
 | Phần | Chọn | Thay thế | Tại sao chọn cái này |
 | --- | --- | --- | --- |
-| Harness Tier 0 | **Claude Code / Claude Agent SDK** | Codex CLI, Gemini CLI, OpenHands (MIT) | Có sẵn cả năm năng lực Tier 0 bật mặc định (caching, tự động nén + cắt tỉa, tool có ngân sách, chỉnh sửa xác minh mỏ neo, tải MCP trì hoãn) |
+| Harness Tier 0 | **Claude Code / Claude Agent SDK** | Codex CLI, Gemini CLI, OpenHands (MIT) | Có sẵn cả năm năng lực Tier 0 bật mặc định (caching, tự động nén + cắt tỉa, tool có ngân sách, chỉnh sửa xác minh anchor, tải MCP trì hoãn) |
 | Đo lường Tier 1.1 | **Langfuse tự host (MIT)** nạp bởi **OpenLLMetry (Apache-2.0)** | Proxy Helicone (Apache-2.0); OTel GenAI thuần → Grafana/Datadog hiện có của bạn | Có thể tự host, usage + chi phí mỗi request, phiên bản prompt, và đánh giá trong một nơi |
 | Kiểm thử byte CI Tier 1.2 | **pytest + syrupy** (hoặc Jest snapshots) | Bất kỳ trình chạy kiểm thử snapshot nào | ~30 dòng; thực thi bất biến prefix mãi mãi |
 | Hợp đồng bàn giao Tier 1.3 | **Định nghĩa subagent của harness + hệ thống file chung** | Trạng thái có kiểu của LangGraph (MIT) cho các vòng lặp tùy chỉnh | Mẫu tóm tắt sống trong prompt orchestrator; artifact trên đĩa |
 | Bản đồ model/effort Tier 1.4 | **Một file config đã check-in** (định nghĩa agent của harness hoặc cấu hình router LiteLLM, MIT) | Gateway Portkey (MIT) | Một lần chỉnh config, không phải một service |
 | Batch Tier 2 | API batch của nhà cung cấp qua **LiteLLM** | Gọi SDK trực tiếp | Gửi thống nhất nếu bạn dùng nhiều nhà cung cấp |
 | CI hướng sự kiện Tier 2 | **Đăng ký PR của harness + webhook GitHub** | Temporal (MIT) khi workflow vượt quá khả năng của harness | Không hạ tầng mới lúc đầu |
-| Gỡ khung sườn Tier 2 | Lượt loại bỏ bằng **promptfoo (MIT)** | DSPy (MIT) khi hạ tầng đánh giá đã trưởng thành | Các biến thể song song với chi phí token mỗi biến thể |
+| Gỡ scaffolding Tier 2 | Lượt loại bỏ bằng **promptfoo (MIT)** | DSPy (MIT) khi hạ tầng đánh giá đã trưởng thành | Các biến thể song song với chi phí token mỗi biến thể |
 | Ép output tùy chọn | Skill **Caveman (MIT)** trên các agent nội bộ dài dòng | Chỉ hợp đồng output cấp prompt | Skill lắp trực tiếp; cắt token output trên lưu lượng agent — chỉ route nội bộ |
 
 ### Tier 1.1 — Lắp dây đo lường
@@ -240,7 +240,7 @@ xếp trong bất kỳ module nào nạp vào phần đầu prompt.
 Được check-in vào prompt/định nghĩa agent của orchestrator:
 
 ```markdown
-Mỗi lần sinh subagent PHẢI bao gồm: mục tiêu, ràng buộc, đường dẫn/ID file
+Mỗi lần spawn subagent PHẢI bao gồm: mục tiêu, ràng buộc, đường dẫn/ID file
 chính xác, phát hiện hiện có, định nghĩa "xong".
 Mỗi subagent PHẢI ghi toàn bộ kết quả vào artifacts/<task-id>/ và chỉ trả
 về đường dẫn + tóm tắt ≤300 token.

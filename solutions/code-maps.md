@@ -52,8 +52,8 @@ flowchart TD
    — nhưng *hãy đặt ngân sách*: đóng gói một repo lớn không lọc có thể tự
    nó làm nổ cửa sổ, nên hãy nén và loại trừ code sinh ra/thư viện bên thứ
    ba trước.
-4. **Lưu giữ một gói ngữ cảnh để xóa bỏ chi phí khởi động lạnh.** Sinh một
-   artifact ngữ cảnh dự án gọn nhẹ một lần và check-in / cache nó, để mỗi
+4. **Lưu giữ một gói context để xóa bỏ chi phí cold-start.** Sinh một
+   artifact context dự án gọn nhẹ một lần và check-in / cache nó, để mỗi
    phiên mới không phải tốn lại 25–60K token khám phá lại cùng một bố cục.
    Tái sinh khi có thay đổi cấu trúc đáng kể, không phải mỗi phiên.
 5. **Bản đồ tự viết tay vẫn có giá trị.** Một file `CLAUDE.md`/rules gọn
@@ -76,7 +76,7 @@ flowchart TD
 | --- | --- | --- |
 | Bản đồ repo của aider (`Aider-AI/aider`) | Apache-2.0 | Bản đồ ký hiệu xếp hạng tree-sitter + PageRank, có ngân sách token qua `--map-tokens`; 130+ ngôn ngữ; triển khai tham chiếu |
 | Repomix (`yamadashy/repomix`) | MIT | Đóng gói một repo vào một file thân thiện với AI với `--token-count-tree` (xem các file nặng) và `--compress` (chế độ chỉ chữ ký tree-sitter) |
-| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói ngữ cảnh `.codesight/` gọn nhẹ để agent bỏ qua 25–60K token khám phá khởi động lạnh |
+| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói context `.codesight/` gọn nhẹ để agent bỏ qua 25–60K token khám phá cold-start |
 | TokenSave (`aovestdipaperino/tokensave`) | Mã nguồn mở | Server trí tuệ code MCP: đồ thị ngữ nghĩa đã index sẵn được truy vấn qua tool MCP thay vì các vòng lặp grep/glob/read; hoàn toàn cục bộ |
 | tree-sitter | MIT | Lớp phân tích cú pháp bên dưới hầu hết các công cụ trên; tự viết bản đồ có ngân sách riêng cho các stack đặc thù |
 
@@ -99,8 +99,8 @@ flowchart TD
 - Tấn công trực tiếp vào dòng chi phí lớn nhất của coding agent: **chi phí
   67–76% dành cho tìm file** thu nhỏ về mức chi phí của một bản đồ nhỏ
   cộng với vài lần đọc có mục tiêu.
-- Các gói ngữ cảnh lưu giữ loại bỏ việc khám phá lại tốn **25–60K token
-  khởi động lạnh** khỏi mỗi phiên mới trên một repo.
+- Các gói context lưu giữ loại bỏ việc khám phá lại tốn **25–60K token
+  cold-start** khỏi mỗi phiên mới trên một repo.
 - Cộng dồn với việc lịch sử tồn tại lâu (nguyên nhân 2.1) — các file không
   bao giờ mở thì không bao giờ tích lũy trong transcript — và với caching
   (một bản đồ ổn định đã check-in nằm trong prefix có thể cache).

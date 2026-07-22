@@ -26,8 +26,7 @@ tiện ích mở rộng.
 | Tải tool trì hoãn | ❌ Schema MCP được chèn vào mọi request — bạn phải tự cắt gọt thủ công (bên dưới) | `tool-search.md` |
 
 Vì vậy Tier 0 phần lớn được kế thừa; công việc thiết lập của bạn tập
-trung vào **lựa chọn nhà cung cấp, chi phí prompt cố định, và kỷ luật ngữ
-cảnh**.
+trung vào **lựa chọn nhà cung cấp, chi phí prompt cố định, và kỷ luật context**.
 
 ---
 
@@ -59,8 +58,8 @@ cài đặt.
 
 | Chế độ | Chọn (bậc thang Anthropic) | Lý do |
 | --- | --- | --- |
-| Plan | Hàng đầu (tier Opus) | Kiến trúc/quyết định là nơi năng lực đáng giá |
-| Act | Hàng đầu hoặc mid mạnh (tier Sonnet); quét trên tác vụ của bạn | Triển khai đã được lên kế hoạch tốt thường giữ chất lượng ở một tier thấp hơn |
+| Plan | Frontier (tier Opus) | Kiến trúc/quyết định là nơi năng lực đáng giá |
+| Act | Frontier hoặc mid mạnh (tier Sonnet); quét trên tác vụ của bạn | Triển khai đã được lên kế hoạch tốt thường giữ chất lượng ở một tier thấp hơn |
 
 Các bậc thang tương đương: GPT-5.x ↔ mini; Gemini 3 Pro ↔ Flash — một key
 qua OpenRouter bao phủ tất cả.
@@ -76,11 +75,11 @@ Hai lưu ý về cache (nguyên nhân 1.3):
 Dùng **Deep Planning** cho các tác vụ lớn: nạp trước một kế hoạch sạch làm
 cho giai đoạn Act (đắt đỏ) ngắn hơn và ít khám phá hơn.
 
-## 3. Kỷ luật ngữ cảnh — Auto Compact, `/smol`, `/newtask`
+## 3. Kỷ luật context — Auto Compact, `/smol`, `/newtask`
 
 ```mermaid
 flowchart TD
-    A[Ngữ cảnh đang đầy dần] --> B{Cùng mục tiêu,<br/>cùng tác vụ?}
+    A[Context đang đầy dần] --> B{Cùng mục tiêu,<br/>cùng tác vụ?}
     B -- có --> S["/smol — cô đọng tại chỗ,<br/>tiếp tục làm việc"]
     B -- "không — chuyển tiếp tự nhiên<br/>(nghiên cứu → triển khai,<br/>đã sửa lỗi → lỗi tiếp theo)" --> N["/newtask — đóng gói kế hoạch,<br/>quyết định, file, bước tiếp theo<br/>vào một tác vụ mới"]
     A -.->|không làm gì| C[Auto Compact vẫn kích hoạt<br/>gần giới hạn]
@@ -97,7 +96,7 @@ flowchart TD
 - Giữ **Focus Chain** bật cho các tác vụ dài để danh sách việc cần làm
   sống sót qua nén.
 - Đừng dán log/file khổng lồ vào chat — tham chiếu đường dẫn và để Cline
-  đọc; nhắc đến file bằng `@file` để chỉ những gì cần thiết vào ngữ cảnh.
+  đọc; nhắc đến file bằng `@file` để chỉ những gì cần thiết vào context.
 
 ## 4. Cắt gọt chi phí cố định mỗi request
 
@@ -142,23 +141,22 @@ chỉ đáng thêm vào ở nơi Cline có khoảng trống.
 
 ### Phình to output tool — nguyên nhân 3.1, 2.1 → [`tool-output-compression.md`](tool-output-compression.md)
 
-Khoảng trống có sẵn lớn nhất của Cline: đọc file và output lệnh vào ngữ
-cảnh không được cắt lát.
+Khoảng trống có sẵn lớn nhất của Cline: đọc file và output lệnh vào context không được cắt lát.
 
 | Công cụ | Giấy phép | Cách nó lắp vào Cline |
 | --- | --- | --- |
-| RTK (`rtk-ai/rtk`) | Apache-2.0 | Nén output của 100+ lệnh dev 60–90% trước khi vào ngữ cảnh; **cấu hình dự án Cline có sẵn**; giữ nguyên thất bại test/diff/lỗi |
+| RTK (`rtk-ai/rtk`) | Apache-2.0 | Nén output của 100+ lệnh dev 60–90% trước khi vào context; **cấu hình dự án Cline có sẵn**; giữ nguyên thất bại test/diff/lỗi |
 | Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Proxy local hoặc MCP server nén kết quả tool khi đang truyền (JSON 60–95%, build log ~94%); `CacheAligner` giữ cache prefix tiếp tục hit; **Cline có trong ma trận hỗ trợ của nó** |
 
-### Khởi động lạnh & định hướng repo — nguyên nhân 6.5, 4.2 → [`code-maps.md`](code-maps.md)
+### Cold-start & định hướng repo — nguyên nhân 6.5, 4.2 → [`code-maps.md`](code-maps.md)
 
-Mỗi tác vụ Cline mới đều khám phá lại repo (chi phí khởi động lạnh
+Mỗi tác vụ Cline mới đều khám phá lại repo (chi phí cold-start
 25–60K token).
 
 | Công cụ | Giấy phép | Cách nó lắp vào Cline |
 | --- | --- | --- |
 | Repomix (`yamadashy/repomix`) | MIT | Đóng gói/nén repo (`--compress` = chỉ chữ ký) vào một file đã check-in; tham chiếu nó bằng `@file` khi bắt đầu tác vụ |
-| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói ngữ cảnh `.codesight/` agent đọc thay vì quét lại |
+| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói context `.codesight/` agent đọc thay vì quét lại |
 | TokenSave (`aovestdipaperino/tokensave`) | Mã nguồn mở | Server đồ thị code MCP cục bộ — Cline truy vấn đồ thị ký hiệu đã dựng sẵn thay vì các vòng lặp grep/read (lưu ý nguyên nhân 3.4: nó thêm schema tool) |
 | OpenMemory MCP (mem0) | Apache-2.0 | Server bộ nhớ MCP local-first, **Cline được hỗ trợ chính thức** — quyết định/sự kiện tồn tại lâu qua các tác vụ để bàn giao `/newtask` và các phiên mới bắt đầu ấm |
 
@@ -196,14 +194,13 @@ Bộ ba **RTK + Headroom + Caveman** là "bộ công cụ tiết kiệm token" c
 cộng đồng cho các agent VS Code — nén CLI phía input, nén kết quả tool cấp
 API, và nén phản hồi phía output tương ứng; cả ba đều liệt kê Cline là
 được hỗ trợ. Thêm **OpenMemory hoặc một bản đồ Repomix đã check-in** lên
-trên và hai khoảng trống cấu trúc còn lại (phình to output tool và khởi
-động lạnh) đều được bao phủ.
+trên và hai khoảng trống cấu trúc còn lại (phình to output tool và cold-start) đều được bao phủ.
 
-Những gì bạn **không nên** thêm: các trình nén ngữ cảnh kiểu LLMLingua
+Những gì bạn **không nên** thêm: các trình nén context kiểu LLMLingua
 (rủi ro độ trung thực trên code — `recommended-setup.md` Tier 3), một lớp
 nén thứ hai (Auto Compact + `/smol` của Cline đã bao phủ nguyên nhân
 2.1), hoặc một router model động (việc tách Plan/Act *chính là* router
-cho hồ sơ này).
+cho profile này).
 
 ## Checklist thiết lập
 
@@ -218,8 +215,7 @@ cho hồ sơ này).
    `/newtask` tại các điểm chuyển tiếp, Focus Chain bật
 6. ☐ (Đội) Gateway LiteLLM + Langfuse với ba cảnh báo
 7. ☐ Add-on lấp khoảng trống nơi đo lường biện minh được: RTK/Headroom
-   cho phình to output tool, bản đồ Repomix hoặc OpenMemory MCP cho khởi
-   động lạnh, Caveman cho các route nội bộ dài dòng
+   cho phình to output tool, bản đồ Repomix hoặc OpenMemory MCP cho cold-start, Caveman cho các route nội bộ dài dòng
 
 ## Tác động dự kiến
 

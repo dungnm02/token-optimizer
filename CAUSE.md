@@ -5,7 +5,7 @@ Tài liệu này liệt kê các nguyên nhân đã xác định gây tiêu tố
 vào nhà cung cấp (provider-agnostic): chúng áp dụng cho mọi stack (Claude,
 GPT, Gemini, các model mã nguồn mở, v.v.) vì chúng bắt nguồn từ cách các API
 LLM hoạt động về cơ bản — các request không trạng thái (stateless), tính phí
-theo token, với cửa sổ ngữ cảnh (context window) có giới hạn. Các chi tiết
+theo token, với context window có giới hạn. Các chi tiết
 riêng của từng nhà cung cấp chỉ xuất hiện như ví dụ minh họa.
 
 Mỗi nguyên nhân mô tả **nó là gì**, **tại sao nó làm tăng mức sử dụng
@@ -28,7 +28,7 @@ mục này:
 2. **Định giá theo token, bất đối xứng.** Input và output được tính phí theo
    token, với output thường đắt gấp 3–5× giá input, và input được cache
    thường chỉ bằng ~10–25% giá input (khi nhà cung cấp hỗ trợ caching).
-3. **Ngữ cảnh có giới hạn.** Cửa sổ ngữ cảnh là hữu hạn; khi tiệm cận giới
+3. **Context có giới hạn.** Context window là hữu hạn; khi tiệm cận giới
    hạn sẽ buộc phải cắt bớt, tóm tắt, hoặc thất bại — và mọi thứ bên trong nó
    đều bị tính phí trên mỗi lần gọi.
 
@@ -58,8 +58,8 @@ Các nguyên nhân được nhóm thành sáu danh mục:
 | # | Danh mục | Vấn đề cốt lõi |
 | --- | --- | --- |
 | 1 | Lỗi caching | Trả giá đầy đủ cho các token tiền tố (prefix) lẽ ra có thể được phục vụ với giá cache-read |
-| 2 | Tích lũy ngữ cảnh | Lịch sử hội thoại tăng trưởng không giới hạn và được gửi lại mỗi lượt |
-| 3 | Cách dùng tool | Các lệnh gọi tool và kết quả làm tràn ngập ngữ cảnh bằng nội dung ít giá trị |
+| 2 | Tích lũy context | Lịch sử hội thoại tăng trưởng không giới hạn và được gửi lại mỗi lượt |
+| 3 | Cách dùng tool | Các lệnh gọi tool và kết quả làm tràn ngập context bằng nội dung ít giá trị |
 | 4 | Loại nội dung đắt đỏ | Hình ảnh, tài liệu, và dữ liệu truy xuất tốn kém hơn nhiều so với dự kiến |
 | 5 | Chi tiêu phía sinh (generation) | Token output (suy luận + phản hồi) — loại token đắt nhất — bị chi tiêu quá mức |
 | 6 | Lựa chọn kiến trúc | Thiết kế hệ thống nhân bội chi phí token trên nhiều request và agent |
@@ -76,14 +76,14 @@ soát** — một công cụ phía client có thể *tận dụng* một mức g
 | Danh mục | Giải quyết được bằng công cụ bên thứ ba / kiến trúc của bạn | Phụ thuộc vào nhà cung cấp |
 | --- | --- | --- |
 | 1 Caching | Kỷ luật ổn định prompt, render tất định, kiểm thử byte trong CI; đo lường cache-hit (Langfuse/Helicone/LiteLLM); tái sử dụng prefix tự host (vLLM/SGLang) | Chính mức giảm giá: sự tồn tại của cache, giá đọc (~0.1×), TTL, breakpoint, phụ phí ghi |
-| 2 Tích lũy ngữ cảnh | Gần như hoàn toàn bên thứ ba: cắt tỉa/nén trong harness hoặc framework (LangGraph, LlamaIndex), registry hash, kho lưu bộ nhớ | Các API nén/quản lý ngữ cảnh phía server chỉ là tiện lợi, không phải bắt buộc |
+| 2 Tích lũy context | Gần như hoàn toàn bên thứ ba: cắt tỉa/nén trong harness hoặc framework (LangGraph, LlamaIndex), registry hash, kho lưu bộ nhớ | Các API nén/quản lý context phía server chỉ là tiện lợi, không phải bắt buộc |
 | 3 Dùng tool | Chủ yếu bên thứ ba: ngân sách output, proxy nén (RTK/Headroom), cắt gọt MCP, hạ tầng hướng sự kiện (Temporal, webhook) | Tải tool trì hoãn / tìm kiếm tool, gọi tool theo chương trình (Code Mode), định dạng gọi tool tiết kiệm token |
 | 4 Loại nội dung | Giảm độ phân giải (sharp/Pillow), trích xuất (Docling/unstructured), reranker mã nguồn mở (BGE), bản đồ mã nguồn (aider/Repomix) | Công thức token thị giác và nút `detail`, API file/caching, endpoint `count_tokens` |
 | 5 Phía sinh (generation) | Hợp đồng output trong prompt, định dạng edit dạng diff (Aider), retry có kiểm định (Instructor), nén output (Caveman) | Các nút điều chỉnh chính là của nhà cung cấp: ngân sách reasoning-effort/thinking, `verbosity`, chế độ structured-output |
-| 6 Kiến trúc | Định tuyến/gateway (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), framework điều phối, logic warm-then-fan, gói ngữ cảnh | Bậc thang giá qua các tier model, tier batch giảm 50%, khả năng fine-tuning/distillation |
+| 6 Kiến trúc | Định tuyến/gateway (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), framework điều phối, logic warm-then-fan, gói context | Bậc thang giá qua các tier model, tier batch giảm 50%, khả năng fine-tuning/distillation |
 
 Quy tắc chung: **vệ sinh (hygiene) là của bạn, giảm giá là của họ.** Mọi thứ
-giữ token *không* lọt vào request (ngữ cảnh, output tool, prompt, trùng lặp)
+giữ token *không* lọt vào request (context, output tool, prompt, trùng lặp)
 đều di động và giải quyết được bằng bên thứ ba; các đòn bẩy làm cho các
 token còn lại *rẻ hơn* (giá cache tiền tố, tier batch, tier model rẻ hơn,
 nút effort/verbosity) đều do nhà cung cấp kiểm soát — việc của bạn ở đó là
@@ -186,11 +186,11 @@ pre-warming, lưu lượng giữ ấm)
 
 ---
 
-## 2. Tích lũy ngữ cảnh
+## 2. Tích lũy context
 
 > **Danh mục này là một vấn đề chất lượng, không chỉ là vấn đề chi phí.**
-> Các nghiên cứu có kiểm soát ("context rot" — sự suy thoái ngữ cảnh) trên
-> 18 model hàng đầu cho thấy mỗi model đều suy giảm khi input tăng lên — và
+> Các nghiên cứu có kiểm soát ("context rot") trên
+> 18 model frontier cho thấy mỗi model đều suy giảm khi input tăng lên — và
 > điều này xảy ra *trước khi* cửa sổ đầy: ngân sách thực tế cho độ chính xác
 > cao nằm trong khoảng 150–400K token ngay cả trên các model có cửa sổ 2M
 > token, và độ chính xác giảm nhanh nhất khi nhiễu tích lũy *tương đồng về
@@ -213,7 +213,7 @@ toàn bộ lịch sử ở giá đầy đủ.
 
 **Cách nhận biết:** Kích thước prompt tổng (input cached + uncached) tăng
 đều đặn qua từng lượt; các request cuối phiên lớn hơn 10–100× so với các
-request đầu; các phiên cuối cùng chạm giới hạn cửa sổ ngữ cảnh.
+request đầu; các phiên cuối cùng chạm giới hạn context window.
 
 **Giải pháp liên quan:** `solutions/compaction.md`,
 `solutions/context-editing.md`
@@ -234,7 +234,7 @@ trong prompt tiếp tục tăng trong khi tỷ trọng hữu ích thì không.
 **Giải pháp liên quan:** `solutions/context-editing.md`
 (cắt tỉa các kết quả tool / khối reasoning cũ)
 
-### 2.3 Chèn ngữ cảnh trùng lặp
+### 2.3 Chèn context trùng lặp
 
 **Tóm tắt:** Cùng một nội dung (một file, một schema, tài liệu truy xuất)
 được chèn vào cuộc hội thoại nhiều lần.
@@ -270,14 +270,14 @@ các kết quả tool mà model chỉ rõ ràng sử dụng một phần nhỏ.
 **Giải pháp liên quan:** `solutions/tool-output-budgets.md`,
 `solutions/tool-output-compression.md`
 
-### 3.2 Nhiều lượt qua lại thay vì kết hợp (composition)
+### 3.2 Nhiều round-trip thay vì kết hợp (composition)
 
 **Tóm tắt:** Nhiều lệnh gọi tool tuần tự nơi mỗi kết quả trung gian đều chảy
-qua ngữ cảnh của model, dù model chỉ cần câu trả lời cuối cùng.
+qua context của model, dù model chỉ cần câu trả lời cuối cùng.
 
-**Tại sao nó tiêu tốn token:** Mỗi lượt qua lại gửi lại lịch sử đang lớn
+**Tại sao nó tiêu tốn token:** Mỗi round-trip gửi lại lịch sử đang lớn
 dần và đưa thêm một kết quả trung gian vào đó. Ba lần tra cứu nối tiếp
-(profile → đơn hàng → tồn kho) tốn ba lượt xử lý ngữ cảnh đầy đủ, và dữ liệu
+(profile → đơn hàng → tồn kho) tốn ba lượt xử lý context đầy đủ, và dữ liệu
 trung gian thường không bao giờ cần lại nữa.
 
 **Cách nhận biết:** Chuỗi dài các lệnh gọi tool nhỏ cho mỗi request người
@@ -289,15 +289,15 @@ chiếu đến.
 
 ### 3.3 Vòng lặp thử lại và polling
 
-**Tóm tắt:** Các lệnh gọi tool thất bại được thử lại với cùng ngữ cảnh, hoặc
+**Tóm tắt:** Các lệnh gọi tool thất bại được thử lại với cùng context, hoặc
 agent poll trạng thái bên ngoài ("kiểm tra lại trong vòng lặp") với một
 request model đầy đủ cho mỗi lần poll.
 
 **Tại sao nó tiêu tốn token:** Mỗi lần thử lại/poll tính lại toàn bộ prompt.
-Một vòng lặp poll 10 lần trên ngữ cảnh 100K token tiêu tốn 1M token input
+Một vòng lặp poll 10 lần trên context 100K token tiêu tốn 1M token input
 chỉ để biết "chưa xong" chín lần. Người anh em của nó trong bối cảnh agentic
-là **vòng lặp diệt vong (doom loop)**: model lặp đi lặp lại một bản sửa lỗi
-thất bại (sửa → test → thất bại → sửa tương tự), tính phí lại ngữ cảnh ngày
+là **doom loop**: model lặp đi lặp lại một bản sửa lỗi
+thất bại (sửa → test → thất bại → sửa tương tự), tính phí lại context ngày
 càng lớn trên mỗi vòng và thêm một lần thất bại nữa vào đó — chi phí tăng
 dồn trong khi tiến độ không đổi.
 
@@ -450,20 +450,20 @@ dẫn vào một vòng lặp thử lại.
 
 ## 6. Lựa chọn kiến trúc
 
-### 6.1 Subagent khởi động lạnh (cold-start)
+### 6.1 Subagent cold-start
 
 **Tóm tắt:** Các subagent được sinh ra cho từng tác vụ con mà không có
-cache hay bàn giao ngữ cảnh chung, mỗi cái tự suy ra lại những gì agent cha
+cache hay bàn giao context chung, mỗi cái tự suy ra lại những gì agent cha
 đã biết.
 
 **Tại sao nó tiêu tốn token:** Mỗi lần sinh gửi lại (và thường khám phá lại
-qua các lệnh gọi tool) ngữ cảnh mà orchestrator đã trả tiền. Các lệnh gọi
+qua các lệnh gọi tool) context mà orchestrator đã trả tiền. Các lệnh gọi
 fork xây lại system prompt / danh sách tool / lựa chọn model với bất kỳ khác
 biệt nào cũng bỏ lỡ hoàn toàn cache prefix của agent cha.
 
 **Cách nhận biết:** Transcript của subagent mở đầu bằng đúng những khám phá
 mà agent cha đã làm; mẫu hình fan-out nơi N worker đều phải trả giá cho một
-ngữ cảnh lạnh đầy đủ; cache-hit bằng 0 trên các request fork dù agent cha
+context lạnh đầy đủ; cache-hit bằng 0 trên các request fork dù agent cha
 đang "ấm" (warm).
 
 **Giải pháp liên quan:** `solutions/subagent-context-handoff.md`,
@@ -477,7 +477,7 @@ tier nhỏ hơn vẫn phục vụ tốt.
 
 **Tại sao nó tiêu tốn token:** Đây thuần túy là một hệ số nhân *chi phí*
 chứ không phải *số lượng token*, nhưng nó khuếch đại mọi nguyên nhân khác:
-các model tier hàng đầu trên các nhà cung cấp có giá cao hơn khoảng 5–25×
+các model tier frontier trên các nhà cung cấp có giá cao hơn khoảng 5–25×
 mỗi token so với các model tier nhỏ cùng dòng, nên cùng một sự lãng phí
 token lại tốn kém hơn nhiều đến vậy.
 
@@ -505,13 +505,13 @@ cùng các request đó cho thấy hit từ lần thứ hai trở đi.
 **Giải pháp liên quan:** `solutions/fan-out-warming.md` (làm ấm bằng một
 request, sau đó mới bắn phần còn lại)
 
-### 6.4 Prompt và khung sườn (scaffolding) quá quy định
+### 6.4 Prompt và scaffolding quá quy định
 
-**Tóm tắt:** System prompt mang theo khung sườn cũ — cập nhật tiến độ bắt
+**Tóm tắt:** System prompt mang theo scaffolding cũ — cập nhật tiến độ bắt
 buộc, quy trình từng bước, vòng lặp xác minh "kiểm tra lại X", các bộ
 few-shot dài — được tinh chỉnh cho các model cũ hơn hoặc khác.
 
-**Tại sao nó tiêu tốn token:** Bản thân khung sườn là chi phí prompt cố
+**Tại sao nó tiêu tốn token:** Bản thân scaffolding là chi phí prompt cố
 định trên mỗi lệnh gọi, và nó gây ra thêm output: tường thuật bắt buộc, các
 lệnh gọi tool xác minh dư thừa, và giải thích lại những gì model hiện tại
 sẽ không tự sinh ra. Các prompt tích lũy qua nhiều thế hệ model hiếm khi
@@ -524,7 +524,7 @@ làm được mà không cần ví dụ.
 
 **Giải pháp liên quan:** `solutions/prompt-de-scaffolding.md`
 
-### 6.5 Khởi động lạnh giữa các phiên (không có kiến thức bền vững)
+### 6.5 Cold-start giữa các phiên (không có kiến thức bền vững)
 
 **Tóm tắt:** Mỗi phiên mới đều bắt đầu từ số không — agent khám phá lại
 codebase hoặc lĩnh vực và suy luận lại những hiểu biết mà các phiên trước đã
@@ -541,7 +541,7 @@ thống — cùng một kiến thức được mua đi mua lại nhiều lần.
 chi phối bởi các lần đọc mà một phiên trước đã từng làm; không có gì học
 được trong một phiên khả dụng cho phiên tiếp theo.
 
-**Giải pháp liên quan:** `solutions/code-maps.md` (bản đồ/gói ngữ cảnh đã
+**Giải pháp liên quan:** `solutions/code-maps.md` (bản đồ/gói context đã
 lưu sẵn), `solutions/subagent-context-handoff.md` (kho lưu artifact),
 `solutions/compaction.md` (mang tóm tắt sang các ranh giới phiên)
 

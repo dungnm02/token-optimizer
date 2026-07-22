@@ -50,7 +50,7 @@ so với văn bản tự do.
 - Chuỗi `stop` để kết thúc các định dạng đã biết điểm dừng (ví dụ kết thúc
   JSON).
 
-### 4. Gỡ bỏ khung sườn gây ra sự dài dòng
+### 4. Gỡ bỏ scaffolding gây ra sự dài dòng
 
 Các bản tóm tắt tiến độ bắt buộc, "giải thích lý luận của bạn" sót lại từ
 thời trước-model-reasoning, các mẫu section bắt buộc — hãy rà soát và loại
