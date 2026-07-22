@@ -171,7 +171,7 @@ they let you cut k by 3–5× at equal-or-better answer quality.
 | --- | --- | --- |
 | BGE-reranker-v2 / mxbai-rerank | Apache-2.0 | Self-hosted SOTA-class cross-encoder reranking; Cohere Rerank 3.5 / Voyage rerank-2 / Jina Reranker v2 are hosted commercial equivalents |
 | BGE-M3 embeddings | MIT | Strong open first-stage recall; Voyage-3 is the hosted commercial option |
-| LLMLingua / LLMLingua-2 / LongLLMLingua | MIT | Microsoft prompt-compression family — up to ~20× compression at ~1.5-pt quality drop on QA/reasoning benchmarks (one reported SaaS case: $42K→$2.1K/mo); LongLLMLingua ~94% RAG-cost cut on LooGLE. **Strong fidelity caveat on code/structured text** — eval before adopting, and prefer Tier-0/1 removal on coding fleets (`recommended-setup.md` Tier 3) |
+| LLMLingua / LLMLingua-2 / LongLLMLingua | MIT | Microsoft prompt-compression family — up to ~20× compression at ~1.5-pt quality drop on QA/reasoning benchmarks (one reported SaaS case: $42K→$2.1K/mo); LongLLMLingua ~94% RAG-cost cut on LooGLE. **Strong fidelity caveat on code/structured text** — eval before adopting, and prefer Tier-0/1 removal on coding fleets (`../setups/recommended-setup.md` Tier 3) |
 | RAGAS / promptfoo | Apache-2.0 / MIT | Measure the k/chunk/rerank sweeps instead of guessing; Braintrust is the commercial alternative |
 
 ## Trade-offs
