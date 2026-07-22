@@ -1,3 +1,238 @@
+# Thiết lập Coding: Cline (Tiện ích mở rộng VS Code) (Tiếng Việt)
+
+Một cách hiện thực hóa cụ thể của
+[`recommended-setup.md`](recommended-setup.md) cho **Cline** — coding agent
+mã nguồn mở (Apache-2.0) cho VS Code. Cline dùng nhà cung cấp do bạn tự mang
+(BYO-provider) và tính phí theo token qua chính API key của bạn, nên mọi
+nguyên nhân trong [`../CAUSE.md`](../CAUSE.md) đều đổ trực tiếp vào hóa đơn
+của bạn — và hầu như mọi nút điều chỉnh để sửa nó đều được cung cấp trong
+tiện ích mở rộng.
+
+> Xác minh lại với tài liệu/bản phát hành Cline hiện tại trước khi triển
+> khai — tiện ích mở rộng ra bản nhanh và tên tính năng có thể thay đổi.
+
+---
+
+## Tier 0 — những gì Cline cung cấp sẵn có
+
+Đối chiếu với checklist năng lực harness trong `recommended-setup.md`:
+
+| Năng lực | Trạng thái Cline | Tài liệu trong danh mục |
+| --- | --- | --- |
+| Caching prompt | ✅ Tự động trên các nhà cung cấp hỗ trợ (Anthropic, OpenRouter, Gemini…); số lần đọc/ghi cache và mức tiết kiệm hiển thị theo từng tác vụ | `prompt-caching.md` |
+| Nén | ✅ **Auto Compact** gần giới hạn cửa sổ + `/smol` (bí danh `/compact`) thủ công và `/newtask`; **Focus Chain** giữ danh sách việc cần làm sống sót qua các lần tóm tắt | `compaction.md` |
+| Chỉnh sửa dựa trên diff | ✅ Khối SEARCH/REPLACE của `replace_in_file` là đường chỉnh sửa mặc định | `diff-based-edits.md` |
+| Tool có ngân sách | ⚠️ Một phần — đọc file không được cắt lát theo mặc định; giảm thiểu bằng `.clineignore`, giới hạn phạm vi tác vụ chặt, và rules (bên dưới) | `tool-output-budgets.md` |
+| Tải tool trì hoãn | ❌ Schema MCP được chèn vào mọi request — bạn phải tự cắt gọt thủ công (bên dưới) | `tool-search.md` |
+
+Vì vậy Tier 0 phần lớn được kế thừa; công việc thiết lập của bạn tập
+trung vào **lựa chọn nhà cung cấp, chi phí prompt cố định, và kỷ luật ngữ
+cảnh**.
+
+---
+
+## 1. Thiết lập nhà cung cấp & caching (đòn bẩy lớn nhất)
+
+Cline gửi lại toàn bộ cuộc hội thoại trên mỗi request — không có lịch sử
+thường trú trong cache, bạn trả nhiều hơn 5–10× trong các phiên dài
+(nguyên nhân 1.1).
+
+| Tuyến | Caching | Ghi chú |
+| --- | --- | --- |
+| **API key Anthropic (trực tiếp)** — khuyến nghị | ✅ Breakpoint tự động; đọc ~0.1×, ghi 1.25× | Tuyến được đo lường tốt nhất; Cline hiển thị chỉ số cache theo từng tác vụ |
+| **OpenRouter / nhà cung cấp Cline** | ✅ Cho các model hỗ trợ caching | Một key, nhiều model — kết hợp tốt với việc tách Plan/Act bên dưới |
+| **API key Gemini** | ✅ Caching ngầm định | Các tier Flash là lựa chọn Act/Plan rẻ, mạnh |
+| **Tương thích OpenAI / local (Ollama, LM Studio)** | ⚠️ Tùy server | Tự host: đặt vLLM/SGLang phía trước để APC/RadixAttention cho bạn tái sử dụng prefix |
+| OAuth thuê bao Claude | ❌ Bị chặn từ tháng 1/2026 ngoài CLI riêng của Anthropic | Dùng một API key thực sự |
+
+Xác minh nó hoạt động: mở phân tích chi phí của bất kỳ tác vụ đã hoàn
+thành nào — các lượt ở trạng thái ổn định nên hiển thị số lần đọc cache
+lớn. **Số lần đọc cache bằng 0 ở lượt 5+ của một phiên nghĩa là có gì đó
+đang vô hiệu hóa prefix** (thường là một file rules bị chỉnh sửa giữa
+phiên — nguyên nhân 1.3).
+
+## 2. Bản đồ Model & effort qua Plan/Act
+
+Việc tách Plan/Act của Cline là cơ chế định tuyến có sẵn của nó
+(`model-routing.md`): cấu hình một **model riêng cho mỗi chế độ** trong
+cài đặt.
+
+| Chế độ | Chọn (bậc thang Anthropic) | Lý do |
+| --- | --- | --- |
+| Plan | Hàng đầu (tier Opus) | Kiến trúc/quyết định là nơi năng lực đáng giá |
+| Act | Hàng đầu hoặc mid mạnh (tier Sonnet); quét trên tác vụ của bạn | Triển khai đã được lên kế hoạch tốt thường giữ chất lượng ở một tier thấp hơn |
+
+Các bậc thang tương đương: GPT-5.x ↔ mini; Gemini 3 Pro ↔ Flash — một key
+qua OpenRouter bao phủ tất cả.
+
+Hai lưu ý về cache (nguyên nhân 1.3):
+
+- **Đổi model giữa tác vụ sẽ làm mới cache** — model mới trả giá lại toàn
+  bộ lịch sử ở giá input đầy đủ. Đổi tại ranh giới chế độ mà bạn sẽ vượt
+  qua dù sao đi nữa, không phải giữa lúc triển khai.
+- Giữ cả hai chế độ trong một nhà cung cấp khi có thể để lịch sử vẫn ấm
+  trong cache qua quá trình chuyển Plan→Act khi model được chia sẻ.
+
+Dùng **Deep Planning** cho các tác vụ lớn: nạp trước một kế hoạch sạch làm
+cho giai đoạn Act (đắt đỏ) ngắn hơn và ít khám phá hơn.
+
+## 3. Kỷ luật ngữ cảnh — Auto Compact, `/smol`, `/newtask`
+
+```mermaid
+flowchart TD
+    A[Ngữ cảnh đang đầy dần] --> B{Cùng mục tiêu,<br/>cùng tác vụ?}
+    B -- có --> S["/smol — cô đọng tại chỗ,<br/>tiếp tục làm việc"]
+    B -- "không — chuyển tiếp tự nhiên<br/>(nghiên cứu → triển khai,<br/>đã sửa lỗi → lỗi tiếp theo)" --> N["/newtask — đóng gói kế hoạch,<br/>quyết định, file, bước tiếp theo<br/>vào một tác vụ mới"]
+    A -.->|không làm gì| C[Auto Compact vẫn kích hoạt<br/>gần giới hạn]
+```
+
+- **Một tác vụ = một mục tiêu.** Các tác vụ dài, nhiều mục tiêu tích lũy
+  lịch sử mà mỗi lượt đều tính phí lại (nguyên nhân 2.1). `/newtask` tại
+  các điểm chuyển tiếp là mẫu hình bàn giao-tóm-tắt từ
+  `subagent-context-handoff.md` — trạng thái mang theo là *tóm tắt*,
+  không phải transcript.
+- Ưu tiên `/smol` tường minh tại một điểm dừng tự nhiên hơn là chờ Auto
+  Compact giữa luồng — bạn chọn thời điểm việc làm mới cache (một lần)
+  xảy ra.
+- Giữ **Focus Chain** bật cho các tác vụ dài để danh sách việc cần làm
+  sống sót qua nén.
+- Đừng dán log/file khổng lồ vào chat — tham chiếu đường dẫn và để Cline
+  đọc; nhắc đến file bằng `@file` để chỉ những gì cần thiết vào ngữ cảnh.
+
+## 4. Cắt gọt chi phí cố định mỗi request
+
+Mọi thứ dưới đây đi theo **mỗi request đơn lẻ** của mọi tác vụ:
+
+- **`.clinerules`** — giữ nó gọn nhẹ (nó là một phần mở rộng system
+  prompt, nguyên nhân 6.4). Chuyển các playbook theo tình huống vào tài
+  liệu Cline đọc theo yêu cầu; đừng để thư mục rules trở thành một wiki.
+  Không bao giờ đặt nội dung dễ thay đổi (ngày tháng, số ticket) trong
+  rules — đó là một yếu tố vô hiệu hóa cache toàn phiên; và **đừng chỉnh
+  sửa rules giữa tác vụ** (hoàn thành, chỉnh sửa, `/newtask`).
+- **`.clineignore`** — loại trừ `node_modules`, output build, lockfile,
+  code sinh ra, fixture. Cắt giảm cả chi phí liệt kê file lẫn các lần đọc
+  khổng lồ vô tình.
+- **MCP server** — schema tool của mọi server đã kết nối đều bị chèn vào
+  trọn gói (nguyên nhân 3.4). Tắt các server bạn không dùng *hôm nay* và
+  tắt các tool không dùng của những cái bạn giữ lại; bật lại chỉ tốn vài
+  giây. Vài server rảnh rỗi có thể âm thầm thêm hàng nghìn token mỗi
+  request.
+
+## 5. Đo lường
+
+- **Theo từng tác vụ**: tiêu đề tác vụ của Cline hiển thị token
+  (vào/ra), số lần đọc/ghi cache, và chi phí — hãy biến việc kiểm tra nó
+  thành thói quen; các bất thường (đọc cache bằng 0, input phình to) hiển
+  thị ngay tại đó.
+- **Cấp đội/hệ thống** (yêu cầu Tier 1.1): trỏ nhà cung cấp tương thích
+  OpenAI của Cline vào một **gateway LiteLLM** (MIT) với key theo từng kỹ
+  sư, và gửi usage tới **Langfuse** (MIT) / **Helicone** (Apache-2.0). Bạn
+  nhận được ba cảnh báo từ `recommended-setup.md` (sụt cache-hit, tăng
+  trưởng siêu tuyến tính, chi phí mỗi tác vụ) trên toàn bộ usage Cline của
+  mọi người — lưu ý là các route gateway vẫn phải hỗ trợ caching, nên hãy
+  kiểm chứng chỉ số cache sau khi chèn proxy.
+
+## 6. Các add-on không phụ thuộc agent, theo nguyên nhân chúng tấn công
+
+Mỗi add-on dưới đây ánh xạ tới một nguyên nhân được đánh số trong
+[`../CAUSE.md`](../CAUSE.md) và một tài liệu giải pháp giải thích cơ chế.
+Danh sách này cố tình có hình dạng-theo-khoảng-trống: Cline đã bao phủ
+nén, chỉnh sửa diff, và caching có sẵn (§Tier 0), nên công cụ bên thứ ba
+chỉ đáng thêm vào ở nơi Cline có khoảng trống.
+
+### Phình to output tool — nguyên nhân 3.1, 2.1 → [`tool-output-compression.md`](tool-output-compression.md)
+
+Khoảng trống có sẵn lớn nhất của Cline: đọc file và output lệnh vào ngữ
+cảnh không được cắt lát.
+
+| Công cụ | Giấy phép | Cách nó lắp vào Cline |
+| --- | --- | --- |
+| RTK (`rtk-ai/rtk`) | Apache-2.0 | Nén output của 100+ lệnh dev 60–90% trước khi vào ngữ cảnh; **cấu hình dự án Cline có sẵn**; giữ nguyên thất bại test/diff/lỗi |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Proxy local hoặc MCP server nén kết quả tool khi đang truyền (JSON 60–95%, build log ~94%); `CacheAligner` giữ cache prefix tiếp tục hit; **Cline có trong ma trận hỗ trợ của nó** |
+
+### Khởi động lạnh & định hướng repo — nguyên nhân 6.5, 4.2 → [`code-maps.md`](code-maps.md)
+
+Mỗi tác vụ Cline mới đều khám phá lại repo (chi phí khởi động lạnh
+25–60K token).
+
+| Công cụ | Giấy phép | Cách nó lắp vào Cline |
+| --- | --- | --- |
+| Repomix (`yamadashy/repomix`) | MIT | Đóng gói/nén repo (`--compress` = chỉ chữ ký) vào một file đã check-in; tham chiếu nó bằng `@file` khi bắt đầu tác vụ |
+| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói ngữ cảnh `.codesight/` agent đọc thay vì quét lại |
+| TokenSave (`aovestdipaperino/tokensave`) | Mã nguồn mở | Server đồ thị code MCP cục bộ — Cline truy vấn đồ thị ký hiệu đã dựng sẵn thay vì các vòng lặp grep/read (lưu ý nguyên nhân 3.4: nó thêm schema tool) |
+| OpenMemory MCP (mem0) | Apache-2.0 | Server bộ nhớ MCP local-first, **Cline được hỗ trợ chính thức** — quyết định/sự kiện tồn tại lâu qua các tác vụ để bàn giao `/newtask` và các phiên mới bắt đầu ấm |
+
+Lựa chọn thay thế có sẵn của Cline cho bộ nhớ: mẫu hình cộng đồng
+**Memory Bank** (các file `.clinerules` có cấu trúc mà agent duy trì) —
+không hạ tầng mới, nhưng nó đi theo mọi request, nên hãy giữ nó gọn nhẹ
+(nguyên nhân 6.4).
+
+### Dài dòng output — nguyên nhân 5.2 → [`concise-output-prompting.md`](concise-output-prompting.md)
+
+| Công cụ | Giấy phép | Cách nó lắp vào Cline |
+| --- | --- | --- |
+| Caveman (`wilpel/caveman-compression`) | MIT | Rules/skill nén output, Cline được hỗ trợ; loại bỏ tường thuật/từ đệm trong khi giữ code và sự kiện — chỉ dùng cho công việc nội bộ, không phải văn xuôi hướng người dùng |
+
+### Cấp hệ thống: trùng lặp, đo lường, định tuyến — nguyên nhân 6.6, 4.3, 6.2
+
+| Công cụ | Giấy phép | Cách nó lắp vào Cline |
+| --- | --- | --- |
+| Gateway LiteLLM + Langfuse / Helicone | MIT / Apache-2.0 | Trỏ nhà cung cấp tương thích OpenAI của Cline vào gateway → usage theo từng kỹ sư, ba cảnh báo, định tuyến thống nhất (`token-counting.md`, `model-routing.md`) |
+| GPTCache (`zilliztech/GPTCache`) | MIT | Cache cấp phản hồi tại gateway cho các prompt chỉ-đọc lặp lại; **tránh xa các route chỉnh sửa code** (`semantic-caching.md`) |
+
+### Chi phí prompt — nguyên nhân 6.4 → [`prompt-de-scaffolding.md`](prompt-de-scaffolding.md)
+
+| Công cụ | Giấy phép | Cách nó lắp vào Cline |
+| --- | --- | --- |
+| promptfoo | MIT | Loại bỏ các khối `.clinerules` như bất kỳ prompt nào: xóa một khối, chạy các tác vụ đánh giá của bạn, giữ việc xóa nếu chất lượng vẫn vững |
+
+### Phục vụ model local — nguyên nhân 1.1 → [`prompt-caching.md`](prompt-caching.md)
+
+| Công cụ | Giấy phép | Cách nó lắp vào Cline |
+| --- | --- | --- |
+| vLLM / SGLang | Apache-2.0 | Đặt trước các thiết lập kiểu Ollama/LM Studio với APC/RadixAttention để lịch sử gửi lại của Cline được tái sử dụng prefix mà một server local trần sẽ không cho bạn |
+
+Bộ ba **RTK + Headroom + Caveman** là "bộ công cụ tiết kiệm token" của
+cộng đồng cho các agent VS Code — nén CLI phía input, nén kết quả tool cấp
+API, và nén phản hồi phía output tương ứng; cả ba đều liệt kê Cline là
+được hỗ trợ. Thêm **OpenMemory hoặc một bản đồ Repomix đã check-in** lên
+trên và hai khoảng trống cấu trúc còn lại (phình to output tool và khởi
+động lạnh) đều được bao phủ.
+
+Những gì bạn **không nên** thêm: các trình nén ngữ cảnh kiểu LLMLingua
+(rủi ro độ trung thực trên code — `recommended-setup.md` Tier 3), một lớp
+nén thứ hai (Auto Compact + `/smol` của Cline đã bao phủ nguyên nhân
+2.1), hoặc một router model động (việc tách Plan/Act *chính là* router
+cho hồ sơ này).
+
+## Checklist thiết lập
+
+1. ☐ Nhà cung cấp API key có caching (Anthropic trực tiếp hoặc
+   OpenRouter); xác nhận số lần đọc cache trong phân tích chi phí tác vụ
+2. ☐ Model Plan/Act được cấu hình theo bản đồ; effort/thinking được chỉnh
+   theo từng chế độ
+3. ☐ `.clineignore` bao phủ dependency/build artifact; `.clinerules` gọn
+   nhẹ và cố định giữa tác vụ
+4. ☐ MCP server đã cắt gọt về tập hiện tại; các tool không dùng đã tắt
+5. ☐ Thói quen: một tác vụ = một mục tiêu, `/smol` tại các điểm dừng,
+   `/newtask` tại các điểm chuyển tiếp, Focus Chain bật
+6. ☐ (Đội) Gateway LiteLLM + Langfuse với ba cảnh báo
+7. ☐ Add-on lấp khoảng trống nơi đo lường biện minh được: RTK/Headroom
+   cho phình to output tool, bản đồ Repomix hoặc OpenMemory MCP cho khởi
+   động lạnh, Caveman cho các route nội bộ dài dòng
+
+## Tác động dự kiến
+
+| Thay đổi | Hiệu ứng điển hình |
+| --- | --- |
+| Nhà cung cấp hỗ trợ caching (so với không có) | Giảm 5–10× input hiệu dụng trong các phiên dài |
+| Tách model Plan/Act | Giảm 2–4× giá pha trộn mỗi token trên công việc nặng về Act |
+| Cắt gọt MCP + rules gọn nhẹ | Giảm hàng nghìn token trên *mọi* request |
+| Kỷ luật `/smol`–`/newtask` | Chi phí phiên từ bậc hai → có giới hạn; ít tác vụ quá dài làm giảm chất lượng hơn |
+| `.clineignore` | Loại bỏ lớp tăng vọt do đọc khổng lồ vô tình |
+
+---
+
 # Coding Setup: Cline (VS Code Extension)
 
 A concrete instantiation of [`recommended-setup.md`](recommended-setup.md)

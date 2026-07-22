@@ -1,3 +1,265 @@
+# Thiết lập Coding-Agent Doanh nghiệp: Claude, GPT, Gemini (Tiếng Việt)
+
+Các cách hiện thực hóa cụ thể, theo từng nhà cung cấp của
+[`recommended-setup.md`](recommended-setup.md) cho **coding agent trong môi
+trường doanh nghiệp**, cho ba stack lớn. Mỗi phần bao gồm: tuyến truy cập
+doanh nghiệp (và tuyến nào âm thầm *mất* các tính năng tối ưu token), harness
+coding nên chuẩn hóa, cách caching thực sự hoạt động ở đó, bản đồ
+model/effort, và các kết nối batch + đo lường.
+
+> ⚠️ Giá cả, tên model, và tính khả dụng tính năng thay đổi nhanh — coi các
+> con số ở đây là hình dạng của bối cảnh và xác minh lại với tài liệu hiện
+> tại của nhà cung cấp trước khi ký hợp đồng.
+
+---
+
+## Bản thiết kế mà cả ba đều hiện thực hóa
+
+| Tier (từ `recommended-setup.md`) | Claude | GPT | Gemini |
+| --- | --- | --- | --- |
+| Harness (Tier 0) | Claude Code / Claude Agent SDK | Codex (CLI + cloud) / Agents SDK | Gemini CLI + Code Assist / ADK |
+| Cơ chế caching | Breakpoint `cache_control` tường minh (TTL 5 phút/1 giờ) | Caching prefix tự động (≥1.024 token) + `prompt_cache_key` | Caching ngầm định + `CachedContent` tường minh (TTL, tính phí lưu trữ) |
+| Giảm giá input đã cache | ~90% (đọc ~0.1×) | 50–90% tùy dòng model (GPT-5.x: ~90%) | ~75% trên token đã cache |
+| Nút điều chỉnh reasoning | `output_config.effort` (low→max) + adaptive thinking | `reasoning_effort` (minimal→high) + `verbosity` | `thinking_level` / `thinking_budget` |
+| Tier batch | Message Batches −50% | Batch API −50% (+ tier Flex trên một số model) | Batch Vertex/Gemini −50% |
+| Hàng đầu/mid/nhỏ cho bản đồ model | Opus 4.8 / Sonnet 5 / Haiku 4.5 | GPT-5.x-Codex / GPT-5.x / GPT-5-mini·nano | Gemini 3 Pro / Gemini 2.5 Flash / Flash-Lite |
+
+---
+
+## 1. Claude (Anthropic)
+
+### Tuyến truy cập — quyết định chi phối mọi thứ
+
+Claude doanh nghiệp tiếp cận bạn qua năm cánh cửa, và **chúng không tương
+đương về tính năng**. Với một hệ thống coding tối ưu token, sự khác biệt
+quan trọng hơn sự tiện lợi mua sắm:
+
+```mermaid
+flowchart TD
+    A[Truy cập Claude doanh nghiệp] --> B{Ràng buộc?}
+    B -- "không có / ưu tiên hiệu quả token" --> C["API Claude 1P<br/>(thỏa thuận doanh nghiệp)"]
+    B -- "cần billing + IAM của AWS" --> D["Claude Platform trên AWS<br/>(Anthropic vận hành, ngang hàng cùng ngày)"]
+    B -- "phải ở trong Bedrock" --> E["Amazon Bedrock<br/>⚠ mất: Batch API, Files API,<br/>caching tự động, một số server tool"]
+    B -- "cần GCP-native" --> F["Vertex AI<br/>⚠ mất: Batch, Files, web fetch,<br/>thực thi code, caching tự động"]
+    B -- "cần Azure-native" --> G["Microsoft Foundry<br/>phần lớn tính năng còn beta"]
+```
+
+**Khuyến nghị:** API 1P hoặc **Claude Platform trên AWS** (Anthropic vận
+hành với sự tương đương API cùng ngày, SigV4/IAM, billing qua AWS
+Marketplace) — bạn giữ được toàn bộ bề mặt tối ưu. Chỉ chọn Bedrock/Vertex
+khi chính sách bắt buộc, và dự trù cho việc thiếu tier batch giảm 50% và
+Files API (cả hai đều liên quan trực tiếp đến hóa đơn token).
+
+### Harness
+
+- **Coding tương tác + CI:** **Claude Code** — triển khai doanh nghiệp hỗ
+  trợ SSO, cài đặt/chính sách quản lý, kiểm soát chi tiêu, và có thể chạy
+  trên backend 1P, Bedrock, hoặc Vertex. Nó có sẵn toàn bộ stack Tier-0:
+  phần đầu prompt ổn định đã cache, tự động nén, tool có ngân sách (`Read`
+  offset/limit, `Grep` head_limit, bash nền với file log), `Edit` xác minh
+  mỏ neo, tải tool MCP trì hoãn.
+- **Hệ thống agent tùy chỉnh:** **Claude Agent SDK** (cùng harness nhưng
+  dưới dạng thư viện) thay vì một vòng lặp Messages-API trần; bạn kế thừa
+  nén, subagent, hook, và phân quyền thay vì tự xây lại chúng.
+- **Hệ thống quản lý phía server:** Managed Agents (beta) nếu bạn muốn
+  Anthropic chạy vòng lặp + sandbox — các phiên có sẵn nén và caching
+  prompt.
+
+### Cấu hình tối ưu token
+
+1. **Caching:** `cache_control: {type: "ephemeral"}` tường minh trên khối
+   ổn định cuối cùng (cache tool+system cùng nhau); dùng `ttl: "1h"` cho
+   các hệ thống agent có khoảng nghỉ giữa các lượt chạy; pre-warm
+   `max_tokens: 0` trước khi hệ thống khởi động theo lịch. Đọc ~0.1×, ghi
+   1.25×/2×. Thực thi kiểm thử CI ổn định prompt — caching của Claude là
+   tường minh, nên một phần đầu bị thay đổi sẽ thất bại *rõ ràng trong đo
+   lường của bạn* nếu bạn theo dõi `cache_read_input_tokens`.
+2. **Bản đồ model/effort** (theo từng vai trò agent, trong config):
+
+   | Vai trò | Model | Effort |
+   | --- | --- | --- |
+   | Orchestrator / coding khó | `claude-opus-4-8` ($5/$25 mỗi MTok) | `high`, quét `xhigh` |
+   | Subagent coding tiêu chuẩn | `claude-sonnet-5` ($3/$15) | `high` |
+   | Tìm kiếm/khám phá/tóm tắt/commit-msg | `claude-haiku-4-5` ($1/$5) | `low` |
+
+3. **Batch:** định tuyến bộ đánh giá, quét refactor hàng đêm, và phân
+   loại hàng loạt qua Message Batches (−50%, cộng dồn với đọc cache) — chỉ
+   trên 1P và Claude Platform trên AWS.
+4. **Vệ sinh phiên dài:** nén phía server / chỉnh sửa ngữ cảnh
+   (`clear_tool_uses`) đi kèm với harness; xác minh vòng lặp khối nén qua
+   lại nếu bạn điều khiển API trực tiếp.
+5. **Đo lường:** `usage` mang đủ bốn đại lượng bao gồm
+   `cache_creation_input_tokens` — kết nối vào Langfuse/OTel với thẻ
+   `agent_role`; cảnh báo khi tỷ trọng cache-hit sụt theo từng vai trò.
+
+---
+
+## 2. GPT (OpenAI / Azure)
+
+### Tuyến truy cập
+
+- **OpenAI trực tiếp (thỏa thuận doanh nghiệp)** — đầy đủ bề mặt tính
+  năng, chỗ ngồi ChatGPT Enterprise cho con người + API cho agent; có sẵn
+  phụ lục zero-data-retention và tuân thủ.
+- **Azure OpenAI (Azure AI Foundry)** — cho IAM native của Azure, mạng,
+  cư trú dữ liệu theo vùng/khu vực, và **Provisioned Throughput Units
+  (PTU)** cho giá dung lượng dự đoán được. Tương đương tính năng khá tốt
+  nhưng thường trễ hơn API trực tiếp vài tuần; xác minh mức giảm giá
+  Batch + caching trên loại triển khai mục tiêu của bạn trước khi giả định
+  chúng có sẵn.
+
+### Harness
+
+- **Coding tương tác + CI:** **Codex** — CLI cho local/CI, Codex cloud
+  cho tác vụ ủy thác, với admin/SSO doanh nghiệp qua workspace ChatGPT
+  Enterprise. Các biến thể Codex của GPT-5.x được huấn luyện tiếp chuyên
+  cho coding agentic và là mặc định dự kiến ở đó.
+- **Hệ thống tùy chỉnh:** **OpenAI Agents SDK** trên **Responses API**
+  (không phải chat completions trần) — bạn có trạng thái hội thoại phía
+  server (`previous_response_id`), tool có sẵn, và handoff; Responses API
+  cũng là nơi việc tái sử dụng mục reasoning giữa các lượt được xử lý hộ
+  bạn, điều quan trọng cho cả chi phí lẫn chất lượng trên các model
+  reasoning dòng o-series/GPT-5.
+
+### Cấu hình tối ưu token
+
+1. **Caching tự động — việc của bạn là kỷ luật prefix.** Caching prefix
+   kích hoạt trên các prompt ≥1.024 token, không cần bật, không phụ phí
+   ghi; input đã cache được giảm giá 50–90% tùy dòng model (GPT-5.x ở đầu
+   cao). Vì không có breakpoint tường minh, đòn bẩy *duy nhất* là thứ tự
+   prefix ổn định từng byte (`stable-prompt-architecture.md`) cộng với
+   `prompt_cache_key` để cải thiện định tuyến cho các prefix chia sẻ QPS
+   cao. Theo dõi `usage.prompt_tokens_details.cached_tokens` theo từng
+   route.
+2. **Bản đồ model/effort:**
+
+   | Vai trò | Model | Nút điều chỉnh |
+   | --- | --- | --- |
+   | Orchestrator / coding khó | GPT-5.x-Codex (biến thể tier Max cho công việc dài hơi) | `reasoning_effort: high` |
+   | Subagent coding tiêu chuẩn | GPT-5.x / Codex tiêu chuẩn | `reasoning_effort: medium` |
+   | Công việc chân tay tìm kiếm/tóm tắt/định dạng | GPT-5-mini / nano | `reasoning_effort: minimal`–`low`, `verbosity: low` |
+
+   `verbosity` là nút điều chỉnh độ dài output có sẵn — dùng nó thay vì
+   can thiệp prompt cho các route kiểu báo cáo.
+3. **Batch + Flex:** Batch API −50% cho đánh giá/backfill; tier dịch vụ
+   **Flex** (chậm hơn, rẻ hơn) bao phủ lưu lượng "sớm nhưng chưa cần ngay"
+   không khớp ngữ nghĩa batch 24 giờ. Trên Azure, ưu tiên kết hợp
+   Batch/PTU: PTU cho tải tương tác ổn định, batch cho tải offline dồn
+   cục.
+4. **Theo dõi token reasoning:** chi tiêu reasoning hiển thị tại
+   `usage.completion_tokens_details.reasoning_tokens` — cảnh báo khi tỷ
+   trọng reasoning leo thang theo từng route; đó là mục tương đương phía
+   GPT của dòng token thinking.
+5. **Quản lý ngữ cảnh là việc của bạn (hoặc của SDK):** các vòng lặp kiểu
+   chat-completions không có nén phía server — dùng cắt tỉa/tóm tắt phiên
+   của Agents SDK, hoặc `truncation: "auto"` của Responses API, và áp dụng
+   các heuristic của `context-editing.md` trong các harness tùy chỉnh.
+
+---
+
+## 3. Gemini (Google Cloud)
+
+### Tuyến truy cập
+
+- **Vertex AI** là cửa ngõ doanh nghiệp cho hệ thống API: CMEK, VPC-SC, cư
+  trú dữ liệu, **Provisioned Throughput** cho dung lượng dự trữ, và batch
+  prediction. Khóa AI Studio cấp người tiêu dùng không phải là con đường
+  doanh nghiệp.
+- Giấy phép **Gemini Code Assist Enterprise** cho nhà phát triển con người
+  (IDE + tùy biến code trên repo riêng của bạn); **Gemini Enterprise** cho
+  quản trị agent/workspace toàn tổ chức.
+
+### Harness
+
+- **Coding tương tác + CI:** **Gemini CLI** (agent terminal, gắn với cấp
+  phép Code Assist cho kiểm soát doanh nghiệp), Code Assist trong IDE;
+  IDE agentic của Google (Antigravity) và agent coding bất đồng bộ Jules
+  là các lựa chọn trải nghiệm được quản lý — đánh giá độ trưởng thành cho
+  hệ thống của bạn trước khi chuẩn hóa.
+- **Hệ thống tùy chỉnh:** **Agent Development Kit (ADK)** + Vertex AI
+  Agent Engine cho các vòng lặp được host — một lần nữa, kế thừa thay vì
+  tự xây tay vòng lặp, phiên, và hệ thống ống nước tool.
+
+### Cấu hình tối ưu token
+
+1. **Caching hai lớp — quản lý chủ động lớp tường minh.**
+   - *Caching ngầm định*: tự động trên các model 2.5+/3, giảm giá ~75%
+     trên token đã cache, cùng kỷ luật ổn định prefix như mọi nơi khác
+     (theo dõi `cached_content_token_count`).
+   - *`CachedContent` tường minh*: gắn một kho ngữ liệu lớn (tài liệu
+     monorepo, tóm tắt bề mặt API, hướng dẫn phong cách) một lần với TTL
+     đã chọn. **Nó tính phí lưu trữ theo token-giờ** — đặt TTL theo cửa sổ
+     sử dụng và xóa khi rảnh, nếu không bản thân cache trở thành một
+     dòng chi phí. Đây là cơ chế tốt nhất trong ba nhà cung cấp cho "nhiều
+     agent chia sẻ một kho ngữ liệu khổng lồ", và là cơ chế duy nhất bạn
+     có thể *quên tắt đi*.
+2. **Chú ý các bậc giá ngữ cảnh dài.** Các cửa sổ khổng lồ của Gemini
+   (1–2M) mang **giá mỗi token cao hơn trên một ngưỡng** (ví dụ >200K
+   input trên các tier Pro). "Cứ nhồi cả monorepo vào" sẽ vượt qua vào
+   bậc giá cao cấp — truy xuất/cắt lát (`retrieval-tuning.md`,
+   `tool-output-budgets.md`) vẫn rẻ hơn kích thước cửa sổ thô.
+3. **Bản đồ model/thinking:**
+
+   | Vai trò | Model | Nút điều chỉnh |
+   | --- | --- | --- |
+   | Orchestrator / coding khó | Gemini 3 Pro | `thinking_level: high` |
+   | Subagent tiêu chuẩn | Gemini 2.5 Flash (hoặc flash tier-3 khi có sẵn) | `thinking_budget` vừa phải |
+   | Chân tay / phân loại / tóm tắt | 2.5 Flash-Lite | `thinking_budget: 0`/tối thiểu |
+
+   Token thinking được hiển thị dưới dạng `thoughts_token_count` — cùng
+   cách cảnh báo theo route như hai nhà cung cấp kia.
+4. **Batch:** batch prediction của Vertex ở mức −50% cho đánh giá/backfill/
+   biến đổi hàng loạt; kết hợp với caching tường minh cho hỏi-đáp hàng loạt
+   trên kho ngữ liệu chung.
+5. **Đo lường:** `usageMetadata` (số token prompt/candidate/cached/thoughts)
+   vào cùng pipeline Langfuse/OTel — giữ một schema dashboard duy nhất qua
+   cả ba nhà cung cấp (mô hình bốn đại lượng từ
+   [`../CAUSE.md`](../CAUSE.md) §Cẩm nang Đo lường ánh xạ gọn gàng).
+
+---
+
+## Vận hành một hệ thống hỗn hợp (hầu hết doanh nghiệp cuối cùng đều ở đây)
+
+1. **Một gateway, một schema đo lường.** Đặt một gateway (LiteLLM, Portkey,
+   hoặc của riêng bạn) trước cả ba để usage đổ vào một pipeline với thẻ
+   `vendor / model / agent_role / session` thống nhất. Chi phí-mỗi-tác-vụ-
+   hoàn-thành phải so sánh được qua các nhà cung cấp nếu không cuộc tranh
+   luận về thành phần hệ thống sẽ chạy trên cảm tính.
+2. **Định tuyến theo hệ thống/vai-trò-agent, không bao giờ theo từng
+   lượt.** Cache gắn với nhà-cung-cấp+model cụ thể; nhảy nhà cung cấp giữa
+   phiên sẽ làm mới lại mọi thứ. Gán một nhà-cung-cấp+model cho mỗi vai trò
+   agent (như trong các bản đồ ở trên) và giữ các phiên đồng nhất.
+3. **Đừng ép một harness duy nhất qua các nhà cung cấp.** Harness coding
+   riêng của mỗi nhà cung cấp mang theo tối ưu Tier-0 của nó (Claude Code,
+   Codex, Gemini CLI); một vòng lặp tùy chỉnh theo mẫu số chung nhỏ nhất
+   thường đánh mất chất lượng caching/nén trên cả ba. Chuẩn hóa các *quy
+   ước* (hợp đồng tóm tắt/artifact, thẻ đo lường, CI ổn định prompt) —
+   không phải chuẩn hóa binary.
+4. **Đàm phán bằng dữ liệu sử dụng.** Các thỏa thuận doanh nghiệp trên cả
+   ba phía đều định giá theo khối lượng cam kết — stack đo lường từ Tier 1
+   đồng thời là bằng chứng đàm phán của bạn cho việc nhà cung cấp nào nhận
+   khối lượng công việc nào.
+
+## Kết quả dự kiến
+
+Áp dụng theo từng nhà cung cấp, cùng mức cải thiện chi phí-mỗi-tác-vụ
+5–20× từ `recommended-setup.md` vẫn giữ vững, với các chênh lệch đặc thù
+theo nhà cung cấp là:
+
+- **Claude:** lợi ích caching *có thể kiểm soát* lớn nhất (breakpoint
+  tường minh, TTL 1 giờ, pre-warm) — phù hợp nhất cho các hệ thống agent
+  sống lâu; chú ý ma trận tính năng theo tuyến truy cập nếu không bạn sẽ
+  âm thầm mất các công cụ batch/caching.
+- **GPT:** caching ít công sức nhất (tự động, không phụ phí ghi) và các
+  nút điều chỉnh `verbosity`/`reasoning_effort` có sẵn — nhanh nhất để đạt
+  trạng thái "tốt"; quản lý ngữ cảnh là phần bạn phải tự lo.
+- **Gemini:** kinh tế kho-ngữ-liệu-chung mạnh nhất (cache tường minh) và
+  tier chân tay rẻ nhất — phù hợp nhất cho các hệ thống nặng về ngữ liệu;
+  chủ động quản lý lưu trữ cache và các bậc giá ngữ cảnh dài nếu không mức
+  tiết kiệm sẽ đảo ngược.
+
+---
+
 # Enterprise Coding-Agent Setups: Claude, GPT, Gemini
 
 Concrete, vendor-specific instantiations of
