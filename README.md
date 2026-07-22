@@ -17,12 +17,14 @@ nó chỉ chứa ghi chú, phân tích và tài liệu tham khảo — không ph
 | `README.md` | Tệp này — tổng quan và quy ước. |
 | `CAUSE.md` | Danh mục các nguyên nhân gây tiêu tốn token cao đã xác định. |
 | `solutions/` | Mỗi tài liệu tương ứng với một giải pháp / chiến lược giảm thiểu. |
+| `setups/` | Hướng dẫn thiết lập chuyên biệt cho các nhà cung cấp và công cụ. |
 
 ## Cách sử dụng
 
 1. Đọc `CAUSE.md` để hiểu các nguyên nhân đã biết.
 2. Duyệt `solutions/` để tìm các giải pháp tương ứng với những nguyên nhân đó.
-3. Khi bạn phát hiện điều gì mới, hãy thêm vào `CAUSE.md` và, nếu có cách khắc
+3. Xem `setups/` để có hướng dẫn thiết lập chuyên biệt cho nhà cung cấp hoặc công cụ cụ thể của bạn.
+4. Khi bạn phát hiện điều gì mới, hãy thêm vào `CAUSE.md` và, nếu có cách khắc
    phục, hãy thêm tài liệu tương ứng trong `solutions/`.
 
 ## Ghi chú đóng góp
@@ -102,12 +104,14 @@ notes, analysis, and reference material — not application code.
 | `README.md` | This file — overview and conventions. |
 | `CAUSE.md` | Catalog of identified causes of high token consumption. |
 | `solutions/` | One document per solution / mitigation strategy. |
+| `setups/` | Specialized setup guides for vendors and tools. |
 
 ## How to Use
 
 1. Read `CAUSE.md` to understand the known causes.
 2. Browse `solutions/` for mitigations mapped to those causes.
-3. When you discover something new, add it to `CAUSE.md` and, if you have a
+3. See `setups/` for specialized setup guides for your vendor or tool.
+4. When you discover something new, add it to `CAUSE.md` and, if you have a
    fix, add a matching document under `solutions/`.
 
 ## Contributing Notes
