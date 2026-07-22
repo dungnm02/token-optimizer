@@ -1,3 +1,109 @@
+# Khám phá Tool Động (Tool Search / Tải trì hoãn) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 3.4 trong [`../CAUSE.md`](../CAUSE.md)
+
+**Ý tưởng:** Chỉ gửi một tool tìm kiếm/khám phá nhỏ xíu trong mỗi request;
+toàn bộ danh mục schema tool nằm ngoài ngữ cảnh, và model chỉ tải những
+schema nó thực sự cần, theo yêu cầu — với các schema được khám phá **nối
+thêm** để cache prompt còn nguyên vẹn.
+
+---
+
+## Tại sao điều này đang cấp bách (số liệu về sự phình to của MCP)
+
+Vấn đề này tăng theo quy mô áp dụng MCP. Một stack điển hình gồm **bảy MCP
+server tiêu tốn ~67.300 token định nghĩa tool — ~34% của cửa sổ ngữ cảnh
+200K — trước khi người dùng gõ bất cứ điều gì**; các stack doanh nghiệp
+5–10 server thường xuyên đốt 100–200K token chi phí schema thuần túy. Đây
+không chỉ là vấn đề chi phí: khi menu tool phình to, **độ chính xác chọn
+tool đã được đo là sụp đổ từ ~43% xuống dưới ~14%** — model chọn sai tool
+phần lớn thời gian. Chi phí và chất lượng suy giảm cùng nhau, đó là lý do
+giải pháp này giờ đã được tích hợp sẵn.
+
+## Cách áp dụng
+
+1. **Tool search có sẵn từ nhà cung cấp** — *Anthropic*: khai báo một tool
+   tìm kiếm (`tool_search_tool_regex_20251119` hoặc biến thể BM25) và đánh
+   dấu phần còn lại của danh mục là `defer_loading: true`. Các tool bị trì
+   hoãn chỉ đóng góp tên của chúng cho đến khi được tìm kiếm; các schema
+   khớp được nối vào request (an toàn với prefix-cache theo thiết kế). Giữ
+   một vài tool luôn dùng ở chế độ không trì hoãn.
+2. **Khám phá cấp MCP** — với các thiết lập nặng về MCP (nguồn phổ biến
+   nhất gây phình to schema: gắn nguyên cả server), dùng một harness trì
+   hoãn schema tool MCP sau một meta-tool kiểu `ToolSearch` (Claude Code
+   làm điều này có sẵn) thay vì mở rộng toàn bộ schema của mọi server vào
+   mỗi request.
+3. **Phân phạm vi route tĩnh như phương án dự phòng không cần kỹ thuật** —
+   nếu các request có thể phân loại trước ("tác vụ thanh toán" so với "tác
+   vụ triển khai"), chọn tập con tool liên quan trong harness theo từng
+   route. Không cần tool tìm kiếm; chỉ cần ngừng gửi hợp của mọi thứ. Giữ
+   tập con của mỗi route *ổn định* để caching hoạt động (nguyên nhân 1.3).
+4. **Cắt gọn chính các schema** — mô tả cũng là văn bản prompt: thắt chặt
+   các mô tả dài dòng, thu gọn tài liệu enum dư thừa, tách các payload ví
+   dụ ra một skill/tài liệu model có thể đọc theo yêu cầu.
+5. **Hoặc trình bày danh mục dưới dạng code, không phải schema ("Code
+   Mode").** Thay vì liệt kê hàng trăm tool, cho model *một* tool thực thi
+   code cùng với một API có kiểu mà nó có thể gọi theo chương trình; nó
+   viết một script dựa trên bề mặt API thay vì chọn từ một menu JSON phình
+   to. Trên các API rất lớn (ví dụ 2.500+ endpoint), điều này đã cắt giảm
+   input định nghĩa tool tới **~99,9%**, và nó kết hợp nhiều lệnh gọi trong
+   một lượt — xem [`tool-composition.md`](tool-composition.md). Tải trì
+   hoãn và Code Mode bổ sung cho nhau: trì hoãn những gì vẫn giữ dạng tool,
+   biến thành code những bề mặt API khổng lồ.
+
+```mermaid
+flowchart LR
+    subgraph Before["❌ Toàn bộ schema từ đầu"]
+        A["200 schema tool<br/>≈ 40–70K token<br/>trong mỗi request"]
+    end
+    subgraph After["✅ Trì hoãn + tìm kiếm"]
+        B["1 tool tìm kiếm + tên<br/>≈ 1–3K token"] --> C{model tìm kiếm}
+        C -->|khớp| D["3 schema liên quan được nối thêm<br/>≈ 1–2K token"]
+    end
+```
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| Anthropic API | Tool search (`tool_search_tool_regex/bm25`) + `defer_loading` | Khám phá chỉ-nối-thêm; giữ nguyên cache prompt; biến thể regex và BM25 |
+| Claude Code | Tool MCP trì hoãn (`ToolSearch`) | Triển khai tham chiếu cho các danh mục MCP |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| Client MCP `tools/list` tải lười (lazy) | MIT (SDK, tiêu chuẩn mở) | Tải danh mục server vào một index cục bộ, cung cấp tìm kiếm — không phải hợp thô; hoạt động với mọi agent hỗ trợ MCP |
+| Registry tool theo phạm vi route (tool theo node của LangGraph) | MIT | Phân tập con tất định theo từng node workflow |
+
+## Đánh đổi
+
+- Thêm một lượt qua lại khám phá khi cần một tool chưa tải (một lần tìm
+  kiếm + một schema được nối thêm). Với các danh mục dưới ~10 tool, việc
+  trì hoãn tiết kiệm quá ít để đáng làm.
+- Chất lượng tìm kiếm rất quan trọng: tên/mô tả tool tệ → khám phá thất
+  bại → model tự ứng biến hoặc bỏ cuộc. Đầu tư vào việc đặt tên có thể tìm
+  kiếm được.
+- Không bao giờ trì hoãn mọi thứ — model phải luôn có sẵn tool tìm kiếm
+  cùng các tool cốt lõi của nó (các nhà cung cấp từ chối cấu hình trì hoãn
+  toàn bộ).
+
+## Tác động dự kiến
+
+- Chi phí cố định mỗi request từ schema tool giảm **~10–50×** cho các danh
+  mục lớn (hàng chục nghìn token → 1–3K), trên *mọi* request.
+- Các đánh giá đã công bố của Anthropic về tool search còn cho thấy **cải
+  thiện độ chính xác** trên các tác vụ danh mục lớn (ví dụ thiết lập nặng
+  về MCP), vì các schema không liên quan đang làm suy giảm việc chọn tool
+  — chi phí và chất lượng cùng cải thiện ở đây.
+- Tỷ lệ cache-hit cải thiện như một hiệu ứng phụ: một phần đầu nhỏ, ổn
+  định cộng với khám phá chỉ-nối-thêm chính xác là kiến trúc mà
+  `prompt-caching.md` mong muốn.
+
+---
+
 # Dynamic Tool Discovery (Tool Search / Deferred Loading)
 
 **Addresses:** Cause 3.4 in [`../CAUSE.md`](../CAUSE.md)

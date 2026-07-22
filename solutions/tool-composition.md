@@ -1,3 +1,114 @@
+# Kết hợp Tool (Điều phối thực thi bằng code) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 3.2 trong [`../CAUSE.md`](../CAUSE.md)
+
+**Ý tưởng:** Thay thế các chuỗi lượt qua lại tool được trung gian bởi model
+bằng một bước duy nhất trong đó model **viết code kết hợp các tool**; code
+chạy trong sandbox, kết quả trung gian chảy giữa các lệnh gọi tool bên
+trong runtime, và chỉ câu trả lời cô đọng cuối cùng quay lại ngữ cảnh của
+model.
+
+---
+
+## Tại sao nó thắng
+
+```mermaid
+sequenceDiagram
+    participant M as Model
+    participant T as Tool
+    rect rgb(255, 235, 235)
+    Note over M,T: ❌ Kiểu qua lại — 3 lượt xử lý ngữ cảnh đầy đủ
+    M->>T: get_profile(user)
+    T-->>M: profile 4K token → vào ngữ cảnh
+    M->>T: get_orders(profile.id)
+    T-->>M: danh sách đơn hàng 12K token → vào ngữ cảnh
+    M->>T: check_inventory(order_ids)
+    T-->>M: kết quả 6K token → vào ngữ cảnh
+    end
+    rect rgb(235, 255, 235)
+    Note over M,T: ✅ Kết hợp — 1 lượt, dữ liệu trung gian không bao giờ bị tính phí
+    M->>T: run_code("p=get_profile(u); o=get_orders(p.id);<br/>print(summarize(check_inventory(o)))")
+    T-->>M: câu trả lời cuối 300 token
+    end
+```
+
+Mỗi lượt qua lại gửi lại toàn bộ lịch sử (đang lớn dần); kết hợp chỉ gửi
+một lần. Payload trung gian (thường là phần lớn dữ liệu) không bao giờ vào
+ngữ cảnh — chúng sinh ra và mất đi bên trong sandbox.
+
+## Cách áp dụng
+
+1. **Gọi tool theo chương trình có sẵn từ nhà cung cấp** — *Anthropic
+   PTC*: khai báo tool thực thi code và đánh dấu các tool tùy chỉnh của bạn
+   với `allowed_callers: ["code_execution_20260120"]`; Claude viết một
+   script gọi các tool của bạn như các hàm bên trong sandbox, và chỉ stdout
+   của script quay lại ngữ cảnh. *OpenAI*: code interpreter + kết hợp
+   function-calling trên Responses API.
+2. **Framework agent code-as-action** — **smolagents** của Hugging Face
+   (`CodeAgent`) biến code thành định dạng hành động *mặc định*: thay vì
+   phát một lệnh gọi tool JSON mỗi bước, model phát ra một đoạn Python có
+   thể lặp, rẽ nhánh, và gọi nhiều tool. Dòng nghiên cứu CodeAct đứng sau
+   điều này báo cáo giảm tới ~30% số bước so với agent gọi-tool-JSON trên
+   các benchmark nhiều tool — ít bước hơn = ít lượt xử lý ngữ cảnh đầy đủ
+   hơn.
+3. **Kết hợp trước một cách tất định** — nếu chuỗi *luôn luôn* giống nhau
+   (profile → đơn hàng → tồn kho), đó hoàn toàn không phải là một quyết
+   định của LLM: hợp nhất nó thành một tool (`get_user_order_status`)
+   trong harness. Token rẻ nhất là token model không bao giờ phải điều
+   phối.
+4. **Gộp các lệnh gọi độc lập trong một lượt** — khi không có kết hợp, ít
+   nhất hãy tận dụng việc dùng tool song song: N lệnh gọi độc lập trong
+   một lượt assistant + toàn bộ kết quả trong một lượt user là một lượt xử
+   lý ngữ cảnh thay vì N.
+5. **Lọc bên trong sandbox** — script kết hợp nên kết thúc bằng một bước
+   `summarize`/`select` để giá trị trả về là câu trả lời, không phải dữ
+   liệu thô (kết hợp với `tool-output-budgets.md`).
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| Anthropic API | Gọi tool theo chương trình (`code_execution` + `allowed_callers`) | Dữ liệu trung gian quay lại code đang chạy, không vào ngữ cảnh; chi phí token tỷ lệ với output cuối cùng |
+| OpenAI API · Codex | Code interpreter + gọi hàm trên Responses API | Kết hợp phía sandbox |
+| Claude Code / Codex CLI / Gemini CLI | Kết hợp có sẵn qua shell (pipeline `Bash`, script) | Các coding agent đã kết hợp qua shell — pipe/lọc trong bash thay vì qua lại với output thô |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| Hugging Face smolagents `CodeAgent` | Apache-2.0 | Code-as-action là định dạng hành động *mặc định*; báo cáo giảm ~30% số bước so với gọi-tool-JSON |
+| LangGraph | MIT | Biểu diễn các chuỗi tất định thành cạnh của đồ thị (code), dành model cho các quyết định thực sự |
+| E2B | Apache-2.0 | Sandbox tự host cho các agent code-as-action; Modal / Daytona là các lựa chọn thương mại/host sẵn thay thế |
+
+## Đánh đổi
+
+- Đòi hỏi một sandbox — hạ tầng, rà soát bảo mật, và (với các lựa chọn
+  host sẵn) chi phí thực thi.
+- Bản thân việc viết code tốn token output; với một lệnh gọi đơn lẻ tầm
+  thường, dùng tool trực tiếp rẻ hơn. Kết hợp đáng giá từ ~3 lệnh gọi nối
+  chuỗi trở lên hoặc bất kỳ dữ liệu trung gian lớn nào.
+- Các thất bại khó kiểm tra hơn: một lỗi bên trong script kết hợp cần
+  script + traceback được hiển thị tốt, nếu không model sẽ tốn lượt gỡ lỗi
+  trong mù mờ.
+- PTC có sẵn từ nhà cung cấp hạn chế một số tính năng (ví dụ không tương
+  thích với schema chặt/buộc chọn tool trên một số stack) — kiểm tra ma
+  trận hiện tại.
+
+## Tác động dự kiến
+
+- Chi phí token của một chuỗi K bước giảm từ **K lượt xử lý ngữ cảnh đầy đủ
+  xuống ~1**; với ngữ cảnh 100K token và K=5, đó là ~500K token input →
+  ~100K.
+- Kết quả trung gian (thường lớn gấp 10–100× câu trả lời cuối cùng) được
+  loại bỏ khỏi ngữ cảnh *vĩnh viễn* — cộng dồn với việc lịch sử tồn tại
+  lâu.
+- Giảm số bước (~30% trong các đánh giá kiểu CodeAct) cũng cắt giảm độ trễ
+  và bề mặt lỗi, không chỉ token.
+
+---
+
 # Tool Composition (Code-Executed Orchestration)
 
 **Addresses:** Cause 3.2 in [`../CAUSE.md`](../CAUSE.md)

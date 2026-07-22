@@ -1,3 +1,113 @@
+# Nén Output Tool (Thu nhỏ những gì trả về) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 3.1 và 2.1 trong [`../CAUSE.md`](../CAUSE.md) —
+bổ sung cho [`tool-output-budgets.md`](tool-output-budgets.md)
+
+**Ý tưởng:** Đặt một giai đoạn nén *giữa tool và ngữ cảnh* để loại bỏ nhiễu
+có thể đoán trước khỏi output lệnh, log, và dữ liệu có cấu trúc trước khi
+model nhìn thấy — giữ lại tín hiệu (lỗi, diff, thất bại test, giá trị cụ
+thể) và loại bỏ boilerplate.
+
+---
+
+## Nén so với ngân sách — hai công việc khác nhau
+
+| | Ngân sách output tool | Nén output tool |
+| --- | --- | --- |
+| Cơ chế | Thiết kế lại *tool của bạn* để trả về một lát cắt nhỏ (offset/limit, offload) | Đứng trước bất cứ thứ gì đang chạy và thu nhỏ các byte nó tạo ra |
+| Yêu cầu | Quyền kiểm soát tool | Không cần gì — hoạt động trên các tool bạn không thể thay đổi, kể cả MCP server và shell thô |
+| Mục tiêu tốt nhất | File lớn, phản hồi API bạn sở hữu | Build log, output test, nhiễu `git`/`kubectl`/`npm`, JSON dài dòng |
+
+Chúng chồng lên nhau: đặt ngân sách cho các tool bạn sở hữu, nén các tool
+bạn không sở hữu.
+
+```mermaid
+flowchart LR
+    A[Chạy Shell / MCP / tool] --> C["Giai đoạn nén<br/>(hook, proxy, hoặc MCP wrapper)"]
+    C -->|"giữ lại tín hiệu:<br/>lỗi, diff, thất bại"| M[Ngữ cảnh model]
+    C -.->|"loại bỏ nhiễu:<br/>thanh tiến trình, cảnh báo<br/>lặp lại, boilerplate, khoảng trắng"| X[/bị loại bỏ/]
+```
+
+## Cách áp dụng
+
+1. **Ưu tiên tất định, chỉ dùng model khi cần.** Hầu hết nhiễu tool có thể
+   loại bỏ bằng quy tắc, với chi phí token bằng 0: loại bỏ mã ANSI, thanh
+   tiến trình, cảnh báo lặp lại, spam giải quyết dependency, nhiễu
+   stack-frame; thu gọn khoảng trắng; giữ lại các dòng lỗi và ngữ cảnh của
+   chúng. Dành việc tóm tắt bằng model cho khối lượng thực sự không có cấu
+   trúc.
+2. **Bảo toàn tín hiệu một cách tường minh.** Quy tắc giữ cho việc nén an
+   toàn: *không bao giờ* bỏ các thất bại test, thông báo lỗi, diff, hoặc
+   stack trace — nén 1.000 dòng "OK" xung quanh chúng, không phải 5 dòng
+   quan trọng. Các công cụ làm điều này đi kèm danh sách cho phép/từ chối
+   được tinh chỉnh theo từng lệnh.
+3. **Nén mạnh nhất với dữ liệu có cấu trúc.** Output JSON/YAML/dạng bảng
+   là lợi ích lớn nhất — in đẹp và khóa lặp lại là chi phí thuần túy; mảng
+   đối tượng → bảng gọn thường tiết kiệm 60–95%.
+4. **Chọn một điểm tích hợp:**
+   - *Hook* — chặn các lệnh gọi shell/tool của agent (ví dụ hook
+     `PreToolUse` của Claude Code) và viết lại lệnh hoặc xử lý output sau
+     khi chạy. Trong suốt đối với model.
+   - *Proxy* — một gateway cục bộ giữa agent và API nén các khối kết quả
+     tool khi đang truyền; không phụ thuộc ngôn ngữ, hoạt động với mọi
+     client tương thích OpenAI.
+   - *MCP wrapper* — cung cấp các tool MCP `compress`/`retrieve` để mọi
+     agent hỗ trợ MCP đều hưởng lợi.
+5. **Giữ nguyên vẹn caching prefix.** Một trình nén viết lại các byte lịch
+   sử *đã cố định* sẽ phá vỡ cache (nguyên nhân 1.3). Các trình nén tốt chỉ
+   chạm vào kết quả tool mới được nối thêm và giữ lịch sử đã gửi trước đó
+   giống hệt từng byte — xác minh các chỉ số cache-read không giảm sau khi
+   bạn thêm một trình nén.
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| Claude Code | Hook `PreToolUse` / `PostToolUse` | Điểm chặn có sẵn — viết lại lệnh Bash hoặc lọc output trước khi vào ngữ cảnh |
+| Nền tảng Anthropic | Offload output lớn của MCP | Output tool >100K token tự động offload ra file kèm xem trước + đường dẫn (trường hợp nén cực đoan) |
+| Mọi harness | Bộ xử lý hậu kỳ tất định tại ranh giới tool | Loại bỏ ANSI/boilerplate chỉ vài dòng code và miễn phí |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| RTK (Rust Token Killer, `rtk-ai/rtk`) | Apache-2.0 | Proxy/hook CLI nén 100+ lệnh dev (git, trình chạy test, công cụ build, `kubectl`, `aws`) 60–90%; giữ nguyên thất bại/diff; tích hợp có sẵn với Claude Code / Cline / Codex / Gemini |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Thư viện / proxy / MCP / agent-wrap; JSON 60–95%, shell ~85%, build log ~94%; `CacheAligner` giữ prefix ổn định cho cache; ma trận hỗ trợ gồm Claude Code, Codex, Cline, Aider, Cursor |
+| Trafilatura / mozilla-readability | Apache-2.0 | HTML → văn bản sạch (nhỏ hơn 5–20×) trước khi vào ngữ cảnh của bất kỳ agent nào |
+| `jq` / định dạng lại có cấu trúc tại ranh giới | MIT | Chọn trường tất định và làm phẳng mảng→bảng, không tốn chi phí model |
+| Caveman (`wilpel/caveman-compression`) | MIT | Nén *output mà model viết ra* — người anh em của việc nén phía input (`concise-output-prompting.md`) |
+
+## Đánh đổi
+
+- Nén quá mạnh tay che mất đúng dòng quan trọng — luôn giữ artifact đầy
+  đủ có thể truy xuất được (offload tốt hơn cắt bớt phá hủy), và tinh chỉnh
+  danh sách từ chối một cách thận trọng.
+- Đây là một mắt xích di động khác trong đường đi của request (hook/proxy/
+  wrapper) với các chế độ lỗi riêng; một trình nén bị hỏng có thể làm hỏng
+  kết quả tool.
+- Nén dựa trên model tốn token/độ trễ riêng của nó — ưu tiên quy tắc tất
+  định; dành tóm tắt bằng LLM cho khối lượng không có cấu trúc nơi nó thực
+  sự đáng giá.
+- Xác minh tỷ lệ cache-hit prefix sau khi thêm một trình nén — một trình
+  nén ngây thơ chạm vào lịch sử đã cố định sẽ đánh đổi thắng lợi caching
+  lấy thắng lợi nén.
+
+## Tác động dự kiến
+
+- **Giảm 60–90% trên output lệnh dev nhiễu** là điển hình (JSON có cấu
+  trúc ở đầu khoảng đó, build/test log 85–94%); các dấu vết phiên đã công
+  bố cho thấy ~118K → ~24K token trong một phiên lập trình 30 phút.
+- Mức tiết kiệm cộng dồn với việc lịch sử tồn tại lâu (nguyên nhân 2.1):
+  một build log chỉ chấp nhận ở mức 2K thay vì 40K token sẽ được tiết kiệm
+  trên *mọi lượt sau đó*.
+- Vì không cần thiết kế lại tool, đây thường là thắng lợi nhanh nhất có
+  sẵn cho một agent hiện có — một hook hoặc proxy đứng trước các tool bạn
+  đã đang chạy.
+
+---
+
 # Tool-Output Compression (Shrink What Comes Back)
 
 **Addresses:** Causes 3.1 and 2.1 in [`../CAUSE.md`](../CAUSE.md) —
