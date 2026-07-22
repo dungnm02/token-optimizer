@@ -1,7 +1,6 @@
 # Semantic / Response Caching (Skip the Model on Repeats)
 
-**Addresses:** Cause 6.2 in [`../CAUSE.md`](../CAUSE.md) (cost-side), and the
-request-duplication note in [`../CAUSE.md`](../CAUSE.md)
+**Addresses:** Causes 6.6 and 6.2 (cost-side) in [`../CAUSE.md`](../CAUSE.md)
 
 **Idea:** When a new request is close enough to one you've already answered,
 return the stored answer instead of calling the model at all. Unlike prefix

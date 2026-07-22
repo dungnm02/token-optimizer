@@ -62,6 +62,30 @@ The causes are grouped into six categories:
 | 5 | [Generation-side spend](#5-generation-side-spend) | Output tokens (reasoning + response) — the most expensive tokens — are overspent |
 | 6 | [Architectural choices](#6-architectural-choices) | System design multiplies token cost across requests and agents |
 
+## Where the Fixes Live: Third-Party vs Provider
+
+A quick orientation before the catalog: some causes can be attacked
+entirely with **agent-agnostic third-party tooling** (usually open source,
+portable across providers), while others hinge on **capabilities and
+pricing only the provider controls** — a client-side tool can *exploit* a
+provider discount or dial, but it can never *create* one.
+
+| Category | Solvable with third-party tools / your architecture | Depends on the provider |
+| --- | --- | --- |
+| 1 Caching | Prompt-stability discipline, deterministic rendering, CI byte-tests; cache-hit telemetry (Langfuse/Helicone/LiteLLM); self-hosted prefix reuse (vLLM/SGLang) | The discount itself: cache existence, read pricing (~0.1×), TTLs, breakpoints, write surcharges |
+| 2 Context accumulation | Almost fully third-party: pruning/compaction in the harness or framework (LangGraph, LlamaIndex), hash registries, memory stores | Server-side compaction/context-management APIs are a convenience, not a requirement |
+| 3 Tool usage | Mostly third-party: output budgets, compression proxies (RTK/Headroom), MCP trimming, event-driven infra (Temporal, webhooks) | Deferred tool loading / tool search, programmatic tool calling (Code Mode), token-efficient tool-call formats |
+| 4 Content types | Downscaling (sharp/Pillow), extraction (Docling/unstructured), open rerankers (BGE), code maps (aider/Repomix) | Vision token formulas and `detail` dials, file/caching APIs, `count_tokens` endpoints |
+| 5 Generation-side | Output contracts in prompts, diff edit formats (Aider), validation-aware retries (Instructor), output compression (Caveman) | The main dials are provider knobs: reasoning-effort/thinking budgets, `verbosity`, structured-output modes |
+| 6 Architecture | Routing/gateways (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), orchestration frameworks, warm-then-fan logic, context packs | The price ladder across model tiers, the 50% batch tier, fine-tuning/distillation availability |
+
+Rule of thumb: **hygiene is yours, discounts are theirs.** Everything that
+keeps tokens *out* of requests (context, tool output, prompts, duplication)
+is portable and third-party-solvable; the levers that make remaining tokens
+*cheaper* (prefix caching rates, batch tier, cheaper model tiers,
+effort/verbosity dials) are provider-controlled — your job there is to
+qualify for them, and a provider choice caps how much they can give you.
+
 ---
 
 ## 1. Caching Failures
@@ -78,7 +102,7 @@ are about failing to earn that discount.
 > same support question, the same analytic query, the same eval prompt) —
 > each one a full model call that a *response-level* (semantic) cache could
 > skip entirely. That's a distinct opportunity from the prefix discount
-> below; see `solutions/semantic-caching.md`.
+> below — cataloged as cause 6.6; see `solutions/semantic-caching.md`.
 
 ### 1.1 No prompt caching at all
 
@@ -96,7 +120,7 @@ tokens (e.g. `cache_read_input_tokens` on Anthropic, `cached_tokens` on
 OpenAI) on every response, while raw input token counts stay large and
 roughly constant across requests.
 
-**Related solution(s):** _planned — `solutions/prompt-caching.md`_
+**Related solution(s):** `solutions/prompt-caching.md`
 
 ### 1.2 Silent cache invalidators
 
@@ -116,7 +140,7 @@ cached tokens) on every request despite requests looking identical. Diffing
 the fully rendered prompts of two consecutive requests exposes the mutating
 fragment.
 
-**Related solution(s):** _planned — `solutions/prompt-caching.md`_
+**Related solution(s):** `solutions/prompt-caching.md`
 
 ### 1.3 Mid-session changes that rebuild the cache
 
@@ -135,8 +159,8 @@ models mid-session always starts cold.
 cached input) mid-session, correlated with a config change: mode switch,
 tool set rebuild, model swap, or a "small edit" to the system prompt.
 
-**Related solution(s):** _planned — `solutions/prompt-caching.md`,
-`solutions/stable-prompt-architecture.md`_
+**Related solution(s):** `solutions/prompt-caching.md`,
+`solutions/stable-prompt-architecture.md`
 
 ### 1.4 Cache lifetime expiry between requests
 
@@ -152,7 +176,7 @@ requests.
 **How to recognize it:** Cache hits succeed within a burst, but the first
 request after each idle gap shows a full uncached (or cache-write) pass.
 
-**Related solution(s):** _planned — `solutions/prompt-caching.md`_ (longer
+**Related solution(s):** `solutions/prompt-caching.md` (longer
 TTLs, pre-warming, keep-alive traffic)
 
 ---
@@ -183,8 +207,8 @@ and every cache miss re-bills the whole history at full price.
 steadily turn over turn; late-session requests are 10–100× larger than early
 ones; sessions eventually hit the context-window limit.
 
-**Related solution(s):** _planned — `solutions/compaction.md`,
-`solutions/context-editing.md`_
+**Related solution(s):** `solutions/compaction.md`,
+`solutions/context-editing.md`
 
 ### 2.2 Stale tool results kept in history
 
@@ -199,7 +223,7 @@ still re-sent (and re-billed) on turns 21–100.
 blocks whose content is duplicated or superseded later; the tool-result
 share of the prompt keeps growing while the useful share doesn't.
 
-**Related solution(s):** _planned — `solutions/context-editing.md`_
+**Related solution(s):** `solutions/context-editing.md`
 (pruning old tool results / reasoning blocks)
 
 ### 2.3 Duplicate context injection
@@ -216,7 +240,7 @@ retrieval pipelines that re-attach the same top-k documents on every user
 message; system-level content pasted into user turns "to make sure the model
 sees it".
 
-**Related solution(s):** _planned — `solutions/context-hygiene.md`_
+**Related solution(s):** `solutions/context-hygiene.md`
 
 ---
 
@@ -236,7 +260,8 @@ over a long session.
 **How to recognize it:** Individual tool results in the tens of thousands of
 tokens; tool results of which the model visibly uses only a small fraction.
 
-**Related solution(s):** _planned — `solutions/tool-output-budgets.md`_
+**Related solution(s):** `solutions/tool-output-budgets.md`,
+`solutions/tool-output-compression.md`
 
 ### 3.2 Chatty round-trips instead of composition
 
@@ -252,7 +277,7 @@ intermediate data is usually never needed again.
 **How to recognize it:** Long chains of small tool calls per user request;
 transcripts full of intermediate data the final answer doesn't reference.
 
-**Related solution(s):** _planned — `solutions/tool-composition.md`_
+**Related solution(s):** `solutions/tool-composition.md`
 (code-executed tool orchestration, server-side composition, batching)
 
 ### 3.3 Retry and polling loops
@@ -263,13 +288,18 @@ request per poll.
 
 **Why it consumes tokens:** Every retry/poll re-bills the entire prompt.
 A 10-iteration poll loop on a 100K-token context spends 1M input tokens to
-learn "not done yet" nine times.
+learn "not done yet" nine times. The agentic cousin is the **doom loop**:
+the model repeatedly attempts a failing fix (edit → test → fail → similar
+edit), re-billing the ever-growing context on each lap and adding another
+failed attempt to it — cost compounds while progress stays flat.
 
 **How to recognize it:** Bursts of near-identical requests in usage logs;
 repeated errored tool results with unchanged inputs; sleep-and-check
-patterns implemented *through* the model instead of *around* it.
+patterns implemented *through* the model instead of *around* it; many
+consecutive similar diffs/test failures in one session (cap attempts in the
+harness and force a replan or escalation instead).
 
-**Related solution(s):** _planned — `solutions/event-driven-waiting.md`_
+**Related solution(s):** `solutions/event-driven-waiting.md`
 
 ### 3.4 Too many tool schemas loaded upfront
 
@@ -286,7 +316,7 @@ common in MCP-style setups where entire tool servers are attached wholesale.
 tools-included request vs. the same request without tools; a tool list much
 larger than the set actually invoked.
 
-**Related solution(s):** _planned — `solutions/tool-search.md`_ (dynamic
+**Related solution(s):** `solutions/tool-search.md` (dynamic
 tool discovery / deferred loading)
 
 ---
@@ -308,7 +338,7 @@ multiply this per step, and images also persist in history (cause 2.1).
 above the text length; per-step cost of computer-use loops dominated by the
 screenshot.
 
-**Related solution(s):** _planned — `solutions/image-downsampling.md`_
+**Related solution(s):** `solutions/image-downsampling.md`
 
 ### 4.2 Whole-document dumping (PDF / RAG over-retrieval)
 
@@ -324,8 +354,8 @@ in history forever.
 large document; retrieval configured for recall (large k, large chunks)
 with answers that cite a tiny fraction of what was sent.
 
-**Related solution(s):** _planned — `solutions/document-reuse.md`,
-`solutions/retrieval-tuning.md`_
+**Related solution(s):** `solutions/document-reuse.md`,
+`solutions/retrieval-tuning.md`, `solutions/code-maps.md` (for codebases)
 
 ### 4.3 Tokenizer-expensive content
 
@@ -344,7 +374,7 @@ by ~33% before tokenization even starts.
 or costing more after a model swap; the provider's token-counting endpoint
 showing counts far above chars/4 heuristics on your actual content.
 
-**Related solution(s):** _planned — `solutions/token-counting.md`_
+**Related solution(s):** `solutions/token-counting.md`
 (re-baseline with the provider's counter for the exact target model)
 
 ---
@@ -367,7 +397,7 @@ appears without any opt-in.
 response length; simple routes (classification, lookups) showing the same
 output spend as complex ones.
 
-**Related solution(s):** _planned — `solutions/reasoning-effort-tuning.md`_
+**Related solution(s):** `solutions/reasoning-effort-tuning.md`
 (per-route effort/budget settings)
 
 ### 5.2 Output verbosity
@@ -384,8 +414,8 @@ history.
 unchanged code, or summarize what was just shown; output token counts
 disproportionate to the information delivered.
 
-**Related solution(s):** _planned — `solutions/concise-output-prompting.md`,
-`solutions/diff-based-edits.md`_
+**Related solution(s):** `solutions/concise-output-prompting.md`,
+`solutions/diff-based-edits.md`
 
 ### 5.3 Truncation-and-retry cycles
 
@@ -402,7 +432,7 @@ invalid generation triggers a full re-request.
 near-identical retry requests; structured-output parse failures feeding a
 retry loop.
 
-**Related solution(s):** _planned — `solutions/output-cap-sizing.md`_
+**Related solution(s):** `solutions/output-cap-sizing.md`
 
 ---
 
@@ -422,8 +452,8 @@ also miss the parent's prefix cache entirely.
 exploration the parent did; fan-out patterns where N workers each pay a
 full cold context; zero cache hits on fork requests despite a warm parent.
 
-**Related solution(s):** _planned — `solutions/subagent-context-handoff.md`,
-`solutions/prompt-caching.md`_ (forks must reuse the parent's exact prefix)
+**Related solution(s):** `solutions/subagent-context-handoff.md`,
+`solutions/prompt-caching.md` (forks must reuse the parent's exact prefix)
 
 ### 6.2 Oversized model for the task
 
@@ -439,8 +469,8 @@ siblings, so the same token waste costs that much more.
 flowing through the top-tier model; no routing layer; no use of the
 provider's discounted async/batch tier for latency-insensitive work.
 
-**Related solution(s):** _planned — `solutions/model-routing.md`,
-`solutions/batch-processing.md`_
+**Related solution(s):** `solutions/model-routing.md`,
+`solutions/batch-processing.md`, `solutions/semantic-caching.md`
 
 ### 6.3 Concurrent cold-cache fan-out
 
@@ -455,7 +485,7 @@ full input price — none can read what the others are still writing.
 cached tokens despite sharing a prefix, while sequential runs of the same
 requests show hits from the second one on.
 
-**Related solution(s):** _planned — `solutions/fan-out-warming.md`_ (warm
+**Related solution(s):** `solutions/fan-out-warming.md` (warm
 with one request, then fire the rest)
 
 ### 6.4 Over-prescriptive prompts and scaffolding
@@ -475,7 +505,45 @@ defaults ("after every 3 tool calls, summarize progress"); output containing
 ritualized sections nobody reads; few-shot examples for behaviors the model
 now does zero-shot.
 
-**Related solution(s):** _planned — `solutions/prompt-de-scaffolding.md`_
+**Related solution(s):** `solutions/prompt-de-scaffolding.md`
+
+### 6.5 Cross-session cold starts (no persistent knowledge)
+
+**Summary:** Every new session starts from zero — the agent re-explores the
+codebase or domain and re-derives understanding that previous sessions
+already paid for.
+
+**Why it consumes tokens:** Statelessness applies *across* sessions, not
+just within them. Orienting on a large repo is many large tool calls
+(commonly 25–60K tokens before real work begins), and that bill repeats for
+every new session, every engineer, every agent in the fleet — the same
+knowledge purchased over and over.
+
+**How to recognize it:** Session transcripts open with the same exploration
+sequence (list → read → grep of the same core files); first-N-turn spend is
+dominated by reads that a previous session already made; nothing learned in
+one session is available to the next.
+
+**Related solution(s):** `solutions/code-maps.md` (checked-in maps/context
+packs), `solutions/subagent-context-handoff.md` (artifact stores),
+`solutions/compaction.md` (carry summaries forward at session boundaries)
+
+### 6.6 Fleet-duplicate requests
+
+**Summary:** The same or near-identical request is answered many times
+across users, sessions, or scheduled runs — each time at full model price.
+
+**Why it consumes tokens:** Prefix caching discounts the repeated *prompt*
+but still runs the model; with no response-level reuse, N near-identical
+questions cost N full generations. Support/docs Q&A, recurring analytics
+questions, and re-run eval suites are the classic shapes.
+
+**How to recognize it:** Usage logs cluster into groups of near-identical
+prompts with near-identical answers; high query overlap in read-mostly
+traffic; scheduled jobs re-generating mostly-unchanged outputs.
+
+**Related solution(s):** `solutions/semantic-caching.md`;
+`solutions/batch-processing.md` for the scheduled-rerun variant
 
 ---
 

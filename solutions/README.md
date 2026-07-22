@@ -95,7 +95,7 @@ assessment; several include mermaid diagrams of the mechanism.
 | [`image-downsampling.md`](image-downsampling.md) | 4.1 | 3–5× vision input cut; 50–80% on screenshot loops |
 | [`document-reuse.md`](document-reuse.md) | 4.2 | doc×questions → doc×1 + cheap cached reads |
 | [`retrieval-tuning.md`](retrieval-tuning.md) | 4.2 | ~5× retrieval-share cut via reranked small-k; quality improves too |
-| [`code-maps.md`](code-maps.md) | 4.2, 6.1, 2.1 | Kills the 67–76% file-finding tax; 25–60K cold-start tokens saved |
+| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Kills the 67–76% file-finding tax; 25–60K cold-start tokens saved |
 | [`token-counting.md`](token-counting.md) | 4.3 (+ all) | The measurement layer — turns every other fix into an enforced invariant |
 
 ### Category 5 — Generation-side spend
@@ -114,7 +114,7 @@ assessment; several include mermaid diagrams of the mechanism.
 | [`subagent-context-handoff.md`](subagent-context-handoff.md) | 6.1 | 50–90% of subagent re-discovery eliminated; artifact handoff keeps parents lean |
 | [`model-routing.md`](model-routing.md) | 6.2 | 50–80% of volume moved to 5–25× cheaper tiers; RouteLLM/FrugalGPT-class results |
 | [`batch-processing.md`](batch-processing.md) | 6.2 | Flat 2× on latency-insensitive traffic; 5–20× stacked with caching |
-| [`semantic-caching.md`](semantic-caching.md) | 6.2 | 100% model-cost skip on cache hits; 20–60% of repetitive read-only traffic |
+| [`semantic-caching.md`](semantic-caching.md) | 6.6, 6.2 | 100% model-cost skip on cache hits; 20–60% of repetitive read-only traffic |
 | [`fan-out-warming.md`](fan-out-warming.md) | 6.3 | N cold passes → 1 write + (N−1) cache reads (~85–90% off fan-out input) |
 | [`prompt-de-scaffolding.md`](prompt-de-scaffolding.md) | 6.4 | 30–70% system-prompt cut + induced-output savings, often with quality gains |
 

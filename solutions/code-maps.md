@@ -1,6 +1,6 @@
 # Code Maps (Orient Without Reading Everything)
 
-**Addresses:** Causes 4.2, 6.1, and 2.1 in [`../CAUSE.md`](../CAUSE.md)
+**Addresses:** Causes 4.2, 6.5, 6.1, and 2.1 in [`../CAUSE.md`](../CAUSE.md)
 
 **Idea:** Coding agents burn most of their tokens just *finding* the right
 code. Instead of reading dozens of files to orient, give the agent a
