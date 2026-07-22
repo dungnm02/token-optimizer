@@ -1,3 +1,114 @@
+# Đặt kích thước Giới hạn Output (Chấm dứt Cắt bớt-và-Thử lại) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 5.3 trong [`../CAUSE.md`](../CAUSE.md)
+
+**Ý tưởng:** Coi một phản hồi bị cắt bớt là một *lỗi có chi phí đã biết*
+(toàn bộ request bị lãng phí và phải thử lại), và loại bỏ nó bằng cách đặt
+giới hạn output rộng rãi, streaming các output dài, và phục hồi bằng
+**continuation** (tiếp tục) thay vì thử lại toàn bộ khi việc cắt bớt vẫn
+xảy ra.
+
+---
+
+## Cách áp dụng
+
+### 1. Đặt giới hạn theo từng route, một cách rộng rãi
+
+Giới hạn là một lưới an toàn, không phải kiểm soát sự ngắn gọn (đó là việc
+của `concise-output-prompting.md`). Đặt quá thấp sẽ biến $0 tiết kiệm được
+thành các lần thử lại toàn bộ request.
+
+| Route | Hướng dẫn giới hạn |
+| --- | --- |
+| Phân loại/trích xuất | Nhỏ (256–1K) — output thực sự có giới hạn |
+| Chat/tóm tắt | Cao hơn thoải mái so với output quan sát P99 (ví dụ 4–16K) |
+| Coding/agentic/có bật reasoning | Lớn (16–64K+); **reasoning chia sẻ ngân sách output** — một giới hạn chặt sau khi đã tốn kém cho thinking sẽ cho ra câu trả lời bị cắt bớt dù sao cũng đã phải trả tiền cho việc suy nghĩ |
+| Sinh nội dung đã biết là dài | Tối đa của nhà cung cấp, kèm streaming |
+
+Hiệu chỉnh lại giới hạn khi di chuyển model — thay đổi tokenizer làm dịch
+chuyển số token của cùng nội dung (nguyên nhân 4.3).
+
+### 2. Streaming mọi thứ có khả năng dài
+
+Streaming loại bỏ áp lực timeout vốn khiến người ta đặt giới hạn thấp, và
+cho phép bạn thực thi giới hạn *cấp ứng dụng* (dừng tiêu thụ) mà không đầu
+độc request.
+
+### 3. Phục hồi bằng continuation, không phải thử lại toàn bộ
+
+Khi dừng do độ dài, đừng chạy lại toàn bộ request — nối phần output đã có
+như một lượt assistant và yêu cầu model tiếp tục từ nơi nó dừng lại. Bạn
+trả tiền input lần nữa nhưng giữ được khoản đầu tư output đã có.
+
+```mermaid
+flowchart TD
+    A[Phản hồi] --> B{Lý do dừng?}
+    B -- dừng tự nhiên --> C[Xong]
+    B -- length/max_tokens --> D{Phần đã có dùng được?}
+    D -- có --> E["Tiếp tục: nối phần đã có<br/>như một lượt assistant + 'tiếp tục chính xác<br/>từ nơi bạn đã dừng'"]
+    E --> A
+    D -- không (JSON dị dạng, v.v.) --> F[Thử lại với giới hạn cao hơn<br/>+ ghi log lỗi đặt kích thước]
+    F --> A
+```
+
+### 4. Xử lý riêng các thất bại độ dài của structured output
+
+Một JSON bị cắt bớt là vô dụng — với các route ràng buộc bởi schema:
+
+- Đặt giới hạn rộng rãi (output schema không thể lan man dù sao).
+- Dùng các helper thử lại có kiểm định ở cấp SDK để sửa/hỏi lại tối thiểu
+  (kiểu Instructor) thay vì các vòng lặp yêu-cầu-lại-toàn-bộ ngây thơ, và
+  giới hạn số lần thử lại.
+- Với các structured output rất lớn, chia schema (phân trang việc sinh)
+  thay vì một đối tượng khổng lồ.
+
+### 5. Cảnh báo về tỷ lệ cắt bớt
+
+Tỷ trọng dừng do `length` theo từng route là một chỉ số hạng nhất
+(`token-counting.md`); một cú tăng vọt nghĩa là lỗi đặt kích thước hoặc
+một sự dịch chuyển do di chuyển model — hãy sửa giới hạn, đừng để vòng lặp
+thử lại âm thầm hấp thụ nó.
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| SDK Anthropic / OpenAI / Gemini | Streaming + helper `finalMessage`/`get_final_message` | Output dài mà không cần hạ giới hạn do áp lực timeout |
+| Mọi nhà cung cấp | `stop_reason` trong mỗi phản hồi | Tín hiệu mà toàn bộ luồng phục hồi dựa vào — dừng do độ dài so với dừng tự nhiên |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| Instructor (Python/TS) / kiểm định Zod | MIT | Thử lại tối thiểu có kiểm định cho các route schema, di động qua các nhà cung cấp |
+| Dashboard lý do dừng của Langfuse / Helicone | MIT / Apache-2.0 | Cảnh báo tỷ lệ cắt bớt theo từng route cho bất kỳ agent nào đứng sau proxy/SDK wrapper |
+| Prompt continuation (mẫu hình harness) | — | Cứu vãn output đã có thay vì bỏ đi — có thể triển khai trong mọi vòng lặp |
+
+## Đánh đổi
+
+- Giới hạn rộng rãi nghĩa là một lần sinh chạy trốn có thể tốn nhiều hơn
+  trước khi chạm lưới an toàn — kết hợp với giám sát luồng cấp ứng dụng
+  cho trường hợp bệnh lý hiếm gặp.
+- Continuation qua hai phản hồi có thể tạo ra các đường nối (token lặp
+  lại/bị bỏ sót tại ranh giới) — chỉ dẫn "tiếp tục chính xác từ nơi bạn đã
+  dừng" và xác thực điểm nối cho các định dạng có cấu trúc.
+- Sinh theo schema chia nhỏ thêm độ phức tạp điều phối.
+
+## Tác động dự kiến
+
+- Mỗi chu kỳ cắt bớt-thử lại tránh được tiết kiệm một request đầy đủ:
+  **2–3×** trên lưu lượng bị ảnh hưởng (input bị tính lại + output dở dang
+  bị bỏ đi).
+- Phục hồi bằng continuation cắt chi phí cắt bớt còn lại từ "mọi thứ"
+  xuống "chỉ gửi lại input" — thường cứu vãn được 50–90% giá trị của
+  request thất bại.
+- Cảnh báo tỷ lệ cắt bớt bắt được các dịch chuyển token do di chuyển model
+  (nguyên nhân 4.3) trong vài giờ thay vì một chu kỳ billing.
+
+---
+
 # Output Cap Sizing (Ending Truncation-and-Retry)
 
 **Addresses:** Cause 5.3 in [`../CAUSE.md`](../CAUSE.md)
