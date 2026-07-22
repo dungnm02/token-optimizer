@@ -1,3 +1,110 @@
+# Nén Hội thoại (Tóm tắt-và-Tiếp tục) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 2.1 trong [`../CAUSE.md`](../CAUSE.md)
+
+**Ý tưởng:** Khi lịch sử hội thoại tiệm cận một ngưỡng token, thay thế phần
+cũ hơn bằng một bản tóm tắt cô đọng giữ lại trạng thái liên quan đến tác vụ,
+và tiếp tục phiên trên nền bản tóm tắt đó — giới hạn chi phí input mỗi lượt
+thay vì để nó tăng trưởng không giới hạn.
+
+---
+
+## Cách hoạt động
+
+```mermaid
+flowchart TD
+    A[Lượt N đến] --> B{Token lịch sử<br/>> ngưỡng kích hoạt?}
+    B -- không --> M[Gửi toàn bộ lịch sử cho model]
+    B -- có --> S[Tóm tắt đoạn cũ hơn:<br/>mục tiêu, quyết định, việc còn dang dở,<br/>tham chiếu file/trạng thái]
+    S --> R["Xây lại ngữ cảnh:<br/>phần đầu cố định + khối tóm tắt<br/>+ đuôi gần đây (giữ nguyên văn)"]
+    R --> M
+    M --> O[Phản hồi] --> A
+```
+
+Các quyết định thiết kế then chốt:
+
+- **Ngưỡng kích hoạt**: thường 60–80% ngân sách ngữ cảnh thực tế (ví dụ
+  150K trên cửa sổ 1M cho triển khai phía server, hoặc thấp hơn nhiều nếu
+  bạn muốn giới hạn chi phí thay vì chỉ tránh tràn).
+- **Giữ đuôi**: K lượt gần nhất được giữ nguyên văn — model cần trạng thái
+  gần đây chính xác (kết quả tool cuối cùng, nội dung file hiện tại).
+- **Hợp đồng tóm tắt**: bản tóm tắt phải nắm bắt *mục tiêu, ràng buộc,
+  quyết định đã đưa ra, artifact đã tạo (đường dẫn/ID), và TODO còn mở* —
+  không phải văn xuôi tường thuật. Một bản tóm tắt tệ sẽ âm thầm mất trạng
+  thái tác vụ và gây ra việc khám phá lại tốn kém (tốn nhiều hơn số đã tiết
+  kiệm được).
+- **Tương tác với cache**: nén viết lại lịch sử, điều này vô hiệu hóa cache
+  cấp tin nhắn một lần. Đó là đánh đổi hợp lý khi lịch sử được viết lại chỉ
+  bằng một phần nhỏ của bản gốc — prefix mới, nhỏ hơn sẽ được cache lại
+  trong lượt tiếp theo.
+
+## Cách áp dụng
+
+1. **Ưu tiên nén phía server khi nhà cung cấp hỗ trợ** — nó đã được tinh
+   chỉnh, và artifact tóm tắt được quản lý hộ bạn:
+   - *Anthropic*: `context_management: {edits: [{type: "compact_20260112"}]}`
+     (beta) — API tự động tóm tắt gần ngưỡng và trả về một khối
+     `compaction` mà bạn **phải** nối lại nguyên văn trên các request tiếp
+     theo. Các harness được quản lý (Claude Code, Claude Agent SDK, các
+     phiên Managed Agents) tự động nén mà không cần code phía client.
+   - *OpenAI*: Responses API với `previous_response_id` + truncation
+     `auto` quản lý ngữ cảnh phía server; Agents SDK cung cấp bộ nhớ phiên
+     với các chiến lược tóm tắt.
+2. **Phía client, dùng bộ nhớ tóm tắt của framework của bạn** thay vì tự
+   viết tay: LangGraph `SummarizationNode` / LangChain
+   `ConversationSummaryBufferMemory`, LlamaIndex `ChatSummaryMemoryBuffer`,
+   hoặc auto-compact có sẵn của Claude Agent SDK.
+3. **Tự viết tay**: chạy lệnh gọi tóm tắt trên một **model rẻ** (tier
+   Haiku/mini), tái sử dụng chính xác prefix prompt của agent cha để chính
+   request tóm tắt cũng trúng cache (xem `prompt-caching.md` — quy tắc
+   fork).
+4. **Lưu trạng thái bền vững bên ngoài cửa sổ** để việc nén có thể mạnh
+   tay hơn: ghi các quyết định/bài học vào file hoặc kho lưu bộ nhớ (xem
+   `subagent-context-handoff.md`) thay vì dựa vào transcript như nguồn sự
+   thật duy nhất.
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| Anthropic API | Nén phía server (`compact-2026-01-12`) | Tự động tóm tắt gần ngưỡng; vòng lặp khối nén qua lại |
+| Claude Code / Claude Agent SDK | Auto-compact + lệnh `/compact` | Không cần cấu hình; việc nén được kích hoạt và áp dụng bên trong harness |
+| OpenAI API · Codex CLI | Responses API (`truncation: "auto"`, `previous_response_id`); Codex `/compact` | Trạng thái hội thoại quản lý bởi server; lệnh nén cấp harness |
+| Gemini CLI | Lệnh `/compress` + ngưỡng tự nén | Tóm tắt lịch sử cấp harness |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| LangGraph `SummarizationNode` | MIT | Chính sách kích hoạt + tóm tắt + giữ-đuôi có thể kết hợp cho các vòng lặp tùy chỉnh |
+| LlamaIndex `ChatSummaryMemoryBuffer` | MIT | Bộ nhớ tóm tắt có ngân sách token |
+| mem0 | Apache-2.0 | Trích xuất các sự kiện bền vững ra khỏi transcript để bản thân transcript có thể thu nhỏ; Zep là lựa chọn thương mại thay thế có bản OSS cộng đồng |
+
+## Đánh đổi
+
+- **Có mất mát.** Bất cứ điều gì bản tóm tắt bỏ sót đều biến mất; model có
+  thể phải suy luận lại nó (tốn token) hoặc tiếp tục dựa trên giả định lỗi
+  thời (tốn độ chính xác). Giảm thiểu bằng hợp đồng tóm tắt ở trên + các
+  file trạng thái bên ngoài.
+- Vô hiệu hóa cache một lần cho mỗi sự kiện nén.
+- Bản thân lệnh gọi tóm tắt cũng tốn token — dùng model rẻ và đừng kích
+  hoạt quá sớm.
+- Khó gỡ lỗi hơn: transcript không còn chứa lịch sử nguyên văn.
+
+## Tác động dự kiến
+
+- Biến chi phí phiên bậc hai thành chi phí **gần như tuyến tính**: input
+  mỗi lượt bị giới hạn bởi `ngưỡng_kích_hoạt` thay vì tăng trưởng mãi mãi.
+- Trên các lượt chạy agentic dài (hàng trăm lượt), tổng chi tiêu input
+  thường giảm **3–10×**, với giới hạn được đặt bởi ngưỡng kích hoạt của
+  bạn.
+- Loại bỏ các lỗi cứng `context_window_exceeded`, vốn nếu không sẽ lãng
+  phí toàn bộ đầu tư của phiên.
+
+---
+
 # Conversation Compaction (Summarize-and-Continue)
 
 **Addresses:** Cause 2.1 in [`../CAUSE.md`](../CAUSE.md)

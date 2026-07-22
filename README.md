@@ -1,3 +1,88 @@
+# token-optimizer (Tiếng Việt)
+
+Đây là kho tài liệu để khám phá **nguyên nhân gây tiêu tốn token cao** và
+**cách giảm thiểu nó**. Repo này được thiết kế tối giản một cách có chủ đích:
+nó chỉ chứa ghi chú, phân tích và tài liệu tham khảo — không phải mã ứng dụng.
+
+## Mục đích
+
+- Xác định và ghi lại các nguyên nhân gốc rễ gây tiêu tốn token cao.
+- Thu thập các giải pháp cụ thể, khả thi để giảm mức sử dụng token.
+- Đóng vai trò là kho kiến thức chung, ngày càng phát triển khi có phát hiện mới.
+
+## Cấu trúc kho lưu trữ
+
+| Đường dẫn | Mô tả |
+| --- | --- |
+| `README.md` | Tệp này — tổng quan và quy ước. |
+| `CAUSE.md` | Danh mục các nguyên nhân gây tiêu tốn token cao đã xác định. |
+| `solutions/` | Mỗi tài liệu tương ứng với một giải pháp / chiến lược giảm thiểu. |
+
+## Cách sử dụng
+
+1. Đọc `CAUSE.md` để hiểu các nguyên nhân đã biết.
+2. Duyệt `solutions/` để tìm các giải pháp tương ứng với những nguyên nhân đó.
+3. Khi bạn phát hiện điều gì mới, hãy thêm vào `CAUSE.md` và, nếu có cách khắc
+   phục, hãy thêm tài liệu tương ứng trong `solutions/`.
+
+## Ghi chú đóng góp
+
+Kho lưu trữ này **chỉ dành cho tài liệu**. Không có bước build, không có
+kiểm thử, và không có ứng dụng nào để chạy — chỉ có Markdown.
+
+- **Không cần nhánh (branch).** Làm việc trực tiếp trên `main`.
+- **Không cần pull request.** Commit và push thẳng lên `main`.
+- Giữ mỗi thay đổi tập trung vào chất lượng và độ chính xác của tài liệu.
+
+Xem [Quy tắc thông điệp commit](#quy-tắc-thông-điệp-commit) bên dưới trước khi commit.
+
+## Quy tắc thông điệp commit
+
+Vì repo này chỉ dành riêng cho tài liệu, thông điệp commit tuân theo một
+quy ước đơn giản, nhất quán.
+
+### Định dạng
+
+```
+<type>: <tóm tắt ngắn gọn ở thể mệnh lệnh>
+
+<phần thân tùy chọn: cái gì và tại sao, ngắt dòng ở ~72 ký tự>
+```
+
+### Type
+
+Sử dụng một trong các tiền tố sau:
+
+| Type | Dùng cho |
+| --- | --- |
+| `docs` | Thêm hoặc chỉnh sửa nội dung tài liệu (mặc định cho repo này). |
+| `cause` | Thêm hoặc cập nhật một mục trong `CAUSE.md`. |
+| `solution` | Thêm hoặc cập nhật một tài liệu trong `solutions/`. |
+| `chore` | Việc dọn dẹp repo (cấu trúc, đổi tên, định dạng, metadata). |
+
+### Quy tắc
+
+1. **Dòng tiêu đề**
+   - Dùng thể mệnh lệnh: "add", "fix", "clarify" — không dùng "added" / "adds".
+   - Giữ dưới ~72 ký tự.
+   - Viết thường sau tiền tố `type:`; không có dấu chấm cuối câu.
+2. **Phạm vi** thông điệp cho một thay đổi logic duy nhất.
+3. **Phần thân** (tùy chọn) giải thích *cái gì* đã thay đổi và *tại sao*,
+   không phải *cách* thực hiện.
+4. Tham chiếu đến tệp bị ảnh hưởng khi điều đó giúp rõ ràng hơn, ví dụ:
+   `cause: document large-context re-sends in CAUSE.md`.
+
+### Ví dụ
+
+```
+docs: add repository overview and layout
+cause: document redundant system-prompt re-sends
+solution: add prompt-caching guide
+chore: restructure solutions folder
+```
+
+---
+
 # token-optimizer
 
 A documentation repository for exploring **what causes high token consumption**

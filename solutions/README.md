@@ -1,3 +1,140 @@
+# Giải pháp (Tiếng Việt)
+
+Thư mục này chứa mỗi tài liệu tương ứng với một giải pháp hoặc chiến lược
+giảm thiểu để giảm mức tiêu tốn token. Mỗi giải pháp nên tham chiếu ngược lại
+một hoặc nhiều nguyên nhân được liệt kê trong [`../CAUSE.md`](../CAUSE.md).
+
+## Thêm một giải pháp
+
+1. Tạo một file Markdown mới trong thư mục này, đặt tên theo chiến lược, ví
+   dụ `prompt-caching.md` hoặc `context-trimming.md`.
+2. Tuân theo mẫu (template) mục bên dưới để mọi giải pháp đều nhất quán.
+3. Liên kết giải pháp từ nguyên nhân liên quan trong `../CAUSE.md`.
+
+## Mẫu giải pháp
+
+```
+# <Tên giải pháp>
+
+**Addresses (Giải quyết):** (Các) nguyên nhân nào từ CAUSE.md mà giải pháp
+này khắc phục.
+
+**Idea (Ý tưởng):** Mô tả ngắn gọn về cách tiếp cận.
+
+**How to apply (Cách áp dụng):** Các bước cụ thể, khả thi.
+
+**SOTA tools (Công cụ hiện đại nhất):** Luôn có hai phần con theo thứ tự
+này:
+  - "Native — coding agents & provider APIs" (Có sẵn — các coding agent &
+    API của nhà cung cấp) — các tính năng có sẵn trong các agent/nhà cung
+    cấp bạn đang dùng (Claude Code/Anthropic, Codex/OpenAI, Gemini
+    CLI/Google).
+  - "Third-party — agent-agnostic (open source preferred)" (Bên thứ ba —
+    không phụ thuộc agent, ưu tiên mã nguồn mở) — các công cụ hoạt động với
+    *bất kỳ* agent nào, có ghi giấy phép; liệt kê các lựa chọn mã nguồn mở
+    trước và nêu tên các lựa chọn thương mại kèm theo.
+
+**Trade-offs (Đánh đổi):** Chi phí, hạn chế, hoặc rủi ro cần lưu ý.
+
+**Expected impact (Tác động dự kiến):** Ước lượng sơ bộ về mức tiết kiệm
+token.
+```
+
+## Bắt đầu từ đâu
+
+Không phải giải pháp nào cũng đáng công thiết lập cho mọi hệ thống.
+[`recommended-setup.md`](recommended-setup.md) chắt lọc danh mục thành
+**bộ công cụ cần thiết cho một codebase lớn với nhiều agent** — cái gì nên
+kế thừa từ harness, bốn phần việc tùy chỉnh thực sự quan trọng, và cái gì
+nên bỏ qua một cách rõ ràng.
+
+Để xem các thiết lập cụ thể theo từng nhà cung cấp, xem
+[`coding-setup-enterprise.md`](coding-setup-enterprise.md) — các thiết lập
+coding-agent cấp doanh nghiệp trên **Claude, GPT, và Gemini**: các tuyến
+truy cập và đánh đổi tính năng của chúng, lựa chọn harness, cấu hình
+caching, bản đồ model/effort, và hướng dẫn cho đội hình đa nhà cung cấp.
+
+Đối với harness chúng ta dùng hàng ngày, xem
+[`coding-setup-cline.md`](coding-setup-cline.md) — cùng cách phân tầng áp
+dụng cho **Cline** (tiện ích mở rộng VS Code): lựa chọn nhà cung cấp/caching,
+tách model Plan/Act, kỷ luật ngữ cảnh `/smol`–`/newtask`, cắt gọt chi phí
+`.clinerules`/`.clineignore`/MCP, và đo lường toàn đội qua một gateway.
+
+## Mục lục
+
+Tất cả 25 giải pháp đã được viết, ánh xạ tới các nguyên nhân trong
+[`../CAUSE.md`](../CAUSE.md). Mỗi tài liệu bao gồm các khuyến nghị công cụ
+hiện đại nhất — chia thành **API có sẵn của agent/nhà cung cấp** so với
+**công cụ bên thứ ba không phụ thuộc agent (ưu tiên mã nguồn mở, có ghi
+giấy phép)** — và một đánh giá tác động dự kiến; một số bao gồm sơ đồ
+mermaid minh họa cơ chế.
+
+### Danh mục 1 — Lỗi Caching
+
+| Tài liệu | Giải quyết | Tác động nổi bật |
+| --- | --- | --- |
+| [`prompt-caching.md`](prompt-caching.md) | 1.1–1.4, 6.1 | Giảm tới ~90% giá input đã cache; giảm 5–10× input hiệu dụng trong các phiên dài |
+| [`stable-prompt-architecture.md`](stable-prompt-architecture.md) | 1.3 | Khiến việc làm mới cache giữa phiên trở nên bất khả thi về mặt cấu trúc; duy trì tỷ lệ cache-hit 80–95% |
+
+### Danh mục 2 — Tích lũy ngữ cảnh
+
+| Tài liệu | Giải quyết | Tác động nổi bật |
+| --- | --- | --- |
+| [`compaction.md`](compaction.md) | 2.1 | Chi phí phiên từ bậc hai → tuyến tính; giảm 3–10× trên các phiên chạy dài |
+| [`context-editing.md`](context-editing.md) | 2.1, 2.2 | Thu nhỏ ngữ cảnh ổn định 2–5× mà không mất mát do tóm tắt |
+| [`context-hygiene.md`](context-hygiene.md) | 2.3 | Loại bỏ 20–40% lịch sử thường bị lãng phí vào trùng lặp |
+
+### Danh mục 3 — Cách dùng tool
+
+| Tài liệu | Giải quyết | Tác động nổi bật |
+| --- | --- | --- |
+| [`tool-output-budgets.md`](tool-output-budgets.md) | 3.1 | Giảm 2–5× input mỗi phiên trong khối lượng công việc nặng về tool |
+| [`tool-output-compression.md`](tool-output-compression.md) | 3.1, 2.1 | Giảm 60–90% output CLI/log/JSON nhiễu, không cần thiết kế lại tool |
+| [`tool-composition.md`](tool-composition.md) | 3.2 | K lượt qua lại → ~1 lượt xử lý ngữ cảnh; dữ liệu trung gian không bao giờ bị tính phí |
+| [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Chi phí chờ đợi O(số lần poll × ngữ cảnh) → ~0 |
+| [`tool-search.md`](tool-search.md) | 3.4 | Giảm 10–50× chi phí schema tool mỗi request; Code Mode giảm ~99.9% trên các API lớn |
+
+### Danh mục 4 — Loại nội dung đắt đỏ
+
+| Tài liệu | Giải quyết | Tác động nổi bật |
+| --- | --- | --- |
+| [`image-downsampling.md`](image-downsampling.md) | 4.1 | Giảm 3–5× input thị giác; 50–80% trên các vòng lặp screenshot |
+| [`document-reuse.md`](document-reuse.md) | 4.2 | doc×số câu hỏi → doc×1 + các lần đọc cache rẻ |
+| [`retrieval-tuning.md`](retrieval-tuning.md) | 4.2 | Giảm ~5× tỷ trọng truy xuất nhờ rerank với k nhỏ; chất lượng cũng cải thiện |
+| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Xóa bỏ chi phí 67–76% dành cho việc tìm file; tiết kiệm 25–60K token khởi động lạnh |
+| [`token-counting.md`](token-counting.md) | 4.3 (+ tất cả) | Lớp đo lường — biến mọi giải pháp khác thành một bất biến được thực thi |
+
+### Danh mục 5 — Chi tiêu phía sinh (generation)
+
+| Tài liệu | Giải quyết | Tác động nổi bật |
+| --- | --- | --- |
+| [`reasoning-effort-tuning.md`](reasoning-effort-tuning.md) | 5.1 | Chênh lệch token output 2–10× được kiểm soát bởi effort theo từng route |
+| [`concise-output-prompting.md`](concise-output-prompting.md) | 5.2 | Giảm 30–60% output trên các route chat/agent; 3–10× qua structured output |
+| [`diff-based-edits.md`](diff-based-edits.md) | 5.2 | Giảm 10–50× output mỗi lần chỉnh sửa cho coding agent |
+| [`output-cap-sizing.md`](output-cap-sizing.md) | 5.3 | Loại bỏ lãng phí truncate-retry 2–3×; continuation cứu vãn phần đã sinh dở |
+
+### Danh mục 6 — Lựa chọn kiến trúc
+
+| Tài liệu | Giải quyết | Tác động nổi bật |
+| --- | --- | --- |
+| [`subagent-context-handoff.md`](subagent-context-handoff.md) | 6.1 | Loại bỏ 50–90% việc khám phá lại của subagent; bàn giao artifact giữ agent cha gọn nhẹ |
+| [`model-routing.md`](model-routing.md) | 6.2 | Chuyển 50–80% khối lượng sang các tier rẻ hơn 5–25×; kết quả tương đương RouteLLM/FrugalGPT |
+| [`batch-processing.md`](batch-processing.md) | 6.2 | Giảm cố định 2× trên lưu lượng không nhạy cảm về độ trễ; 5–20× khi kết hợp với caching |
+| [`semantic-caching.md`](semantic-caching.md) | 6.6, 6.2 | Bỏ qua 100% chi phí model khi cache hit; 20–60% lưu lượng đọc lặp lại |
+| [`fan-out-warming.md`](fan-out-warming.md) | 6.3 | N lượt xử lý lạnh → 1 lần ghi + (N−1) lần đọc cache (giảm ~85–90% input fan-out) |
+| [`prompt-de-scaffolding.md`](prompt-de-scaffolding.md) | 6.4 | Giảm 30–70% system prompt + tiết kiệm output phát sinh, thường kèm cải thiện chất lượng |
+
+### Thứ tự áp dụng đề xuất
+
+1. **Đo lường trước** — `token-counting.md` (bạn không thể xếp hạng phần
+   còn lại nếu không có nó)
+2. **Thắng lợi miễn phí** — `prompt-caching.md` + `stable-prompt-architecture.md`, `batch-processing.md`
+3. **Đòn bẩy cấu trúc lớn nhất** — `tool-output-budgets.md`, `compaction.md`/`context-editing.md`, `model-routing.md`
+4. **Tinh chỉnh theo từng route** — các tài liệu còn lại, ưu tiên theo những
+   gì đo lường của bạn quy chi phí vào
+
+---
+
 # Solutions
 
 This folder holds one document per solution or mitigation strategy for reducing

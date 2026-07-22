@@ -1,3 +1,77 @@
+# Vệ sinh Ngữ cảnh (Loại bỏ chèn trùng lặp) (Tiếng Việt)
+
+**Giải quyết:** Nguyên nhân 2.3 trong [`../CAUSE.md`](../CAUSE.md)
+
+**Ý tưởng:** Đảm bảo rằng bất kỳ nội dung nào (một file, một schema, tài
+liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**, và sau đó
+được tham chiếu — chứ không dán lại — về sau.
+
+---
+
+## Cách áp dụng
+
+1. **Theo dõi những gì đã có trong ngữ cảnh.** Harness giữ một registry
+   các artifact đã chèn (đường dẫn/URL/doc-ID → hash nội dung + lượt đã
+   chèn). Trước khi chèn, kiểm tra registry:
+   - Cùng hash đã có sẵn → chèn một tham chiếu thay thế: *"`schema.sql` đã
+     có trong ngữ cảnh (lượt 4, không đổi)."*
+   - Có mặt nhưng đã thay đổi trên đĩa → chèn một **diff** so với phiên
+     bản trong ngữ cảnh, không phải toàn bộ file.
+2. **Sửa các pipeline truy xuất tự động gắn lại mỗi lượt.** RAG ngây thơ
+   dán top-k chunk vào *mọi* tin nhắn người dùng; trong một phiên về một
+   chủ đề, đó là cùng các chunk bị tính phí lại mỗi lượt. Truy xuất một lần
+   cho mỗi lần đổi chủ đề, giữ kết quả như một khối ngữ cảnh ổn định (có
+   thể cache), và chỉ chạy lại truy xuất khi truy vấn trôi dạt (dùng ngưỡng
+   khoảng cách embedding).
+3. **Tham chiếu bằng định danh khi nhà cung cấp hỗ trợ.** Tải lên một lần
+   và tham chiếu bằng ID — `file_id` của Anthropic Files API, OpenAI
+   Files/vector store, Gemini File API — thay vì nhúng lại các byte vào mỗi
+   request (xem `document-reuse.md`).
+4. **Loại bỏ trùng lặp các reminder của harness.** Các khối
+   system-reminder, boilerplate an toàn, và tóm lược schema mà harness tự
+   động chèn nên chỉ được chèn một lần, hoặc được thu gọn khi lặp lại — hãy
+   rà soát những gì framework của bạn thêm vào mỗi lượt.
+5. **Làm cho tool nhận biết tính bất biến (idempotent-aware).** Một tool
+   `read_file` có thể trả lời từ registry ("không đổi kể từ lượt 4") thay
+   vì trả lại toàn bộ nội dung — model nhận được xác nhận với ~10 token
+   thay vì 10.000.
+
+## Công cụ hiện đại nhất (SOTA)
+
+### Có sẵn — coding agent & API của nhà cung cấp
+
+| Nhà cung cấp / agent | Tính năng | Ghi chú |
+| --- | --- | --- |
+| Claude Code / Claude Agent SDK | Theo dõi trạng thái file | Theo dõi trạng thái đọc/sửa; hạn chế việc đọc lại dư thừa ("trạng thái file hiện đang cập nhật trong ngữ cảnh của bạn") |
+| Anthropic Files API / OpenAI Files / Gemini File API | Tải lên một lần, tham chiếu bằng ID | Loại bỏ việc truyền lại byte; kết hợp với caching để giảm chi phí xử lý |
+
+### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
+
+| Công cụ | Giấy phép | Ghi chú |
+| --- | --- | --- |
+| Kiểm soát tương đồng truy vấn của LlamaIndex / LangChain | MIT | Chỉ truy xuất lại khi trôi dạt chủ đề; độc lập với nhà cung cấp |
+| Registry hash nội dung (tùy chỉnh, ~50 dòng code) | — | Cơ chế cốt lõi; triển khai dễ dàng trong mọi stack, mọi agent |
+
+## Đánh đổi
+
+- Registry phải được vô hiệu hóa đúng cách khi artifact gốc thay đổi — một
+  tham chiếu "đã có trong ngữ cảnh" đã cũ là một lỗi về tính đúng đắn,
+  không chỉ là lỗi về token. Hash các byte hiện tại, đừng tin tưởng
+  timestamp.
+- Chèn dạng diff giả định rằng model có thể áp dụng diff trong đầu; với các
+  file bị thay đổi nhiều, một lần đọc lại toàn bộ tươi mới sẽ an toàn hơn.
+
+## Tác động dự kiến
+
+- Các phiên có truy cập file lặp lại thường lãng phí **20–40%** token
+  lịch sử vào nội dung trùng lặp; một registry hash loại bỏ gần như toàn
+  bộ điều đó.
+- Loại bỏ trùng lặp truy xuất biến chi phí RAG mỗi lượt từ `k_chunks ×
+  số lượt` thành `k_chunks × số lần đổi chủ đề` — thường giảm **5–20×**
+  tỷ trọng truy xuất trong input của các phiên dài.
+
+---
+
 # Context Hygiene (Deduplicating Injection)
 
 **Addresses:** Cause 2.3 in [`../CAUSE.md`](../CAUSE.md)
