@@ -3,10 +3,10 @@
 **Giải quyết:** Nguyên nhân 4.2 trong [`../CAUSE.md`](../CAUSE.md) (cùng với
 `retrieval-tuning.md`)
 
-**Ý tưởng:** Ngừng việc truyền lại và tính phí lại cùng một tài liệu lớn
-trên mỗi request. Tải nó lên một lần và tham chiếu bằng ID, gắn nó dưới một
-prefix đã cache, hoặc — khi chỉ một số phần là liên quan — truy xuất từng
-phần thay vì đính kèm toàn bộ.
+**Ý tưởng:** Đừng truyền lại và tính phí lại cùng một tài liệu lớn ở mỗi
+request nữa. Hãy tải tài liệu lên một lần rồi tham chiếu bằng ID, gắn nó
+dưới một prefix đã cache, hoặc — khi chỉ một phần tài liệu liên quan —
+truy xuất đúng phần đó thay vì đính kèm toàn bộ.
 
 ---
 
@@ -42,12 +42,15 @@ flowchart TD
 3. **Sắp xếp các luồng hỏi-đáp để chia sẻ prefix.** `[tài liệu][câu hỏi]`
    cache tài liệu qua các câu hỏi; `[câu hỏi][tài liệu]` không cache gì
    cả. Luôn đặt shared corpus trước truy vấn thay đổi.
-4. **Trích xuất một lần, tái sử dụng bản trích xuất.** Với các PDF chỉ có
-   văn bản là quan trọng, chạy trích xuất (lớp văn bản/OCR) một lần trong
-   harness và nạp văn bản sạch — một trang PDF quét dưới dạng ảnh tốn kém
-   gấp nhiều lần nội dung văn bản của nó, mỗi request.
-5. **Chia các corpus rất lớn thành RAG** thay vì nhồi nhét vào context: trên vài trăm nghìn token, truy xuất thắng "đính kèm mọi thứ" cả
-   về chi phí lẫn chất lượng câu trả lời (recall context dài suy giảm; xem
+4. **Trích xuất một lần, tái sử dụng kết quả trích xuất.** Với các PDF mà
+   chỉ phần văn bản là quan trọng, hãy chạy trích xuất (lớp văn bản hoặc
+   OCR) một lần trong harness rồi nạp văn bản sạch vào context. Một trang
+   PDF quét dưới dạng ảnh tốn kém hơn gấp nhiều lần so với nội dung văn
+   bản thuần của nó, và chi phí đó lặp lại ở mỗi request.
+5. **Chia nhỏ các corpus rất lớn để dùng RAG** thay vì nhồi nhét toàn bộ
+   vào context. Khi vượt quá vài trăm nghìn token, truy xuất (retrieval)
+   sẽ tốt hơn cách "đính kèm mọi thứ" cả về chi phí lẫn chất lượng câu trả
+   lời, vì khả năng recall trên context dài sẽ suy giảm (xem
    `retrieval-tuning.md`).
 
 ## Công cụ hiện đại nhất (SOTA)
@@ -69,12 +72,12 @@ flowchart TD
 
 ## Đánh đổi
 
-- Cache tường minh và kho file có TTL/hạn ngạch lưu trữ cần quản lý; một
-  corpus cache đã hết hạn sẽ âm thầm quay về giá đầy đủ (theo dõi
-  metadata sử dụng).
-- RAG đưa vào rủi ro chất lượng truy xuất — một chunk bị bỏ sót là một câu
-  trả lời sai; toàn bộ tài liệu + cache an toàn hơn khi tài liệu vừa vặn
-  thoải mái.
+- Cache tường minh và kho lưu trữ file đều có TTL/hạn ngạch cần quản lý;
+  nếu cache của một corpus hết hạn, nó sẽ âm thầm quay về giá đầy đủ mà
+  không báo trước — nên theo dõi metadata sử dụng để phát hiện kịp thời.
+- RAG mang theo rủi ro về chất lượng truy xuất: bỏ sót một chunk nghĩa là
+  một câu trả lời sai. Nếu tài liệu đủ nhỏ để dùng thoải mái, dùng toàn bộ
+  tài liệu kết hợp cache sẽ an toàn hơn.
 - Tham chiếu file-ID ràng buộc bạn với lưu trữ của nhà cung cấp (cân nhắc
   về xuất dữ liệu/tuân thủ cho tài liệu nhạy cảm).
 

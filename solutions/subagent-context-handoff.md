@@ -2,10 +2,12 @@
 
 **Giải quyết:** Nguyên nhân 6.1 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Làm cho việc ủy thác rẻ ngay từ thiết kế: trao cho mỗi subagent
-một **bản tóm tắt (briefing) viết sẵn** thay vì để nó tự khám phá lại context, chia sẻ prefix đã cache của agent cha khi có thể, trao đổi kết quả
-dưới dạng **artifact + tóm tắt** thay vì đổ nguyên transcript, và giữ các
-worker sống lâu luôn ấm thay vì sinh lại từ đầu ở trạng thái lạnh.
+**Ý tưởng:** Hãy làm cho việc ủy thác rẻ ngay từ khâu thiết kế. Trao cho
+mỗi subagent một **bản tóm tắt (briefing) viết sẵn** thay vì để nó tự khám
+phá lại context. Chia sẻ prefix đã cache của agent cha bất cứ khi nào có
+thể. Trao đổi kết quả dưới dạng **artifact + tóm tắt** thay vì đổ nguyên
+transcript. Và giữ các worker sống lâu luôn ở trạng thái ấm, thay vì phải
+sinh lại từ đầu ở trạng thái lạnh.
 
 ---
 
@@ -13,9 +15,9 @@ worker sống lâu luôn ấm thay vì sinh lại từ đầu ở trạng thái 
 
 Một subagent lạnh phải trả giá ba lần: (1) prefix system/tool riêng của
 nó, không được cache nếu khác với của agent cha; (2) *khám phá lại* — các
-lệnh gọi tool để xây lại hiểu biết mà agent cha đã có sẵn; (3) báo cáo về,
-vốn sẽ vào context (và lịch sử) của agent cha với bất kỳ kích thước nào nó
-được viết ra.
+lệnh gọi tool để xây dựng lại hiểu biết mà agent cha đã có sẵn; (3) báo cáo
+về, sẽ đi vào context (và lịch sử) của agent cha dù được viết ra với kích
+thước nào.
 
 ```mermaid
 flowchart TD
@@ -23,7 +25,7 @@ flowchart TD
         P[Context orchestrator<br/>mục tiêu, ràng buộc, phát hiện]
     end
     subgraph Cold["❌ Sinh lạnh"]
-        C1["'Sửa lỗi auth'"] --> C2[Subagent khám phá lại repo:<br/>N lệnh gọi tool trả giá lại<br/>những gì agent cha đã biết]
+        C1["'Sửa lỗi auth'"] --> C2[Subagent khám phá lại repo:<br/>tốn N lệnh gọi tool để biết lại<br/>điều agent cha đã biết]
     end
     subgraph Warm["✅ Sinh có tóm tắt"]
         B1["Tóm tắt: mục tiêu, ràng buộc,<br/>đường dẫn liên quan, phát hiện hiện có,<br/>định nghĩa 'xong'"] --> B2[Subagent bắt đầu làm việc<br/>ngay lập tức]
@@ -39,7 +41,8 @@ flowchart TD
 1. **Viết các bản tóm tắt thực sự.** Prompt ủy thác nên mang theo mọi thứ
    agent cha biết mà tác vụ con cần: mục tiêu, ràng buộc, đường dẫn/ID
    file chính xác, phát hiện hiện có, và "xong" trông như thế nào. Một mô
-   tả tác vụ một dòng đảm bảo việc phải khám phá lại và trả tiền cho nó.
+   tả tác vụ vỏn vẹn một dòng chắc chắn sẽ buộc subagent phải khám phá lại
+   từ đầu — và trả giá cho việc đó.
 2. **Trao đổi artifact, không phải transcript.** Subagent ghi toàn bộ kết
    quả (báo cáo, patch, dữ liệu trích xuất) vào **hệ thống file hoặc kho
    artifact** và trả về một con trỏ + tóm tắt ngắn. Context của agent cha
@@ -55,15 +58,17 @@ flowchart TD
    rẻ hơn và/hoặc effort reasoning thấp hơn (`model-routing.md`,
    `reasoning-effort-tuning.md`).
 5. **Ưu tiên worker sống lâu hơn là sinh lại cho các tác vụ con liên
-   quan.** Gửi một yêu cầu tiếp nối tới một subagent hiện có (vốn giữ context của nó, cache đang ấm) tốt hơn việc sinh một cái mới phải suy luận
-   lại. Giao tiếp bất đồng bộ với các worker bền vững cũng giải phóng
-   orchestrator.
+   quan.** Gửi tiếp một yêu cầu nối tiếp tới subagent hiện có — vốn vẫn
+   giữ nguyên context và cache đang ấm — sẽ tốt hơn sinh một worker mới
+   rồi bắt nó suy luận lại từ đầu. Giao tiếp bất đồng bộ với các worker
+   bền vững cũng giúp giải phóng orchestrator.
 6. **Ủy thác để cô lập context, không phải theo phản xạ.** Thắng lợi token
    chính đáng của subagent là giữ việc khám phá cồng kềnh **ngoài lịch sử
    của agent cha** (một subagent tìm kiếm hấp thụ 50K token output grep và
-   trả về 300 token phát hiện). Ủy thác cho các lần đọc một file hoặc các
-   bước tuần tự tầm thường là chi phí thuần túy — hãy cho orchestrator
-   hướng dẫn rõ ràng khi nào nên/không nên spawn subagent.
+   chỉ trả về 300 token phát hiện). Còn việc ủy thác chỉ để đọc một file
+   đơn lẻ hay thực hiện các bước tuần tự đơn giản là chi phí thuần túy —
+   hãy cho orchestrator hướng dẫn rõ ràng về khi nào nên và không nên
+   spawn subagent.
 
 ## Công cụ hiện đại nhất (SOTA)
 
@@ -94,9 +99,9 @@ song** và câu trả lời đáng giá nhiều token (nghiên cứu mở là tr
 - **Các tác vụ con phụ thuộc lẫn nhau** — nếu worker B cần output của
   worker A, "song song" thoái hóa thành thực thi tuần tự cộng thêm chi
   phí.
-- **Tác vụ là coding/debug/hầu hết các workflow** — chúng vốn dĩ nối
-  chuỗi; một agent đơn lẻ, hoặc một pipeline tất định với các agent nhỏ
-  bên trong, thắng cả về chi phí *lẫn* độ tin cậy.
+- **Tác vụ là coding/debug/hầu hết các workflow** — chúng vốn mang tính
+  tuần tự, nối tiếp nhau; một agent đơn lẻ, hoặc một pipeline tất định với
+  các agent nhỏ bên trong, thắng cả về chi phí *lẫn* độ tin cậy.
 - **Tác vụ nhỏ** — agent chính xử lý trực tiếp rẻ hơn round-trip
   sinh + tóm tắt + báo cáo về.
 
@@ -108,16 +113,16 @@ phản xạ.
 ## Đánh đổi
 
 - Bản tóm tắt tốn token output của agent cha — không đáng kể so với việc
-  khám phá lại, nhưng vẫn có thực; giữ chúng cô đọng.
+  khám phá lại, nhưng vẫn tồn tại thực sự; hãy giữ chúng cô đọng.
 - Hệ số nhân 15× ở trên là rủi ro chi phối: một workflow song song hóa sai
   có thể tốn nhiều hơn hẳn đường cơ sở đơn agent mà nó thay thế.
 - Trao đổi artifact đòi hỏi lưu trữ chung và các quy ước đường dẫn/ID có
   kỷ luật.
-- Bản tóm tắt có thể bỏ sót điều agent cha sau này cần (cùng mất mát như
-  nén) — giữ artifact đầy đủ có thể truy xuất được, chỉ tóm tắt phần báo
-  cáo hướng tới transcript.
-- Worker sống lâu giữ trạng thái có thể trở nên cũ; làm mới bản tóm tắt
-  khi có trôi dạt.
+- Bản tóm tắt có thể bỏ sót điều agent cha sau này cần (cùng độ mất mát
+  như khi nén) — hãy giữ artifact đầy đủ ở dạng có thể truy xuất, chỉ tóm
+  tắt phần báo cáo sẽ hiển thị trong transcript.
+- Worker sống lâu giữ trạng thái có thể trở nên cũ; hãy làm mới bản tóm
+  tắt khi trạng thái bắt đầu lệch khỏi thực tế.
 
 ## Tác động dự kiến
 

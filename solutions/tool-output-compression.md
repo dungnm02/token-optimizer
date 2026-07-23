@@ -34,13 +34,13 @@ flowchart LR
    loại bỏ bằng quy tắc, với chi phí token bằng 0: loại bỏ mã ANSI, thanh
    tiến trình, cảnh báo lặp lại, spam giải quyết dependency, nhiễu
    stack-frame; thu gọn khoảng trắng; giữ lại các dòng lỗi và context của
-   chúng. Dành việc tóm tắt bằng model cho khối lượng thực sự không có cấu
-   trúc.
-2. **Bảo toàn tín hiệu một cách tường minh.** Quy tắc giữ cho việc nén an
-   toàn: *không bao giờ* bỏ các thất bại test, thông báo lỗi, diff, hoặc
-   stack trace — nén 1.000 dòng "OK" xung quanh chúng, không phải 5 dòng
-   quan trọng. Các công cụ làm điều này đi kèm danh sách cho phép/từ chối
-   được tinh chỉnh theo từng lệnh.
+   chúng. Chỉ nên dùng model để tóm tắt cho khối lượng thực sự không có
+   cấu trúc.
+2. **Bảo toàn tín hiệu một cách tường minh.** Nguyên tắc để việc nén luôn
+   an toàn là: *không bao giờ* bỏ các thất bại test, thông báo lỗi, diff,
+   hay stack trace — hãy nén 1.000 dòng "OK" xung quanh chúng, chứ không
+   phải 5 dòng quan trọng đó. Các công cụ làm tốt việc này thường đi kèm
+   danh sách cho phép/từ chối được tinh chỉnh theo từng lệnh.
 3. **Nén mạnh nhất với dữ liệu có cấu trúc.** Output JSON/YAML/dạng bảng
    là lợi ích lớn nhất — in đẹp và khóa lặp lại là chi phí thuần túy; mảng
    đối tượng → bảng gọn thường tiết kiệm 60–95%.
@@ -56,8 +56,8 @@ flowchart LR
 5. **Giữ nguyên vẹn caching prefix.** Một trình nén viết lại các byte lịch
    sử *đã cố định* sẽ phá vỡ cache (nguyên nhân 1.3). Các trình nén tốt chỉ
    chạm vào kết quả tool mới được nối thêm và giữ lịch sử đã gửi trước đó
-   giống hệt từng byte — xác minh các chỉ số cache-read không giảm sau khi
-   bạn thêm một trình nén.
+   giống hệt từng byte — hãy xác minh các chỉ số cache-read không giảm sau
+   khi bạn thêm một trình nén.
 
 ## Công cụ hiện đại nhất (SOTA)
 

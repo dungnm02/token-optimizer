@@ -3,10 +3,10 @@
 Tài liệu này liệt kê các nguyên nhân đã xác định gây tiêu tốn token cao trong
 **các agent và ứng dụng dựa trên LLM**. Các nguyên nhân này không phụ thuộc
 vào nhà cung cấp (provider-agnostic): chúng áp dụng cho mọi stack (Claude,
-GPT, Gemini, các model mã nguồn mở, v.v.) vì chúng bắt nguồn từ cách các API
-LLM hoạt động về cơ bản — các request không trạng thái (stateless), tính phí
-theo token, với context window có giới hạn. Các chi tiết
-riêng của từng nhà cung cấp chỉ xuất hiện như ví dụ minh họa.
+GPT, Gemini, các model mã nguồn mở, v.v.) vì bắt nguồn từ chính cách các API
+LLM hoạt động — request không trạng thái (stateless), tính phí theo token, và
+context window có giới hạn. Các chi tiết riêng của từng nhà cung cấp chỉ xuất
+hiện như ví dụ minh họa.
 
 Mỗi nguyên nhân mô tả **nó là gì**, **tại sao nó làm tăng mức sử dụng
 token**, và **cách nhận biết nó**. Liên kết đến tài liệu tương ứng trong
@@ -18,19 +18,18 @@ token**, và **cách nhận biết nó**. Liên kết đến tài liệu tương
 
 ## Bối cảnh: tại sao các nguyên nhân này mang tính phổ quát
 
-Ba đặc điểm chung của hầu như mọi API LLM tạo ra mọi nguyên nhân trong danh
-mục này:
+Hầu như mọi API LLM đều có chung ba đặc điểm, và chính ba đặc điểm này tạo ra
+mọi nguyên nhân trong danh mục này:
 
 1. **Không trạng thái (Statelessness).** API không lưu bộ nhớ giữa các lần
    gọi — client phải gửi lại mọi thứ mà model cần biết trong mỗi request.
-   Bất cứ điều gì làm "mọi thứ" đó lớn lên sẽ làm lớn mọi request trong
-   tương lai.
+   Hễ "mọi thứ" đó phình to thì mọi request về sau cũng phình to theo.
 2. **Định giá theo token, bất đối xứng.** Input và output được tính phí theo
    token, với output thường đắt gấp 3–5× giá input, và input được cache
    thường chỉ bằng ~10–25% giá input (khi nhà cung cấp hỗ trợ caching).
-3. **Context có giới hạn.** Context window là hữu hạn; khi tiệm cận giới
-   hạn sẽ buộc phải cắt bớt, tóm tắt, hoặc thất bại — và mọi thứ bên trong nó
-   đều bị tính phí trên mỗi lần gọi.
+3. **Context có giới hạn.** Context window là hữu hạn. Khi gần chạm giới
+   hạn, hệ thống buộc phải cắt bớt, tóm tắt, hoặc thất bại — và mọi thứ nằm
+   bên trong nó đều bị tính phí trên mỗi lần gọi.
 
 ## Mẫu (Template) cho một mục mới
 
@@ -66,12 +65,12 @@ Các nguyên nhân được nhóm thành sáu danh mục:
 
 ## Giải pháp nằm ở đâu: Bên thứ ba so với Nhà cung cấp
 
-Một định hướng nhanh trước khi vào danh mục: một số nguyên nhân có thể được
-giải quyết hoàn toàn bằng **công cụ bên thứ ba, không phụ thuộc agent**
-(thường mã nguồn mở, di động qua các nhà cung cấp), trong khi những nguyên
-nhân khác lại phụ thuộc vào **năng lực và giá cả chỉ nhà cung cấp mới kiểm
-soát** — một công cụ phía client có thể *tận dụng* một mức giảm giá hoặc nút
-điều chỉnh của nhà cung cấp, nhưng không bao giờ có thể *tạo ra* nó.
+Trước khi vào danh mục, cần định hướng nhanh một điều: một số nguyên nhân có
+thể được giải quyết hoàn toàn bằng **công cụ bên thứ ba, không phụ thuộc
+agent** (thường mã nguồn mở, di động qua các nhà cung cấp). Những nguyên nhân
+khác lại phụ thuộc vào **năng lực và giá cả mà chỉ nhà cung cấp mới kiểm
+soát được** — một công cụ phía client có thể *tận dụng* một mức giảm giá hay
+nút điều chỉnh của nhà cung cấp, nhưng không bao giờ *tạo ra* được nó.
 
 | Danh mục | Giải quyết được bằng công cụ bên thứ ba / kiến trúc của bạn | Phụ thuộc vào nhà cung cấp |
 | --- | --- | --- |
@@ -82,13 +81,13 @@ soát** — một công cụ phía client có thể *tận dụng* một mức g
 | 5 Phía sinh (generation) | Hợp đồng output trong prompt, định dạng edit dạng diff (Aider), retry có kiểm định (Instructor), nén output (Caveman) | Các nút điều chỉnh chính là của nhà cung cấp: ngân sách reasoning-effort/thinking, `verbosity`, chế độ structured-output |
 | 6 Kiến trúc | Định tuyến/gateway (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), framework điều phối, logic warm-then-fan, gói context | Bậc thang giá qua các tier model, tier batch giảm 50%, khả năng fine-tuning/distillation |
 
-Quy tắc chung: **vệ sinh (hygiene) là của bạn, giảm giá là của họ.** Mọi thứ
-giữ token *không* lọt vào request (context, output tool, prompt, trùng lặp)
-đều di động và giải quyết được bằng bên thứ ba; các đòn bẩy làm cho các
-token còn lại *rẻ hơn* (giá cache tiền tố, tier batch, tier model rẻ hơn,
-nút effort/verbosity) đều do nhà cung cấp kiểm soát — việc của bạn ở đó là
-đủ điều kiện để nhận chúng, và lựa chọn nhà cung cấp giới hạn mức họ có thể
-cho bạn.
+Quy tắc chung: **vệ sinh (hygiene) là việc của bạn, giảm giá là việc của họ.**
+Mọi thứ giúp giữ token *không* lọt vào request (context, output tool, prompt,
+trùng lặp) đều di động và giải quyết được bằng bên thứ ba. Còn các đòn bẩy
+làm cho những token còn lại *rẻ hơn* — giá cache tiền tố, tier batch, tier
+model rẻ hơn, nút effort/verbosity — đều do nhà cung cấp kiểm soát. Việc của
+bạn ở phần đó chỉ là đủ điều kiện để nhận các ưu đãi ấy, và nhà cung cấp bạn
+chọn sẽ giới hạn mức họ có thể cho bạn.
 
 ---
 
@@ -98,16 +97,18 @@ Hầu hết các nhà cung cấp lớn đều cung cấp một dạng **caching 
 nào đó (breakpoint tường minh, prefix caching tự động, hoặc nội dung cache
 đăng ký sẵn). Tất cả đều có chung cơ chế cốt lõi: cache khớp với một
 **prefix** của request, và các token được cache sẽ được tính phí ở mức giảm
-giá sâu. Các nguyên nhân này là về việc không đạt được mức giảm giá đó.
+giá sâu. Các nguyên nhân dưới đây đều xoay quanh việc không đạt được mức
+giảm giá đó.
 
 > **Caching prefix không phải là lớp caching duy nhất.** Nó làm cho một
-> *request lặp lại* rẻ hơn, nhưng vẫn chạy model. Một lãng phí riêng biệt,
-> trực giao là việc trả lời **các request gần giống hệt nhau lặp đi lặp lại
-> trên toàn bộ hệ thống (fleet)** (cùng một câu hỏi hỗ trợ, cùng một truy vấn
-> phân tích, cùng một prompt đánh giá) — mỗi lần đều là một lệnh gọi model
-> đầy đủ mà một cache ở *cấp độ phản hồi* (semantic) có thể bỏ qua hoàn toàn.
-> Đó là một cơ hội khác biệt so với mức giảm giá prefix bên dưới — được liệt
-> kê là nguyên nhân 6.6; xem `solutions/semantic-caching.md`.
+> *request lặp lại* rẻ hơn, nhưng vẫn chạy model. Có một dạng lãng phí khác,
+> hoàn toàn tách biệt: toàn hệ thống (fleet) phải trả lời đi trả lời lại
+> **các request gần giống hệt nhau** (cùng một câu hỏi hỗ trợ, cùng một truy
+> vấn phân tích, cùng một prompt đánh giá) — mỗi lần đều tốn một lệnh gọi
+> model đầy đủ, trong khi một cache ở *cấp độ phản hồi* (semantic) lẽ ra có
+> thể bỏ qua hoàn toàn. Đây là một cơ hội khác, tách biệt với mức giảm giá
+> prefix nói trên — được liệt kê là nguyên nhân 6.6; xem
+> `solutions/semantic-caching.md`.
 
 ### 1.1 Không có caching prompt
 
@@ -116,9 +117,9 @@ tool, tài liệu chung) được gửi mà không sử dụng cơ chế caching
 cấp — hoặc trên một provider/cấu hình mà caching không khả dụng.
 
 **Tại sao nó tiêu tốn token:** API không trạng thái, nên toàn bộ prompt được
-xử lý ở giá input đầy đủ trên mỗi request. Với giá cache-read thường ở mức
-~10–25% giá input thông thường, việc bỏ qua caching đồng nghĩa với việc trả
-nhiều hơn 4–10× cho mỗi prefix lặp lại, trên từng lệnh gọi.
+xử lý ở giá input đầy đủ trên mỗi request. Giá cache-read thường chỉ bằng
+~10–25% giá input thông thường, nên nếu bỏ qua caching, bạn phải trả nhiều
+hơn 4–10× cho mỗi prefix lặp lại, ở mọi lệnh gọi.
 
 **Cách nhận biết:** Metadata sử dụng của nhà cung cấp báo cáo số token được
 cache bằng 0 (ví dụ `cache_read_input_tokens` trên Anthropic, `cached_tokens`
@@ -189,15 +190,15 @@ pre-warming, lưu lượng giữ ấm)
 ## 2. Tích lũy context
 
 > **Danh mục này là một vấn đề chất lượng, không chỉ là vấn đề chi phí.**
-> Các nghiên cứu có kiểm soát ("context rot") trên
-> 18 model frontier cho thấy mỗi model đều suy giảm khi input tăng lên — và
-> điều này xảy ra *trước khi* cửa sổ đầy: ngân sách thực tế cho độ chính xác
-> cao nằm trong khoảng 150–400K token ngay cả trên các model có cửa sổ 2M
-> token, và độ chính xác giảm nhanh nhất khi nhiễu tích lũy *tương đồng về
-> mặt ngữ nghĩa* với câu trả lời (chính xác là trường hợp trong một phiên
-> lập trình dài đầy các bước khám phá gần đúng). Vì vậy việc cắt tỉa lịch sử
-> (bên dưới) mang lại cả độ chính xác lẫn tiết kiệm token — hai động lực này
-> cùng hướng về một phía.
+> Các nghiên cứu có kiểm soát ("context rot") trên 18 model frontier cho
+> thấy mọi model đều suy giảm khi input tăng lên, và điều này xảy ra *trước
+> khi* cửa sổ đầy. Ngân sách thực tế để giữ độ chính xác cao chỉ nằm trong
+> khoảng 150–400K token, ngay cả trên các model có cửa sổ 2M token. Độ chính
+> xác giảm nhanh nhất khi nhiễu tích lũy *tương đồng về mặt ngữ nghĩa* với
+> câu trả lời — đúng là tình huống thường gặp trong một phiên lập trình dài
+> đầy các bước khám phá gần đúng. Vì vậy, cắt tỉa lịch sử (xem bên dưới) vừa
+> cải thiện độ chính xác vừa tiết kiệm token — hai động lực này cùng hướng
+> về một phía.
 
 ### 2.1 Lịch sử hội thoại không giới hạn
 
@@ -293,13 +294,13 @@ chiếu đến.
 agent poll trạng thái bên ngoài ("kiểm tra lại trong vòng lặp") với một
 request model đầy đủ cho mỗi lần poll.
 
-**Tại sao nó tiêu tốn token:** Mỗi lần thử lại/poll tính lại toàn bộ prompt.
-Một vòng lặp poll 10 lần trên context 100K token tiêu tốn 1M token input
-chỉ để biết "chưa xong" chín lần. Người anh em của nó trong bối cảnh agentic
-là **doom loop**: model lặp đi lặp lại một bản sửa lỗi
-thất bại (sửa → test → thất bại → sửa tương tự), tính phí lại context ngày
-càng lớn trên mỗi vòng và thêm một lần thất bại nữa vào đó — chi phí tăng
-dồn trong khi tiến độ không đổi.
+**Tại sao nó tiêu tốn token:** Mỗi lần thử lại/poll đều tính lại toàn bộ
+prompt. Một vòng lặp poll 10 lần trên context 100K token tiêu tốn 1M token
+input chỉ để biết "chưa xong" tới chín lần. Một biến thể tương tự trong bối
+cảnh agentic là **doom loop**: model lặp đi lặp lại một bản sửa lỗi thất bại
+(sửa → test → thất bại → sửa tương tự), mỗi vòng đều tính phí lại context
+ngày càng lớn rồi cộng thêm một lần thất bại nữa vào đó — chi phí cứ tăng
+dồn trong khi tiến độ không nhích lên.
 
 **Cách nhận biết:** Các đợt request gần giống hệt nhau trong log sử dụng;
 các kết quả tool bị lỗi lặp lại với input không đổi; các mẫu hình
@@ -531,10 +532,11 @@ codebase hoặc lĩnh vực và suy luận lại những hiểu biết mà các 
 trả tiền cho nó rồi.
 
 **Tại sao nó tiêu tốn token:** Tính không trạng thái áp dụng *giữa các
-phiên*, không chỉ bên trong chúng. Định hướng trên một repo lớn là rất nhiều
-lệnh gọi tool lớn (thường 25–60K token trước khi công việc thực sự bắt đầu),
-và hóa đơn đó lặp lại cho mỗi phiên mới, mỗi kỹ sư, mỗi agent trong hệ
-thống — cùng một kiến thức được mua đi mua lại nhiều lần.
+phiên*, không chỉ bên trong chúng. Để định hướng trên một repo lớn, agent
+phải thực hiện rất nhiều lệnh gọi tool lớn (thường tốn 25–60K token trước
+khi công việc thực sự bắt đầu), và hóa đơn đó lặp lại cho mỗi phiên mới, mỗi
+kỹ sư, mỗi agent trong hệ thống — cùng một kiến thức bị mua đi mua lại nhiều
+lần.
 
 **Cách nhận biết:** Transcript phiên mở đầu bằng cùng một chuỗi khám phá
 (liệt kê → đọc → grep cùng các file cốt lõi); chi tiêu N lượt đầu tiên bị
@@ -568,9 +570,9 @@ lượng chủ yếu đọc; các job theo lịch tái sinh output hầu như kh
 
 ## Cẩm nang Đo lường
 
-Để quy chi phí về một nguyên nhân, metadata sử dụng trả về cùng mỗi phản
-hồi là sự thật nền tảng (ground truth). Tên gọi khác nhau tùy nhà cung cấp,
-nhưng cùng bốn đại lượng tồn tại ở hầu hết mọi nơi:
+Để quy chi phí về đúng nguyên nhân, hãy dựa vào metadata sử dụng đi kèm mỗi
+phản hồi — đó chính là sự thật nền tảng (ground truth). Tên trường khác nhau
+tùy nhà cung cấp, nhưng cùng bốn đại lượng này tồn tại ở hầu hết mọi nơi:
 
 | Đại lượng | Giá tương đối điển hình | Tên trường ví dụ |
 | --- | --- | --- |
@@ -582,11 +584,11 @@ nhưng cùng bốn đại lượng tồn tại ở hầu hết mọi nơi:
 Hai quy tắc phổ quát:
 
 - **Tổng kích thước prompt = input không cache + đã cache (+ ghi cache).**
-  Đánh giá chi tiêu chỉ dựa vào trường không cache sẽ quy chi phí thiếu hoặc
-  thừa.
+  Nếu chỉ đánh giá chi tiêu dựa vào trường không cache, bạn sẽ quy chi phí
+  thiếu hoặc thừa.
 - **Đếm token bằng bộ đếm riêng của nhà cung cấp cho đúng model mục tiêu.**
-  Tokenizer là đặc thù theo model; một bộ đếm mượn từ nhà cung cấp khác (hoặc
-  thế hệ model khác) sẽ sai một cách có hệ thống.
+  Tokenizer là đặc thù theo từng model; mượn bộ đếm của nhà cung cấp khác
+  (hoặc của thế hệ model khác) sẽ luôn cho kết quả sai một cách có hệ thống.
 
 ---
 

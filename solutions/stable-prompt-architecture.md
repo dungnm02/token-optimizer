@@ -31,8 +31,8 @@ của nó:
 - Sắp xếp danh sách tool theo tên; không bao giờ suy ra thứ tự từ việc lặp
   qua `dict`/`set`/`Map`.
 - Cấm `random`, `uuid`, `now()` bên trong bất cứ thứ gì nạp vào prefix
-  (thực thi bằng quy tắc lint hoặc unit test render cùng một request hai
-  lần và khẳng định bằng nhau từng byte).
+  (thực thi bằng một quy tắc lint, hoặc một unit test render cùng một
+  request hai lần rồi khẳng định kết quả giống hệt nhau từng byte).
 
 ### 3. Đánh phiên bản prompt như code
 
@@ -50,9 +50,10 @@ flowchart TD
 
 ### 4. Kiểm thử hồi quy cho bất biến này
 
-Thêm một kiểm thử CI: render hai request cho cùng trạng thái phiên và khẳng
-định prefix giống hệt nhau từng byte; render lượt N và lượt N+1 và khẳng
-định byte của lượt N là một prefix chặt (strict prefix) của lượt N+1.
+Thêm một kiểm thử CI: render hai request cho cùng một trạng thái phiên và
+khẳng định rằng prefix của chúng giống hệt nhau từng byte. Sau đó, render
+lượt N và lượt N+1, rồi khẳng định byte của lượt N là một prefix chặt
+(strict prefix) của lượt N+1.
 
 ## Công cụ hiện đại nhất (SOTA)
 
@@ -75,7 +76,7 @@ Thêm một kiểm thử CI: render hai request cho cùng trạng thái phiên v
 ## Đánh đổi
 
 - Chi phí kỷ luật: mỗi lần "chỉ chỉnh nhẹ system prompt" trở thành một thay
-  đổi có phiên bản với việc triển khai tại ranh giới phiên.
+  đổi có phiên bản, phải triển khai đúng tại ranh giới phiên.
 - Context được chèn muộn mang thẩm quyền hơi thấp hơn system prompt trên
   một số model — dùng kênh vai trò system của nhà cung cấp khi có sẵn.
 - Serialize tất định có thể xung đột với các framework xây lại schema tool

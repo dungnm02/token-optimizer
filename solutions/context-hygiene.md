@@ -2,9 +2,9 @@
 
 **Giải quyết:** Nguyên nhân 2.3 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Đảm bảo rằng bất kỳ nội dung nào (một file, một schema, tài
-liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**, và sau đó
-được tham chiếu — chứ không dán lại — về sau.
+**Ý tưởng:** Đảm bảo mỗi nội dung (một file, một schema, một tài liệu
+truy xuất) chỉ đi vào cuộc hội thoại **nhiều nhất một lần**. Sau đó, chỉ
+tham chiếu đến nó — không dán lại nội dung nữa.
 
 ---
 
@@ -17,12 +17,13 @@ liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**
      có trong context (lượt 4, không đổi)."*
    - Có mặt nhưng đã thay đổi trên đĩa → chèn một **diff** so với phiên
      bản trong context, không phải toàn bộ file.
-2. **Sửa các pipeline truy xuất tự động gắn lại mỗi lượt.** RAG ngây thơ
-   dán top-k chunk vào *mọi* tin nhắn người dùng; trong một phiên về một
-   chủ đề, đó là cùng các chunk bị tính phí lại mỗi lượt. Truy xuất một lần
-   cho mỗi lần đổi chủ đề, giữ kết quả như một khối context ổn định (có
-   thể cache), và chỉ chạy lại truy xuất khi truy vấn trôi dạt (dùng ngưỡng
-   khoảng cách embedding).
+2. **Sửa các pipeline truy xuất cứ tự động gắn lại dữ liệu mỗi lượt.** RAG
+   kiểu ngây thơ dán top-k chunk vào *mọi* tin nhắn của người dùng; trong
+   một phiên chỉ xoay quanh một chủ đề, đó là cùng một tập chunk bị tính
+   phí lặp lại ở từng lượt. Thay vào đó, chỉ nên truy xuất lại mỗi khi chủ
+   đề thay đổi, giữ kết quả đó làm một khối context ổn định (có thể cache),
+   và chỉ chạy lại truy xuất khi truy vấn trôi dạt (dùng ngưỡng khoảng cách
+   embedding để phát hiện).
 3. **Tham chiếu bằng định danh khi nhà cung cấp hỗ trợ.** Tải lên một lần
    và tham chiếu bằng ID — `file_id` của Anthropic Files API, OpenAI
    Files/vector store, Gemini File API — thay vì nhúng lại các byte vào mỗi
@@ -42,8 +43,8 @@ liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**
 
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
-| Claude Code / Claude Agent SDK | Theo dõi trạng thái file | Theo dõi trạng thái đọc/sửa; hạn chế việc đọc lại dư thừa ("trạng thái file hiện đang cập nhật trong context của bạn") |
-| Anthropic Files API / OpenAI Files / Gemini File API | Tải lên một lần, tham chiếu bằng ID | Loại bỏ việc truyền lại byte; kết hợp với caching để giảm chi phí xử lý |
+| Claude Code / Claude Agent SDK | Theo dõi trạng thái file | Theo dõi trạng thái đọc/sửa; giúp tránh đọc lại dư thừa ("trạng thái file hiện đang cập nhật trong context của bạn") |
+| Anthropic Files API / OpenAI Files / Gemini File API | Tải lên một lần, tham chiếu bằng ID | Không cần truyền lại byte; kết hợp với caching để giảm chi phí xử lý |
 
 ### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
 
@@ -54,21 +55,21 @@ liệu truy xuất) đi vào cuộc hội thoại **nhiều nhất một lần**
 
 ## Đánh đổi
 
-- Registry phải được vô hiệu hóa đúng cách khi artifact gốc thay đổi — một
-  tham chiếu "đã có trong context" đã cũ là một lỗi về tính đúng đắn,
-  không chỉ là lỗi về token. Hash các byte hiện tại, đừng tin tưởng
+- Registry phải được vô hiệu hóa đúng lúc khi artifact gốc thay đổi. Nếu
+  tham chiếu "đã có trong context" bị cũ, đó là lỗi về tính đúng đắn, không
+  chỉ là lỗi lãng phí token — hãy hash nội dung byte hiện tại, đừng dựa vào
   timestamp.
-- Chèn dạng diff giả định rằng model có thể áp dụng diff trong đầu; với các
-  file bị thay đổi nhiều, một lần đọc lại toàn bộ tươi mới sẽ an toàn hơn.
+- Việc chèn dạng diff giả định rằng model có thể tự áp dụng diff trong đầu;
+  với các file bị thay đổi nhiều, đọc lại toàn bộ file mới sẽ an toàn hơn.
 
 ## Tác động dự kiến
 
 - Các phiên có truy cập file lặp lại thường lãng phí **20–40%** token
   lịch sử vào nội dung trùng lặp; một registry hash loại bỏ gần như toàn
   bộ điều đó.
-- Loại bỏ trùng lặp truy xuất biến chi phí RAG mỗi lượt từ `k_chunks ×
-  số lượt` thành `k_chunks × số lần đổi chủ đề` — thường giảm **5–20×**
-  tỷ trọng truy xuất trong input của các phiên dài.
+- Loại bỏ trùng lặp trong truy xuất giúp chi phí RAG mỗi lượt giảm từ
+  `k_chunks × số lượt` xuống còn `k_chunks × số lần đổi chủ đề` — thường
+  giảm **5–20×** tỷ trọng truy xuất trong input của các phiên dài.
 
 ---
 

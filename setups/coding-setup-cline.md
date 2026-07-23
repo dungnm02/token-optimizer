@@ -3,10 +3,10 @@
 Một cách hiện thực hóa cụ thể của
 [`recommended-setup.md`](recommended-setup.md) cho **Cline** — coding agent
 mã nguồn mở (Apache-2.0) cho VS Code. Cline dùng nhà cung cấp do bạn tự mang
-(BYO-provider) và tính phí theo token qua chính API key của bạn, nên mọi
+(BYO-provider) và tính phí theo token qua chính API key của bạn. Vì vậy, mọi
 nguyên nhân trong [`../CAUSE.md`](../CAUSE.md) đều đổ trực tiếp vào hóa đơn
-của bạn — và hầu như mọi nút điều chỉnh để sửa nó đều được cung cấp trong
-tiện ích mở rộng.
+của bạn — nhưng bù lại, hầu như mọi nút điều chỉnh để sửa nó cũng có sẵn
+trong tiện ích mở rộng.
 
 > Xác minh lại với tài liệu/bản phát hành Cline hiện tại trước khi triển
 > khai — tiện ích mở rộng ra bản nhanh và tên tính năng có thể thay đổi.
@@ -106,8 +106,9 @@ Mọi thứ dưới đây đi theo **mỗi request đơn lẻ** của mọi tác
   prompt, nguyên nhân 6.4). Chuyển các playbook theo tình huống vào tài
   liệu Cline đọc theo yêu cầu; đừng để thư mục rules trở thành một wiki.
   Không bao giờ đặt nội dung dễ thay đổi (ngày tháng, số ticket) trong
-  rules — đó là một yếu tố vô hiệu hóa cache toàn phiên; và **đừng chỉnh
-  sửa rules giữa tác vụ** (hoàn thành, chỉnh sửa, `/newtask`).
+  rules — đó là một yếu tố vô hiệu hóa cache toàn phiên. Và **đừng chỉnh
+  sửa rules giữa tác vụ** — hãy hoàn thành tác vụ, rồi mới chỉnh sửa, hoặc
+  dùng `/newtask`.
 - **`.clineignore`** — loại trừ `node_modules`, output build, lockfile,
   code sinh ra, fixture. Cắt giảm cả chi phí liệt kê file lẫn các lần đọc
   khổng lồ vô tình.
@@ -191,10 +192,11 @@ không hạ tầng mới, nhưng nó đi theo mọi request, nên hãy giữ nó
 | vLLM / SGLang | Apache-2.0 | Đặt trước các thiết lập kiểu Ollama/LM Studio với APC/RadixAttention để lịch sử gửi lại của Cline được tái sử dụng prefix mà một server local trần sẽ không cho bạn |
 
 Bộ ba **RTK + Headroom + Caveman** là "bộ công cụ tiết kiệm token" của
-cộng đồng cho các agent VS Code — nén CLI phía input, nén kết quả tool cấp
-API, và nén phản hồi phía output tương ứng; cả ba đều liệt kê Cline là
-được hỗ trợ. Thêm **OpenMemory hoặc một bản đồ Repomix đã check-in** lên
-trên và hai khoảng trống cấu trúc còn lại (phình to output tool và cold-start) đều được bao phủ.
+cộng đồng cho các agent VS Code — lần lượt là nén CLI phía input, nén kết
+quả tool ở cấp API, và nén phản hồi phía output; cả ba đều liệt kê Cline là
+được hỗ trợ. Thêm **OpenMemory hoặc một bản đồ Repomix đã check-in** vào bộ
+này, và hai khoảng trống cấu trúc còn lại (phình to output tool và
+cold-start) sẽ đều được lấp đầy.
 
 Những gì bạn **không nên** thêm: các trình nén context kiểu LLMLingua
 (rủi ro độ trung thực trên code — `recommended-setup.md` Tier 3), một lớp

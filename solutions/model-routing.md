@@ -2,10 +2,11 @@
 
 **Giải quyết:** Nguyên nhân 6.2 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Các model tier frontier tốn ~5–25× nhiều hơn mỗi token so với
-các model tier nhỏ cùng dòng. Định tuyến mỗi request tới model rẻ nhất đáp
-ứng ngưỡng chất lượng của nó — tĩnh theo route, động theo độ khó, hoặc theo
-kiểu cascade — dành tier frontier cho lưu lượng thực sự cần nó.
+**Ý tưởng:** Các model tier frontier tốn nhiều hơn ~5–25× mỗi token so với
+các model tier nhỏ cùng dòng. Hãy định tuyến mỗi request tới model rẻ nhất
+vẫn đáp ứng đủ ngưỡng chất lượng của nó — có thể tĩnh theo route, động theo
+độ khó, hoặc theo kiểu cascade. Cách này giúp dành tier frontier cho đúng
+phần lưu lượng thực sự cần đến nó.
 
 ---
 
@@ -23,25 +24,29 @@ flowchart TD
 
 1. **Định tuyến tĩnh (làm điều này trước).** Hầu hết sản phẩm đều có các
    route phân tách rõ ràng — phân loại, trích xuất, định dạng, sinh tiêu
-   đề, chính việc định tuyến — mà một model nhỏ phục vụ ở chất lượng đầy
-   đủ. Gán theo từng route trong config. Không cần ML, nắm bắt phần lớn
-   lợi ích.
-2. **Định tuyến động.** Một router đã học chấm điểm mỗi truy vấn và chọn
-   tier — dòng nghiên cứu RouteLLM cho thấy các router được huấn luyện
-   trên dữ liệu ưu tiên có thể cắt giảm chi phí đáng kể ở chất lượng gần
-   ngang hàng frontier trên lưu lượng hỗn hợp.
-3. **Cascade (mẫu hình FrugalGPT).** Thử rẻ trước; leo thang khi thất bại
-   độ tin cậy/xác minh. Hoạt động tốt nhất khi câu trả lời có thể *kiểm
-   tra được* (kiểm định schema, unit test, hỏi-đáp có căn cứ truy xuất) để
-   việc leo thang được kích hoạt bởi bằng chứng, không phải cảm tính.
-4. **Định tuyến nội bộ agent.** Trong một agent: model frontier cho việc
-   lập kế hoạch/quyết định, model nhỏ cho công việc chân tay của subagent
-   (`subagent-context-handoff.md`), tóm tắt, và các lệnh gọi nén. Giữ
-   model của *mỗi vòng lặp* cố định giữa phiên (nguyên nhân 1.3 — cache
-   gắn với model cụ thể); định tuyến tại ranh giới sinh.
+   đề, và cả định tuyến — mà một model nhỏ đã phục vụ tốt ở chất lượng đầy
+   đủ. Hãy gán model theo từng route ngay trong config. Cách này không cần
+   ML mà vẫn nắm bắt được phần lớn lợi ích.
+2. **Định tuyến động.** Một router đã được huấn luyện sẽ chấm điểm từng
+   truy vấn rồi chọn tier phù hợp. Dòng nghiên cứu RouteLLM cho thấy các
+   router huấn luyện trên dữ liệu ưu tiên (preference data) có thể cắt
+   giảm chi phí đáng kể mà vẫn giữ chất lượng gần ngang tier frontier trên
+   lưu lượng hỗn hợp.
+3. **Cascade (mẫu hình FrugalGPT).** Thử model rẻ trước; chỉ leo thang khi
+   thất bại độ tin cậy/xác minh. Cách này hoạt động tốt nhất khi câu trả
+   lời có thể *kiểm tra được* (kiểm định schema, unit test, hỏi-đáp có căn
+   cứ truy xuất), sao cho bằng chứng — chứ không phải cảm tính — là thứ
+   quyết định khi nào cần leo thang.
+4. **Định tuyến nội bộ agent.** Trong nội bộ một agent: dùng model
+   frontier để lập kế hoạch và ra quyết định, dùng model nhỏ cho phần việc
+   chân tay của subagent (`subagent-context-handoff.md`), cho việc tóm
+   tắt, và cho các lệnh gọi nén. Giữ cố định model của *mỗi vòng lặp*
+   trong suốt phiên (nguyên nhân 1.3 — cache gắn với model cụ thể); chỉ
+   đổi model tại thời điểm tạo (spawn) mới.
 5. **Distill các route ổn định, khối lượng cao.** Khi hành vi của một
-   route đã ổn định, fine-tune/distill một model nhỏ trên output của model
-   frontier và định tuyến khối lượng đó tới đó; leo thang phần còn lại.
+   route đã ổn định, hãy fine-tune/distill một model nhỏ trên output của
+   model frontier rồi chuyển toàn bộ khối lượng đó sang model nhỏ ấy;
+   phần còn lại thì leo thang lên frontier.
 
 ## Cách áp dụng
 
@@ -52,10 +57,11 @@ flowchart TD
   biết khi một tier nhỏ bị gán sai (quá cao = lãng phí gọi hai lần; ~0% =
   có thể tier frontier không cần thiết ngay từ đầu).
 - Đo lường bằng **chi phí mỗi tác vụ hoàn thành** (`token-counting.md`) —
-  một model rẻ hơn cần thêm hai lượt sửa lỗi có thể là âm ròng.
-- Nhớ đòn bẩy anh em: với công việc không nhạy cảm về độ trễ, *cùng một*
-  model giảm giá 50% qua batch (`batch-processing.md`) có thể tốt hơn hạ
-  tier.
+  một model rẻ hơn nhưng cần thêm hai lượt sửa lỗi vẫn có thể khiến kết
+  quả ròng bị âm (net-negative).
+- Đừng quên đòn bẩy song song: với công việc không nhạy cảm về độ trễ,
+  dùng *cùng một* model nhưng được giảm giá 50% qua batch
+  (`batch-processing.md`) có thể lợi hơn là hạ tier.
 
 ## Công cụ hiện đại nhất (SOTA)
 
@@ -81,11 +87,12 @@ flowchart TD
 
 - Router/cascade thêm một lớp quyết định: độ trễ (cascade thêm một lệnh
   gọi rẻ đầy đủ khi leo thang), hạ tầng, và các chế độ lỗi riêng của nó.
-- Văn phong output đa model khác nhau — các bộ phân tích/UX phía sau phải
-  chịu được sự chênh lệch, và đánh giá phải chạy theo từng model.
-- Cache không chuyển được qua các model; định tuyến *giữa phiên* là một
-  lần làm mới cache — định tuyến theo từng request/lần sinh, không phải
-  theo từng lượt của một phiên.
+- Văn phong output khác nhau giữa các model — các bộ phân tích/UX phía
+  sau phải chịu được mức chênh lệch này, và phải chạy đánh giá riêng cho
+  từng model.
+- Cache không chuyển được giữa các model khác nhau; nếu định tuyến lại
+  *giữa phiên*, cache sẽ phải xây dựng lại từ đầu. Vì vậy hãy định tuyến
+  theo từng request/lần sinh, không phải theo từng lượt trong một phiên.
 - Bảo trì: bản đồ route cần tinh chỉnh lại trên mỗi thế hệ model (các
   tier nhỏ cải thiện nhanh — route chỉ-dành-cho-hàng-đầu hôm qua thường
   là route model-mini hôm nay).

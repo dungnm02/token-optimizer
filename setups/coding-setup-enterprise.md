@@ -1,11 +1,11 @@
 # Thiết lập Coding-Agent Doanh nghiệp: Claude, GPT, Gemini (Tiếng Việt)
 
-Các cách hiện thực hóa cụ thể, theo từng nhà cung cấp của
-[`recommended-setup.md`](recommended-setup.md) cho **coding agent trong môi
-trường doanh nghiệp**, cho ba stack lớn. Mỗi phần bao gồm: tuyến truy cập
-doanh nghiệp (và tuyến nào âm thầm *mất* các tính năng tối ưu token), harness
-coding nên chuẩn hóa, cách caching thực sự hoạt động ở đó, bản đồ
-model/effort, và các kết nối batch + đo lường.
+Tài liệu này trình bày các cách hiện thực hóa cụ thể theo từng nhà cung cấp
+của [`recommended-setup.md`](recommended-setup.md) cho **coding agent trong
+môi trường doanh nghiệp**, áp dụng cho ba stack lớn. Mỗi phần bao gồm: tuyến
+truy cập doanh nghiệp (và tuyến nào âm thầm *mất* các tính năng tối ưu
+token), harness coding nên chuẩn hóa, cách caching thực sự hoạt động ở đó,
+bản đồ model/effort, và các kết nối batch + đo lường.
 
 > ⚠️ Giá cả, tên model, và tính khả dụng tính năng thay đổi nhanh — coi các
 > con số ở đây là hình dạng của bối cảnh và xác minh lại với tài liệu hiện
@@ -44,11 +44,12 @@ flowchart TD
     B -- "cần Azure-native" --> G["Microsoft Foundry<br/>phần lớn tính năng còn beta"]
 ```
 
-**Khuyến nghị:** API 1P hoặc **Claude Platform trên AWS** (Anthropic vận
-hành với sự tương đương API cùng ngày, SigV4/IAM, billing qua AWS
-Marketplace) — bạn giữ được toàn bộ bề mặt tối ưu. Chỉ chọn Bedrock/Vertex
-khi chính sách bắt buộc, và dự trù cho việc thiếu tier batch giảm 50% và
-Files API (cả hai đều liên quan trực tiếp đến hóa đơn token).
+**Khuyến nghị:** dùng API 1P hoặc **Claude Platform trên AWS** (do Anthropic
+vận hành, tính năng tương đương ngay trong ngày, hỗ trợ SigV4/IAM, billing
+qua AWS Marketplace) — cách này giữ được toàn bộ bề mặt tối ưu. Chỉ chọn
+Bedrock/Vertex khi chính sách bắt buộc, và cần dự trù trước rằng bạn sẽ mất
+tier batch giảm 50% cùng Files API (cả hai đều ảnh hưởng trực tiếp đến hóa
+đơn token).
 
 ### Harness
 

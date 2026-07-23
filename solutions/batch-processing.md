@@ -1,57 +1,61 @@
-# Xử lý theo Lô (Giảm giá 50% cho sự Kiên nhẫn) (Tiếng Việt)
+# Xử lý theo Lô (Giảm 50% Nếu Bạn Không Vội) (Tiếng Việt)
 
 **Giải quyết:** Nguyên nhân 6.2 trong [`../CAUSE.md`](../CAUSE.md) (phía chi
-phí), và khuếch đại `document-reuse.md` / `prompt-caching.md`
+phí), đồng thời khuếch đại hiệu quả của `document-reuse.md` /
+`prompt-caching.md`
 
 **Ý tưởng:** Mọi nhà cung cấp lớn đều bán cùng loại token với giá **giảm
-50%** nếu bạn không cần câu trả lời ngay lập tức. Định tuyến mọi lưu lượng
-không nhạy cảm về độ trễ — job đêm, backfill, đánh giá, phân loại/trích
-xuất hàng loạt, sinh báo cáo — qua tier batch.
+50%** nếu bạn không cần nhận câu trả lời ngay lập tức. Hãy định tuyến mọi
+lưu lượng không nhạy cảm về độ trễ — job chạy đêm, backfill, đánh giá,
+phân loại/trích xuất hàng loạt, sinh báo cáo — qua tier batch.
 
 ---
 
-## Bối cảnh các nhà cung cấp
+## Tổng quan các nhà cung cấp
 
 | Nhà cung cấp | Sản phẩm | Giảm giá | Khung thời gian hoàn tất |
 | --- | --- | --- | --- |
 | Anthropic | Message Batches API | 50% trên mọi mức sử dụng token (cộng dồn với giảm giá prompt-cache) | Phần lớn < 1 giờ, tối đa 24 giờ |
 | OpenAI | Batch API | 50% | Mục tiêu 24 giờ |
 | Google Gemini | Chế độ Batch | 50% | Mục tiêu 24 giờ |
-| Tự host | Suy luận offline vLLM/SGLang | Thực tế còn hơn (tối đa hóa sử dụng GPU, lên lịch giờ thấp điểm) | Tùy bạn chọn |
+| Tự host | Suy luận offline vLLM/SGLang | Trên thực tế còn có thể cao hơn (tận dụng tối đa GPU, chạy vào giờ thấp điểm) | Tùy bạn chọn |
 
-Tất cả đều hỗ trợ đầy đủ bề mặt tính năng (tool, thị giác, structured
-output, caching) với tương quan `custom_id` theo từng request; kết quả trả
-về theo thứ tự tùy ý.
+Tất cả đều hỗ trợ đầy đủ các tính năng (tool, thị giác, structured output,
+caching), đối chiếu qua `custom_id` cho từng request; kết quả trả về không
+theo thứ tự cố định.
 
 ## Cách áp dụng
 
-1. **Kiểm kê lưu lượng theo nhu cầu độ trễ.** Bất cứ điều gì không chặn
-   một con người trong thời gian thực đều là ứng viên batch: bộ đánh giá
-   và hồi quy, backfill embedding/làm giàu, tóm tắt/báo cáo hàng đêm, quét
-   kiểm duyệt, gán nhãn/sinh dataset, xử lý lại sau khi đổi prompt.
+1. **Rà soát lưu lượng theo nhu cầu về độ trễ.** Bất cứ việc gì không bắt
+   một con người phải chờ kết quả ngay lập tức đều là ứng viên cho batch:
+   bộ đánh giá và hồi quy, backfill embedding/làm giàu dữ liệu, tóm
+   tắt/báo cáo hàng đêm, quét kiểm duyệt, gán nhãn/sinh dataset, xử lý lại
+   sau khi đổi prompt.
 2. **Tái cấu trúc "vòng lặp qua các mục" thành các lô.** Một cron job gọi
-   API trong một vòng for đang trả giá 2× cho độ trễ tương tác mà không ai
-   quan sát. Thu thập các mục, gửi một lô, poll/webhook để chờ hoàn tất,
+   API trong vòng lặp for thực chất đang trả gấp đôi giá chỉ để lấy độ trễ
+   kiểu tương tác mà chẳng ai theo dõi cả. Thay vào đó, hãy thu thập các
+   mục lại, gửi thành một lô, poll hoặc dùng webhook để chờ hoàn tất, rồi
    phân phối kết quả trở lại theo `custom_id`.
-3. **Chồng các mức giảm giá.** Chia sẻ một prefix đã cache (corpus, bộ
-   few-shot, system prompt) trên mọi request trong lô — giá cache-read
-   *và* mức giảm giá batch 50% kết hợp (trên Anthropic, token cache-read
-   trong một lô chỉ ~5% giá input cơ bản).
-4. **Xử lý đúng ngữ nghĩa của batch:** dùng khóa `custom_id` (không bao
-   giờ dùng vị trí), coi các mục `errored`/`expired` là có thể thử lại
-   riêng lẻ, và làm cho job có tính bất biến để việc gửi lại là an toàn.
-5. **Mẫu hình lai cho "sớm nhưng chưa cần ngay":** xếp hàng các request
-   tới N phút, sau đó xả ra như một lô; nếu tier batch bị dồn ứ gần deadline
-   của bạn, tràn sang tier tương tác. Điều này thu được mức giảm giá cho
-   các khối lượng công việc bán-tương-tác (ví dụ "có kết quả trước khi
-   họp kết thúc").
+3. **Cộng dồn các mức giảm giá.** Hãy chia sẻ một prefix đã cache (corpus,
+   bộ few-shot, system prompt) trên mọi request trong lô — giá cache-read
+   *và* mức giảm giá batch 50% sẽ cộng dồn với nhau (trên Anthropic, token
+   cache-read trong một lô chỉ tốn ~5% giá input cơ bản).
+4. **Xử lý đúng ngữ nghĩa của batch:** dùng khóa `custom_id` để đối chiếu
+   (không bao giờ dùng vị trí trong danh sách), coi các mục `errored`/
+   `expired` là có thể thử lại riêng lẻ, và thiết kế job có tính bất biến
+   (idempotent) để việc gửi lại luôn an toàn.
+5. **Mô hình lai cho tình huống "sớm cũng được, nhưng chưa cần ngay":**
+   xếp hàng request trong tối đa N phút rồi xả ra thành một lô; nếu tier
+   batch bị dồn ứ gần đến deadline của bạn, chuyển tràn sang tier tương
+   tác. Cách này vẫn tận dụng được mức giảm giá cho các tác vụ bán tương
+   tác (ví dụ: "cần có kết quả trước khi cuộc họp kết thúc").
 
 ```mermaid
 flowchart LR
-    A[Job không nhạy cảm độ trễ] --> Q[Thu thập + gán custom_id]
+    A[Job không nhạy cảm với độ trễ] --> Q[Thu thập + gán custom_id]
     Q --> B[Gửi lô]
     B --> P{Poll / webhook}
-    P -- kết thúc --> R[Stream kết quả,<br/>ghép theo custom_id]
+    P -- hoàn tất --> R[Stream kết quả,<br/>ghép theo custom_id]
     R --> S[Thử lại các mục lỗi<br/>trong lô tiếp theo]
 ```
 
@@ -61,7 +65,7 @@ flowchart LR
 
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
-| Anthropic API | Message Batches API | Chính mức giảm giá 50%; quy mô 100K request mỗi lô; cộng dồn với giá cache-read |
+| Anthropic API | Message Batches API | Chính là mức giảm giá 50%; quy mô 100K request mỗi lô; cộng dồn với giá cache-read |
 | OpenAI API | Batch API | 50%, khung mục tiêu 24 giờ |
 | Google Gemini API | Chế độ Batch | 50%, khung mục tiêu 24 giờ |
 
@@ -69,30 +73,33 @@ flowchart LR
 
 | Công cụ | Giấy phép | Ghi chú |
 | --- | --- | --- |
-| Hỗ trợ batch của LiteLLM | MIT | Gửi lô thống nhất qua các nhà cung cấp |
-| Airflow / Dagster / Temporal | Apache-2.0 / Apache-2.0 / MIT | Lên lịch, poll, thử lại, và fan-out xung quanh các job batch |
-| Chế độ offline vLLM / SGLang | Apache-2.0 | Suy luận hàng loạt tối ưu thông lượng cho model mở — thực tế còn giảm giá hơn 50% nhờ tối đa hóa GPU |
+| Hỗ trợ batch của LiteLLM | MIT | Gửi lô thống nhất qua nhiều nhà cung cấp |
+| Airflow / Dagster / Temporal | Apache-2.0 / Apache-2.0 / MIT | Lên lịch, poll, thử lại, và fan-out cho các job batch |
+| Chế độ offline vLLM / SGLang | Apache-2.0 | Suy luận hàng loạt tối ưu thông lượng cho model mở — trên thực tế còn giảm giá hơn 50% nhờ tận dụng tối đa GPU |
 
 ## Đánh đổi
 
-- Kết quả trong vòng tối đa 24 giờ — lưu lượng thực sự tương tác không
-  dùng được.
-- Hệ thống ống nước bất đồng bộ (gửi/poll/ghép/thử lại) thay thế code
+- Kết quả có thể mất tới 24 giờ — không phù hợp với lưu lượng thực sự cần
+  tương tác ngay.
+- Cơ chế xử lý bất đồng bộ (gửi/poll/ghép/thử lại) thay thế cho code
   request/response đơn giản.
-- Gỡ lỗi có chu kỳ chậm hơn: một prompt tệ đốt cả một lượt quay vòng
-  batch, nên hãy kiểm chứng trên một mẫu tương tác nhỏ trước.
-- Hàng đợi batch của nhà cung cấp chia sẻ pool giới hạn tốc độ của tổ
-  chức trên một số nền tảng — kiểm tra tương tác với lưu lượng tương tác.
+- Gỡ lỗi chậm hơn: một prompt sai có thể làm lãng phí cả một vòng xử lý
+  batch, vì vậy hãy kiểm tra trên một mẫu nhỏ theo kiểu tương tác trước.
+- Trên một số nền tảng, hàng đợi batch dùng chung pool giới hạn tốc độ
+  (rate-limit) với cả tổ chức — cần kiểm tra xem nó có ảnh hưởng đến lưu
+  lượng tương tác hay không.
 
 ## Tác động dự kiến
 
-- Giảm chi phí cố định **2×** trên toàn bộ lưu lượng đã chuyển — tất
-  định, hoàn toàn không đánh đổi chất lượng (cùng model, cùng output).
-- Chồng với caching prefix chia sẻ, các khối lượng công việc hỏi-đáp/đánh
-  giá hàng loạt thường đạt **rẻ hơn 5–20×** so với các vòng lặp tương tác
-  ngây thơ.
-- Với nhiều đội, đánh giá + backfill chiếm 30–70% tổng chi tiêu token —
-  khiến đây là một trong những thắng lợi chắc chắn nhất trong danh mục.
+- Giảm chi phí cố định **2 lần** trên toàn bộ lưu lượng đã chuyển sang
+  batch — đây là mức giảm chắc chắn, hoàn toàn không đánh đổi chất lượng
+  (cùng model, cùng output).
+- Khi kết hợp với caching prefix dùng chung, các tác vụ hỏi-đáp/đánh giá
+  hàng loạt thường **rẻ hơn 5–20 lần** so với cách gọi tương tác thông
+  thường (naive).
+- Ở nhiều đội, việc đánh giá và backfill chiếm tới 30–70% tổng chi tiêu
+  token, khiến đây là một trong những cách tối ưu chắc chắn mang lại hiệu
+  quả nhất trong danh mục này.
 
 ---
 

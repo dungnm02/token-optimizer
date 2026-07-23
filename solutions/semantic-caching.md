@@ -33,19 +33,20 @@ flowchart TD
 
 ## Cách áp dụng
 
-1. **Bắt đầu với caching khớp-chính-xác (rủi ro bằng 0).** Một hash của
+1. **Bắt đầu với caching khớp chính xác (rủi ro bằng 0).** Một hash của
    request đã chuẩn hóa → phản hồi là một tập con an toàn: các câu hỏi
    giống hệt nhau nhận câu trả lời giống hệt nhau miễn phí. Áp dụng điều
-   này trước khi đụng đến ngưỡng tương đồng.
-2. **Thêm khớp tương đồng nơi sự lặp lại mờ nhòe.** Embed truy vấn, tìm
-   hàng xóm gần nhất trong các truy vấn đã lưu, chỉ phục vụ lần hit trên
-   một ngưỡng cosine đã tinh chỉnh. Quá lỏng → câu trả lời sai; quá chặt →
-   tỷ lệ hit thấp. Quét ngưỡng trên lưu lượng thực tế dựa trên một đánh
-   giá tính đúng đắn.
-3. **Phân phạm vi khóa để tránh nhiễm chéo.** Đưa người dùng/tenant,
-   tool/chế độ, và bất kỳ trạng thái nào câu trả lời phụ thuộc vào trong
-   khóa cache — một lần hit bỏ qua ai đang hỏi là một lỗi rò rỉ dữ liệu và
-   tính đúng đắn.
+   này trước khi động đến ngưỡng tương đồng.
+2. **Thêm khớp tương đồng cho những trường hợp lặp lại không hoàn toàn
+   giống nhau.** Embed truy vấn, tìm hàng xóm gần nhất trong các truy vấn
+   đã lưu, và chỉ trả kết quả cache khi độ tương đồng cosine vượt một
+   ngưỡng đã tinh chỉnh. Ngưỡng quá lỏng sẽ cho ra câu trả lời sai; quá
+   chặt thì tỷ lệ hit lại thấp. Hãy quét ngưỡng này trên lưu lượng thực tế
+   dựa trên một bộ đánh giá tính đúng đắn.
+3. **Phân phạm vi khóa để tránh nhiễm chéo.** Hãy đưa user/tenant,
+   tool/chế độ, và bất kỳ trạng thái nào mà câu trả lời phụ thuộc vào, vào
+   trong khóa cache — một lần hit bỏ qua việc ai đang hỏi là một lỗi vừa
+   rò rỉ dữ liệu vừa sai về tính đúng đắn.
 4. **Đặt TTL theo mức độ biến động của câu trả lời.** Câu trả lời FAQ/tài
    liệu có thể sống nhiều ngày; bất cứ thứ gì phản ánh trạng thái thay đổi
    cần TTL ngắn hoặc vô hiệu hóa theo sự kiện.
@@ -78,10 +79,11 @@ flowchart TD
 
 - **Một lần hit lỏng lẻo là một lỗi tính đúng đắn, không chỉ là một token
   cũ** — chế độ thất bại là âm thầm trả về một câu trả lời sai nghe có vẻ
-  hợp lý. Tinh chỉnh ngưỡng và khóa có phạm vi là bắt buộc, và các route
-  coding/agentic nên tránh xa nó.
-- Duy trì một index embedding thêm hạ tầng và độ trễ riêng cho việc tra
-  cứu (thường thấp hơn nhiều một lệnh gọi model, nhưng không bằng 0).
+  hợp lý. Tinh chỉnh ngưỡng và giới hạn phạm vi khóa cache là điều bắt
+  buộc, và các route coding/agentic nên tránh xa kỹ thuật này.
+- Việc duy trì một index embedding sẽ phát sinh thêm hạ tầng và độ trễ
+  riêng cho bước tra cứu (thường thấp hơn nhiều so với một lệnh gọi model,
+  nhưng không bằng 0).
 - Tỷ lệ hit hoàn toàn phụ thuộc vào khối lượng công việc — lưu lượng FAQ
   lặp cao thắng lớn; các truy vấn đuôi dài duy nhất thấy ít lợi ích.
 - Vô hiệu hóa là phần khó: khi sự thật nền tảng thay đổi, các câu trả lời
@@ -91,12 +93,13 @@ flowchart TD
 
 - Khi hit: **loại bỏ 100% chi phí model và độ trễ giảm 2–10×** — request
   không bao giờ chạm tới model.
-- Mức tiết kiệm thực tế tỷ lệ với tỷ lệ hit: các khối lượng công việc
-  hỏi-đáp/hỗ trợ chủ yếu đọc với độ trùng lặp truy vấn cao thường cache
-  được 20–60% lưu lượng; các khối lượng công việc truy vấn duy nhất thấy
-  ít lợi ích và không nên bận tâm.
-- Chồng gọn gàng dưới caching prefix và batching: cache các lần hit đi,
-  phục vụ các lần trượt rẻ, gộp lô phần còn lại không tương tác.
+- Mức tiết kiệm thực tế tỷ lệ thuận với tỷ lệ hit. Các khối lượng công
+  việc hỏi-đáp/hỗ trợ, vốn chủ yếu chỉ đọc và có độ trùng lặp truy vấn
+  cao, thường cache được 20–60% lưu lượng; còn các khối lượng công việc
+  với truy vấn duy nhất thì thấy rất ít lợi ích và không đáng để đầu tư.
+- Kỹ thuật này xếp chồng gọn gàng với caching prefix và batching: cache
+  đi các lần hit, phục vụ các lần trượt với chi phí rẻ, rồi gộp lô
+  (batch) phần còn lại không mang tính tương tác.
 
 ---
 

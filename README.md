@@ -1,8 +1,8 @@
 # token-optimizer (Tiếng Việt)
 
 Đây là kho tài liệu để khám phá **nguyên nhân gây tiêu tốn token cao** và
-**cách giảm thiểu nó**. Repo này được thiết kế tối giản một cách có chủ đích:
-nó chỉ chứa ghi chú, phân tích và tài liệu tham khảo — không phải mã ứng dụng.
+**cách giảm thiểu nó**. Repo này được cố tình thiết kế tối giản: nó chỉ chứa
+ghi chú, phân tích, và tài liệu tham khảo — không phải mã ứng dụng.
 
 ## Mục đích
 

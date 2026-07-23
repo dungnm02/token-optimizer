@@ -3,12 +3,12 @@
 **Giải quyết:** Nguyên nhân 4.3 trong [`../CAUSE.md`](../CAUSE.md) — và
 *lớp đo lường* mà mọi giải pháp khác phụ thuộc vào
 
-**Ý tưởng:** Bạn không thể tối ưu thứ bạn không đo lường. Đếm token bằng
-bộ đếm riêng của nhà cung cấp cho đúng model mục tiêu, ghi lại metadata sử
-dụng của mỗi request một cách tập trung, và quy chi tiêu về các
-route/nguyên nhân — để các hồi quy (cache trượt âm thầm, thay đổi
-tokenizer, dài dòng leo thang) hiện ra thành cảnh báo thay vì hóa đơn bất
-ngờ.
+**Ý tưởng:** Bạn không thể tối ưu thứ bạn không đo lường. Hãy đếm token
+bằng bộ đếm riêng của nhà cung cấp cho đúng model mục tiêu, ghi lại
+metadata sử dụng của mỗi request một cách tập trung, rồi quy chi tiêu về
+các route/nguyên nhân tương ứng. Nhờ vậy, các hồi quy (cache trượt âm
+thầm, tokenizer thay đổi, dài dòng leo thang) sẽ hiện ra thành cảnh báo
+thay vì một hóa đơn bất ngờ.
 
 ---
 
@@ -25,13 +25,13 @@ ngờ.
 
 Các quy tắc:
 
-- **Hiệu chỉnh lại trên mỗi lần di chuyển model.** Thay đổi tokenizer qua
-  các thế hệ đã làm dịch chuyển số đếm hơn 30% cho cùng văn bản — ngân
-  sách, `max_tokens`, và ngưỡng kích hoạt nén được hiệu chỉnh trên model cũ
-  sẽ sai trên model mới.
-- Đếm trước (pre-flight) các input lớn (`count_tokens` trước khi gửi) để
-  tránh các thất bại tràn context thay vì phát hiện ra chúng tại thời
-  điểm request.
+- **Hiệu chỉnh lại mỗi khi di chuyển sang model mới.** Việc thay đổi
+  tokenizer qua các thế hệ từng làm số đếm lệch hơn 30% cho cùng một đoạn
+  văn bản — nên ngân sách, `max_tokens`, và ngưỡng kích hoạt nén được
+  hiệu chỉnh trên model cũ sẽ không còn đúng trên model mới.
+- Hãy đếm trước (pre-flight) các input lớn bằng `count_tokens` trước khi
+  gửi, để tránh các thất bại do tràn context thay vì chỉ phát hiện ra
+  chúng ngay tại thời điểm gửi request.
 
 ### 2. Ghi lại metadata sử dụng trên mỗi phản hồi
 
@@ -60,10 +60,10 @@ reasoning cao hơn nhưng hoàn thành trong ít lượt hơn).
 
 ### 4. Chuẩn hóa pipeline
 
-Phát ra các span theo quy ước ngữ nghĩa OpenTelemetry GenAI
-(`gen_ai.usage.*`) từ harness để bất kỳ backend nào cũng có thể tiêu thụ
-chúng; hoặc áp dụng một nền tảng đo lường LLM-native tự động thu thập usage
-qua SDK wrapper hoặc proxy.
+Hãy phát ra các span theo quy ước ngữ nghĩa OpenTelemetry GenAI
+(`gen_ai.usage.*`) từ harness, để bất kỳ backend nào cũng có thể tiêu thụ
+chúng. Hoặc áp dụng một nền tảng đo lường LLM-native, tự động thu thập
+usage qua SDK wrapper hoặc proxy.
 
 ```mermaid
 flowchart LR
@@ -108,8 +108,8 @@ flowchart LR
   nhất là một yếu tố vô hiệu hóa cache âm thầm hoặc một tool chạy loạn).
 - Biến mọi giải pháp khác trong thư mục này từ một lần sửa đơn lẻ thành một
   *bất biến được thực thi* — các hồi quy sẽ cảnh báo thay vì tích tụ.
-- Đếm trước loại bỏ hoàn toàn một lớp lỗi (tràn context trên input lớn) mà
-  nếu không sẽ lãng phí toàn bộ request phát hiện ra nó.
+- Đếm trước loại bỏ hoàn toàn một lớp lỗi (tràn context trên input lớn) —
+  nếu không có nó, cả request phát hiện ra lỗi cũng bị lãng phí trọn vẹn.
 
 ---
 

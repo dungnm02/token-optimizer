@@ -2,11 +2,11 @@
 
 **Giải quyết:** Nguyên nhân 3.2 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Thay thế các chuỗi round-trip tool được trung gian bởi model
-bằng một bước duy nhất trong đó model **viết code kết hợp các tool**; code
-chạy trong sandbox, kết quả trung gian chảy giữa các lệnh gọi tool bên
-trong runtime, và chỉ câu trả lời cô đọng cuối cùng quay lại context của
-model.
+**Ý tưởng:** Thay các chuỗi round-trip tool phải qua trung gian của model
+bằng một bước duy nhất, trong đó model **viết code để kết hợp các tool**.
+Đoạn code này chạy trong sandbox, kết quả trung gian chảy thẳng giữa các
+lệnh gọi tool bên trong runtime, và chỉ câu trả lời cô đọng cuối cùng mới
+quay lại context của model.
 
 ---
 
@@ -56,10 +56,10 @@ context — chúng sinh ra và mất đi bên trong sandbox.
    định của LLM: hợp nhất nó thành một tool (`get_user_order_status`)
    trong harness. Token rẻ nhất là token model không bao giờ phải điều
    phối.
-4. **Gộp các lệnh gọi độc lập trong một lượt** — khi không có kết hợp, ít
-   nhất hãy tận dụng việc dùng tool song song: N lệnh gọi độc lập trong
-   một lượt assistant + toàn bộ kết quả trong một lượt user là một lượt xử
-   lý context thay vì N.
+4. **Gộp các lệnh gọi độc lập trong một lượt** — khi chưa thể kết hợp, ít
+   nhất hãy tận dụng khả năng dùng tool song song: N lệnh gọi độc lập
+   trong một lượt assistant, cộng toàn bộ kết quả trong một lượt user, chỉ
+   tính là một lượt xử lý context thay vì N.
 5. **Lọc bên trong sandbox** — script kết hợp nên kết thúc bằng một bước
    `summarize`/`select` để giá trị trả về là câu trả lời, không phải dữ
    liệu thô (kết hợp với `tool-output-budgets.md`).
@@ -90,8 +90,8 @@ context — chúng sinh ra và mất đi bên trong sandbox.
   thường, dùng tool trực tiếp rẻ hơn. Kết hợp đáng giá từ ~3 lệnh gọi nối
   chuỗi trở lên hoặc bất kỳ dữ liệu trung gian lớn nào.
 - Các thất bại khó kiểm tra hơn: một lỗi bên trong script kết hợp cần
-  script + traceback được hiển thị tốt, nếu không model sẽ tốn lượt gỡ lỗi
-  trong mù mờ.
+  hiển thị tốt cả script lẫn traceback, nếu không model sẽ phải tốn nhiều
+  lượt gỡ lỗi trong mù mờ.
 - PTC có sẵn từ nhà cung cấp hạn chế một số tính năng (ví dụ không tương
   thích với schema chặt/buộc chọn tool trên một số stack) — kiểm tra ma
   trận hiện tại.

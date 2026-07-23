@@ -2,10 +2,10 @@
 
 **Giải quyết:** Nguyên nhân 3.1 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Thực thi một ngân sách token cứng cho mỗi tool trên kết quả
-trả về, và thiết kế tool để trả về **lát cắt tối thiểu khả dụng** — có
-phân trang, lọc, xem trước — với một lối thoát (offload ra file, con trỏ
-lấy thêm) cho khi model thực sự cần nhiều hơn.
+**Ý tưởng:** Áp một ngân sách token cứng lên kết quả trả về của mỗi tool,
+và thiết kế tool sao cho chỉ trả về **lát cắt tối thiểu khả dụng** — có
+phân trang, lọc, xem trước — kèm một lối thoát (offload ra file, con trỏ
+lấy thêm) cho những lúc model thực sự cần nhiều hơn.
 
 ---
 
@@ -40,8 +40,9 @@ một cách mù quáng — trả về một **phản hồi tràn có cấu trúc
 
 ### 3. Offload output lớn ra hệ thống file
 
-Mẫu hình được các harness hiện đại nhất sử dụng: kết quả lớn được ghi ra
-đĩa, model nhận bản xem trước + đường dẫn và đọc từng phần theo yêu cầu.
+Đây là mẫu hình được các harness hiện đại nhất áp dụng: kết quả lớn được
+ghi ra đĩa, model chỉ nhận bản xem trước kèm đường dẫn, rồi đọc từng phần
+theo yêu cầu.
 
 ```mermaid
 sequenceDiagram
@@ -58,10 +59,10 @@ sequenceDiagram
 
 ### 4. Xử lý trước khi model nhìn thấy
 
-Với các tool nổi tiếng nhiễu (trình chạy test, trình biên dịch, crawler),
-hãy loại bỏ boilerplate một cách tất định trong harness: mã ANSI, nhiễu
-stack-frame, cảnh báo lặp lại, HTML → markdown/text (một trang HTML thường
-đắt gấp 5–20× số token văn bản đọc được của nó).
+Với các tool vốn được biết là nhiễu (trình chạy test, trình biên dịch,
+crawler), hãy loại bỏ boilerplate một cách tất định ngay trong harness: mã
+ANSI, nhiễu stack-frame, cảnh báo lặp lại, HTML → markdown/text (một trang
+HTML thường đắt gấp 5–20× số token văn bản đọc được của nó).
 
 ## Công cụ hiện đại nhất (SOTA)
 

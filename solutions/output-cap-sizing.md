@@ -2,11 +2,11 @@
 
 **Giải quyết:** Nguyên nhân 5.3 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Coi một phản hồi bị cắt bớt là một *lỗi có chi phí đã biết*
-(toàn bộ request bị lãng phí và phải thử lại), và loại bỏ nó bằng cách đặt
-giới hạn output rộng rãi, streaming các output dài, và phục hồi bằng
-**continuation** (tiếp tục) thay vì thử lại toàn bộ khi việc cắt bớt vẫn
-xảy ra.
+**Ý tưởng:** Hãy coi một phản hồi bị cắt bớt là một *lỗi có chi phí đã
+biết* — toàn bộ request bị lãng phí và phải thử lại. Để loại bỏ lỗi này:
+đặt giới hạn output rộng rãi, streaming các output dài, và khi tình trạng
+cắt bớt vẫn xảy ra thì phục hồi bằng **continuation** (tiếp tục) thay vì
+thử lại toàn bộ.
 
 ---
 
@@ -14,9 +14,10 @@ xảy ra.
 
 ### 1. Đặt giới hạn theo từng route, một cách rộng rãi
 
-Giới hạn là một lưới an toàn, không phải kiểm soát sự ngắn gọn (đó là việc
-của `concise-output-prompting.md`). Đặt quá thấp sẽ biến $0 tiết kiệm được
-thành các lần thử lại toàn bộ request.
+Giới hạn là một lưới an toàn, không phải công cụ kiểm soát độ ngắn gọn của
+output (đó là việc của `concise-output-prompting.md`). Nếu đặt quá thấp,
+khoản tiết kiệm tưởng như $0 thực chất sẽ biến thành chi phí của những
+lần thử lại toàn bộ request.
 
 | Route | Hướng dẫn giới hạn |
 | --- | --- |
@@ -56,18 +57,18 @@ flowchart TD
 Một JSON bị cắt bớt là vô dụng — với các route ràng buộc bởi schema:
 
 - Đặt giới hạn rộng rãi (output schema không thể lan man dù sao).
-- Dùng các helper thử lại có kiểm định ở cấp SDK để sửa/hỏi lại tối thiểu
-  (kiểu Instructor) thay vì các vòng lặp yêu-cầu-lại-toàn-bộ ngây thơ, và
-  giới hạn số lần thử lại.
-- Với các structured output rất lớn, chia schema (phân trang việc sinh)
-  thay vì một đối tượng khổng lồ.
+- Dùng các helper thử lại có kiểm định (validation-retry) ở cấp SDK để
+  sửa/hỏi lại ở mức tối thiểu (kiểu Instructor), thay vì các vòng lặp yêu
+  cầu lại toàn bộ một cách ngây thơ; đồng thời giới hạn số lần thử lại.
+- Với các structured output rất lớn, hãy chia nhỏ schema (sinh theo từng
+  trang) thay vì dùng một đối tượng khổng lồ.
 
 ### 5. Cảnh báo về tỷ lệ cắt bớt
 
 Tỷ trọng dừng do `length` theo từng route là một chỉ số hạng nhất
-(`token-counting.md`); một cú tăng vọt nghĩa là lỗi đặt kích thước hoặc
-một sự dịch chuyển do di chuyển model — hãy sửa giới hạn, đừng để vòng lặp
-thử lại âm thầm hấp thụ nó.
+(`token-counting.md`). Một cú tăng vọt nghĩa là có lỗi đặt kích thước, hoặc
+model đã di chuyển khiến số token bị dịch chuyển — hãy sửa giới hạn, đừng
+để vòng lặp thử lại âm thầm hấp thụ nó.
 
 ## Công cụ hiện đại nhất (SOTA)
 
@@ -88,19 +89,21 @@ thử lại âm thầm hấp thụ nó.
 
 ## Đánh đổi
 
-- Giới hạn rộng rãi nghĩa là một lần sinh chạy trốn có thể tốn nhiều hơn
-  trước khi chạm lưới an toàn — kết hợp với giám sát luồng cấp ứng dụng
-  cho trường hợp bệnh lý hiếm gặp.
-- Continuation qua hai phản hồi có thể tạo ra các đường nối (token lặp
-  lại/bị bỏ sót tại ranh giới) — chỉ dẫn "tiếp tục chính xác từ nơi bạn đã
-  dừng" và xác thực điểm nối cho các định dạng có cấu trúc.
+- Giới hạn rộng rãi nghĩa là nếu xảy ra một lần sinh vượt tầm kiểm soát
+  (runaway generation), nó có thể tốn nhiều hơn trước khi chạm tới lưới an
+  toàn. Hãy kết hợp thêm giám sát luồng ở cấp ứng dụng để xử lý những
+  trường hợp bệnh lý hiếm gặp này.
+- Continuation qua hai phản hồi có thể tạo ra đường nối (token lặp lại
+  hoặc bị bỏ sót tại ranh giới). Hãy chỉ dẫn model "tiếp tục chính xác từ
+  nơi bạn đã dừng", và xác thực điểm nối đối với các định dạng có cấu
+  trúc.
 - Sinh theo schema chia nhỏ thêm độ phức tạp điều phối.
 
 ## Tác động dự kiến
 
-- Mỗi chu kỳ cắt bớt-thử lại tránh được tiết kiệm một request đầy đủ:
-  **2–3×** trên lưu lượng bị ảnh hưởng (input bị tính lại + output dở dang
-  bị bỏ đi).
+- Tránh được mỗi chu kỳ cắt bớt-rồi-thử-lại nghĩa là tiết kiệm trọn một
+  request: **2–3×** trên lưu lượng bị ảnh hưởng (input bị tính phí lại
+  cộng với output dở dang bị bỏ phí).
 - Phục hồi bằng continuation cắt chi phí cắt bớt còn lại từ "mọi thứ"
   xuống "chỉ gửi lại input" — thường cứu vãn được 50–90% giá trị của
   request thất bại.

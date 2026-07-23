@@ -42,9 +42,9 @@ sequenceDiagram
 ## Cách áp dụng
 
 1. **Kiểm soát fan-out dựa trên tín hiệu đã ấm.** Với streaming, tín hiệu
-   đáng tin cậy là *token đầu tiên được stream* của request làm ấm — không
-   chỉ đơn thuần là đã gửi nó. Chờ sự kiện đó, sau đó giải phóng phần còn
-   lại đồng thời.
+   đáng tin cậy là *token đầu tiên được stream* của request làm ấm, chứ
+   không phải chỉ đơn thuần là đã gửi request đi. Hãy chờ sự kiện đó, rồi
+   mới giải phóng phần còn lại chạy đồng thời.
 
    ```python
    async def fan_out(shared_prefix, variants):
@@ -58,23 +58,24 @@ sequenceDiagram
        return results
    ```
 
-2. **Pre-warm trước các fan-out theo lịch.** Với các đợt dồn cục có thể dự
-   đoán (đánh giá cron, sinh báo cáo buổi sáng), làm ấm prefix ngay trước
-   khung giờ — Anthropic hỗ trợ một request `max_tokens: 0` chuyên dụng
-   ghi cache và trả về ngay lập tức; ở nơi khác, một request 1-token tối
-   thiểu cũng làm được việc.
+2. **Pre-warm trước các fan-out theo lịch.** Với các đợt tải dồn dập có
+   thể dự đoán trước (đánh giá theo lịch cron, sinh báo cáo mỗi sáng), hãy
+   làm ấm prefix ngay trước khung giờ đó — Anthropic hỗ trợ một request
+   `max_tokens: 0` chuyên dụng, chỉ ghi cache rồi trả về ngay lập tức; ở
+   nơi khác, một request 1-token tối thiểu cũng làm được việc tương tự.
 3. **Xác minh prefix thực sự được chia sẻ.** Làm ấm-rồi-fan chỉ có ích nếu
    cả N request đều giống hệt nhau từng byte cho đến breakpoint — cùng
    system, cùng tool, cùng tài liệu, chỉ khác nhau sau đó (xem
    `prompt-caching.md` §vị trí, và quy tắc sắp xếp `[tài liệu][câu hỏi]`
    trong `document-reuse.md`).
-4. **Giới hạn thời gian chờ.** Thêm timeout cho giai đoạn làm ấm (quay về
-   bắn tất cả) để một request đầu tiên chậm không thể làm trì hoãn cả lô
-   vượt quá mức mà khoản tiết kiệm biện minh được.
-5. **Hoặc né tránh qua tier batch.** Nếu fan-out không nhạy cảm về độ trễ,
-   hãy gửi nó như một batch của nhà cung cấp thay thế — các nhà cung cấp
-   tối ưu việc chia sẻ cache trong một lô, và bạn còn thu được mức giảm
-   giá 50% nữa (`batch-processing.md`).
+4. **Giới hạn thời gian chờ.** Hãy thêm timeout cho giai đoạn làm ấm (hết
+   hạn thì quay về bắn tất cả cùng lúc), để một request đầu tiên bị chậm
+   không thể làm trì hoãn cả lô vượt quá mức lợi ích mà khoản tiết kiệm
+   mang lại.
+5. **Hoặc né tránh hoàn toàn bằng tier batch.** Nếu fan-out không nhạy
+   cảm về độ trễ, hãy gửi nó dưới dạng một batch của nhà cung cấp thay vì
+   gọi song song trực tiếp — nhà cung cấp sẽ tự tối ưu việc chia sẻ cache
+   trong batch, và bạn còn được giảm giá 50% nữa (`batch-processing.md`).
 
 ## Công cụ hiện đại nhất (SOTA)
 
@@ -95,8 +96,9 @@ sequenceDiagram
 ## Đánh đổi
 
 - Thêm một khoảng độ trễ request để tuần tự hóa trước giai đoạn song
-  song — không đáng kể với job, nhưng đáng kể với các fan-out nhạy cảm về
-  độ trễ (ở đó, hãy cân nhắc chi phí so với lợi thế đi trước).
+  song — không đáng kể với các job chạy nền, nhưng đáng kể với các
+  fan-out nhạy cảm về độ trễ (ở đó, hãy cân nhắc chi phí so với lợi thế
+  đi trước).
 - Thêm trạng thái điều phối (tín hiệu làm ấm, timeout, fallback).
 - Thời gian sống của cache ngắn (thường ở mức phút): làm ấm quá sớm là
   lãng phí; giữ khoảng cách làm-ấm→fan chặt chẽ hoặc dùng TTL dài hơn.

@@ -12,13 +12,13 @@ thêm** để cache prompt còn nguyên vẹn.
 ## Tại sao điều này đang cấp bách (số liệu về sự phình to của MCP)
 
 Vấn đề này tăng theo quy mô áp dụng MCP. Một stack điển hình gồm **bảy MCP
-server tiêu tốn ~67.300 token định nghĩa tool — ~34% của context window
-200K — trước khi người dùng gõ bất cứ điều gì**; các stack doanh nghiệp
-5–10 server thường xuyên đốt 100–200K token chi phí schema thuần túy. Đây
-không chỉ là vấn đề chi phí: khi menu tool phình to, **độ chính xác chọn
-tool đã được đo là sụp đổ từ ~43% xuống dưới ~14%** — model chọn sai tool
-phần lớn thời gian. Chi phí và chất lượng suy giảm cùng nhau, đó là lý do
-giải pháp này giờ đã được tích hợp sẵn.
+server đã tiêu tốn ~67.300 token định nghĩa tool — chiếm ~34% context
+window 200K — trước cả khi người dùng gõ bất cứ điều gì**; các stack
+doanh nghiệp có 5–10 server thường xuyên đốt 100–200K token chỉ cho chi
+phí schema. Đây không chỉ là vấn đề chi phí: khi menu tool phình to, **độ
+chính xác chọn tool đo được đã sụp đổ từ ~43% xuống dưới ~14%** — model
+chọn sai tool trong phần lớn thời gian. Chi phí và chất lượng cùng suy
+giảm một lúc, đó là lý do vì sao giải pháp này giờ đã được tích hợp sẵn.
 
 ## Cách áp dụng
 
@@ -35,9 +35,10 @@ giải pháp này giờ đã được tích hợp sẵn.
    mỗi request.
 3. **Phân phạm vi route tĩnh như phương án dự phòng không cần kỹ thuật** —
    nếu các request có thể phân loại trước ("tác vụ thanh toán" so với "tác
-   vụ triển khai"), chọn tập con tool liên quan trong harness theo từng
-   route. Không cần tool tìm kiếm; chỉ cần ngừng gửi hợp của mọi thứ. Giữ
-   tập con của mỗi route *ổn định* để caching hoạt động (nguyên nhân 1.3).
+   vụ triển khai"), hãy chọn tập con tool liên quan trong harness theo
+   từng route. Không cần tool tìm kiếm — chỉ cần ngừng gửi toàn bộ tập hợp
+   tool cho mọi route. Hãy giữ tập con tool của mỗi route *ổn định* để
+   caching vẫn hoạt động (nguyên nhân 1.3).
 4. **Cắt gọn chính các schema** — mô tả cũng là văn bản prompt: thắt chặt
    các mô tả dài dòng, thu gọn tài liệu enum dư thừa, tách các payload ví
    dụ ra một skill/tài liệu model có thể đọc theo yêu cầu.
@@ -81,11 +82,11 @@ flowchart LR
 ## Đánh đổi
 
 - Thêm một round-trip khám phá khi cần một tool chưa tải (một lần tìm
-  kiếm + một schema được nối thêm). Với các danh mục dưới ~10 tool, việc
-  trì hoãn tiết kiệm quá ít để đáng làm.
+  kiếm + một schema được nối thêm). Với các danh mục dưới ~10 tool, trì
+  hoãn tiết kiệm quá ít để đáng làm.
 - Chất lượng tìm kiếm rất quan trọng: tên/mô tả tool tệ → khám phá thất
-  bại → model tự ứng biến hoặc bỏ cuộc. Đầu tư vào việc đặt tên có thể tìm
-  kiếm được.
+  bại → model tự ứng biến hoặc bỏ cuộc. Hãy đầu tư đặt tên tool sao cho dễ
+  tìm kiếm.
 - Không bao giờ trì hoãn mọi thứ — model phải luôn có sẵn tool tìm kiếm
   cùng các tool cốt lõi của nó (các nhà cung cấp từ chối cấu hình trì hoãn
   toàn bộ).

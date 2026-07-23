@@ -2,10 +2,10 @@
 
 **Giải quyết:** Nguyên nhân 1.1, 1.2, 1.3, 1.4, 6.1 trong [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Phục vụ phần prefix ổn định của mỗi request (định nghĩa tool,
-system prompt, tài liệu chung, lịch sử hội thoại) từ cache prompt của nhà
-cung cấp với giá ~10–25% giá input thông thường, thay vì xử lý lại ở giá đầy
-đủ trên mỗi lệnh gọi.
+**Ý tưởng:** Hãy phục vụ phần prefix ổn định của mỗi request (định nghĩa
+tool, system prompt, tài liệu chung, lịch sử hội thoại) từ cache prompt của
+nhà cung cấp, với giá chỉ bằng ~10–25% giá input thông thường. Nhờ vậy bạn
+không phải xử lý lại toàn bộ ở giá đầy đủ trên mỗi lệnh gọi.
 
 ---
 
@@ -37,8 +37,8 @@ flowchart LR
     C --> M
 ```
 
-Mọi thứ bên trái ranh giới cache cuối cùng đều rẻ; chỉ có phần đuôi mới được
-nối thêm mới bị tính giá đầy đủ.
+Mọi thứ nằm bên trái ranh giới cache cuối cùng đều rẻ; chỉ phần đuôi vừa
+được nối thêm mới bị tính giá đầy đủ.
 
 ## Cách áp dụng
 
@@ -71,17 +71,19 @@ nối thêm mới bị tính giá đầy đủ.
      mục đích này.
 4. **Chỉ nối thêm, không bao giờ viết lại** — giữ lịch sử hội thoại giống
    hệt từng byte giữa các lượt; chỉ thêm nội dung mới ở cuối.
-5. **Khớp TTL với hình dạng lưu lượng** — lưu lượng liên tục giữ TTL ngắn
-   mặc định luôn ấm miễn phí; lưu lượng dồn cục có khoảng nghỉ dài cần TTL
-   dài hơn (Anthropic 1 giờ) hoặc một tín hiệu pre-warm (xem bên dưới).
+5. **Khớp TTL với hình dạng lưu lượng** — với lưu lượng liên tục, TTL ngắn
+   mặc định vẫn giữ cache luôn ấm mà không tốn thêm chi phí; còn lưu lượng
+   dồn cục có khoảng nghỉ dài thì cần TTL dài hơn (Anthropic 1 giờ) hoặc
+   một tín hiệu pre-warm (xem bên dưới).
 6. **Pre-warm khi độ trễ request đầu tiên quan trọng** — Anthropic hỗ trợ
    một request `max_tokens: 0` chạy prefill (ghi cache) và trả về ngay lập
    tức; kích hoạt nó khi ứng dụng khởi động hoặc ngay trước một khung giờ
    theo lịch.
-7. **Làm cho fork/subagent kế thừa prefix nguyên văn** — một lệnh gọi
-   summarizer hoặc subagent xây lại `system`/`tools` với bất kỳ khác biệt
-   nào sẽ bỏ lỡ hoàn toàn cache của agent cha. Sao chép chúng từng byte một,
-   chỉ nối thêm nội dung riêng của fork ở cuối.
+7. **Làm cho fork/subagent kế thừa prefix nguyên văn** — nếu một lệnh gọi
+   summarizer hay subagent tự dựng lại `system`/`tools` mà có bất kỳ khác
+   biệt nào, nó sẽ bỏ lỡ hoàn toàn cache của agent cha. Hãy sao chép các
+   phần này nguyên vẹn từng byte, và chỉ nối thêm nội dung riêng của fork
+   ở cuối.
 
 ## Vòng lặp xác minh
 
@@ -124,9 +126,9 @@ sánh (diff) các byte request đã render đầy đủ của hai lệnh gọi l
   caching.
 - Tồn tại kích thước prefix tối thiểu có thể cache (≈1K–4K token tùy
   model); các prompt nhỏ sẽ âm thầm không được cache.
-- Thiết kế để đạt độ ổn định giới hạn kỹ thuật viết prompt: không cá nhân
-  hóa theo từng request ở đầu, chuyển đổi chế độ phải chuyển vào
-  tin nhắn/tool.
+- Để đạt được độ ổn định, cách viết prompt của bạn sẽ bị giới hạn: không
+  thể cá nhân hóa theo từng request ở phần đầu, và mọi thay đổi chế độ
+  phải chuyển vào tin nhắn/tool.
 - Cache gắn với model cụ thể — các A/B test trên nhiều model đều giữ cache
   riêng.
 

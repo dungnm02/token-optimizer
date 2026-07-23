@@ -38,17 +38,18 @@ một cài đặt toàn cục duy nhất.
 3. **Định tuyến động cho lưu lượng hỗn hợp.** Một bộ phân loại độ phức tạp
    rẻ (hoặc router theo tier model từ `model-routing.md`) gán effort theo
    từng request; các truy vấn đơn giản đi theo đường nông.
-4. **Điều khiển việc kích hoạt thinking bằng prompt** khi nút điều chỉnh
-   thô: các model adaptive-thinking chấp nhận hướng dẫn như *"thinking
-   thêm độ trễ và chỉ nên dùng khi nó cải thiện đáng kể chất lượng câu trả
-   lời — khi không chắc chắn, hãy trả lời trực tiếp."*
+4. **Dùng prompt để điều khiển khi nào thinking được kích hoạt**, ở những
+   nơi nút điều chỉnh chỉ ở mức thô: các model adaptive-thinking chấp nhận
+   hướng dẫn kiểu *"thinking làm tăng độ trễ và chỉ nên dùng khi nó cải
+   thiện đáng kể chất lượng câu trả lời — khi không chắc chắn, hãy trả lời
+   trực tiếp."*
 5. **Để lại khoảng trống.** Ở effort cao, đặt giới hạn output rộng rãi —
    reasoning chia sẻ ngân sách output, và một giới hạn chặt sẽ cho ra câu
    trả lời bị cắt bớt sau khi đã tốn kém cho thinking (trường hợp tệ nhất
    của nguyên nhân 5.3).
-6. **Theo dõi khoảng cách reasoning ẩn** trong đo lường: `token_output −
-   token_phản_hồi_hiển_thị` theo từng route chính là chi tiêu reasoning;
-   cảnh báo khi nó leo thang.
+6. **Theo dõi khoảng cách reasoning ẩn** trong đo lường: `output_tokens −
+   visible_response_tokens` theo từng route chính là mức chi tiêu cho
+   reasoning; hãy cảnh báo khi con số này tăng dần theo thời gian.
 
 ## Công cụ hiện đại nhất (SOTA)
 
@@ -70,20 +71,20 @@ một cài đặt toàn cục duy nhất.
 
 ## Đánh đổi
 
-- Reasoning bị cấp thiếu trên các tác vụ khó tốn kém hơn số nó tiết kiệm:
-  câu trả lời sai, thêm lượt sửa lỗi, dùng tool hời hợt. Chỉ cắt effort ở
-  nơi đánh giá xác nhận chất lượng vẫn giữ vững.
+- Cấp thiếu reasoning cho các tác vụ khó sẽ tốn kém hơn số nó tiết kiệm
+  được: câu trả lời sai, phải sửa thêm nhiều lượt, dùng tool hời hợt. Chỉ
+  nên cắt effort ở những nơi đánh giá xác nhận chất lượng vẫn giữ vững.
 - Cấu hình theo từng route là bề mặt cần bảo trì nhiều hơn; giữ bản đồ
   route → effort trong config, có phiên bản kèm đánh giá.
-- Ngữ nghĩa của nhà cung cấp khác nhau (ngân sách so với mức so với luôn
-  bật) — bản đồ cần tinh chỉnh lại theo từng lần di chuyển nhà cung
-  cấp/model.
+- Ngữ nghĩa giữa các nhà cung cấp khác nhau (ngân sách theo token, theo
+  mức effort, hay luôn bật) — bản đồ route → effort cần tinh chỉnh lại mỗi
+  khi đổi nhà cung cấp/model.
 
 ## Tác động dự kiến
 
 - Token reasoning thường chiếm **30–70% chi tiêu output** trên các triển
-  khai có bật reasoning; tắt/giảm chúng trên các route thường lệ loại bỏ
-  phần lớn tỷ trọng đó cho các route đó với chất lượng không đổi.
+  khai có bật reasoning; tắt hoặc giảm chúng trên các route thường lệ sẽ
+  loại bỏ phần lớn tỷ trọng đó mà chất lượng vẫn không đổi.
 - Hướng dẫn của OpenAI/Anthropic và các benchmark cộng đồng nhất quán cho
   thấy effort thấp so với cao chênh lệch **2–10× token output** trên cùng
   prompt — gán theo từng route nắm bắt được sự chênh lệch đó.

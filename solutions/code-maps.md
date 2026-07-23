@@ -3,30 +3,31 @@
 **Giải quyết:** Nguyên nhân 4.2, 6.5, 6.1, và 2.1 trong
 [`../CAUSE.md`](../CAUSE.md)
 
-**Ý tưởng:** Các coding agent đốt phần lớn token chỉ để *tìm* đúng đoạn
-code. Thay vì đọc hàng chục file để định hướng, hãy cho agent một **bản đồ
-codebase** gọn nhẹ, có ngân sách token — ký hiệu, chữ ký hàm, và đồ thị phụ
-thuộc — và để nó đọc toàn bộ file theo yêu cầu, chỉ ở những nơi bản đồ chỉ
-tới.
+**Ý tưởng:** Các coding agent tiêu tốn phần lớn token chỉ để *tìm* đúng
+đoạn code cần dùng. Thay vì đọc hàng chục file để định hướng, hãy cho agent
+một **bản đồ codebase** gọn nhẹ, có giới hạn ngân sách token — gồm ký hiệu,
+chữ ký hàm, và đồ thị phụ thuộc — rồi để nó đọc toàn bộ file theo yêu cầu,
+chỉ ở những nơi bản đồ chỉ tới.
 
 ---
 
-## Tại sao đây là chi phí lớn nhất của coding agent
+## Vì sao đây là khoản chi phí lớn nhất của coding agent
 
-Các phép đo nhất quán cho thấy **~67–76% ngân sách token của một coding
-agent dành cho việc đọc file** — phần lớn là các lần đọc khám phá cuối
-cùng hóa ra không liên quan. Một agent lạnh phải tự suy luận lại cùng một
-hiểu biết cấu trúc mỗi phiên (nguyên nhân 6.1), và mỗi file nó đọc đều tồn
-tại lâu trong lịch sử (nguyên nhân 2.1). Một bản đồ thay thế "đọc 50 file
-để hiểu module" bằng "đọc bản đồ 300 token, sau đó mở 2 file liên quan".
+Các phép đo cho kết quả nhất quán: **~67–76% ngân sách token của một coding
+agent dùng để đọc file**, và phần lớn trong số đó là các lần đọc khám phá
+cuối cùng hóa ra không liên quan. Một agent khởi động lại từ đầu phải tự
+suy luận lại cùng một hiểu biết về cấu trúc dự án ở mỗi phiên (nguyên nhân
+6.1), và mỗi file nó đọc đều tồn tại lâu dài trong lịch sử (nguyên nhân
+2.1). Một bản đồ code sẽ thay "đọc 50 file để hiểu module" bằng "đọc bản đồ
+300 token, rồi mở 2 file thực sự cần".
 
 ```mermaid
 flowchart TD
-    subgraph Bad["❌ Đọc-để-định-hướng"]
+    subgraph Bad["❌ Đọc để định hướng"]
         A[Tác vụ] --> B[Đọc 50 file<br/>~50K token, phần lớn không liên quan]
         B --> C[Giờ mới bắt đầu làm việc]
     end
-    subgraph Good["✅ Bản đồ-để-định-hướng"]
+    subgraph Good["✅ Dùng bản đồ để định hướng"]
         D[Tác vụ] --> E["Đọc bản đồ code<br/>(ký hiệu + đồ thị gọi, ngân sách ~1–4K)"]
         E --> F[Mở 2 file liên quan<br/>theo yêu cầu]
         F --> G[Bắt đầu làm việc]
@@ -35,31 +36,34 @@ flowchart TD
 
 ## Cách áp dụng
 
-1. **Cho agent một bản đồ ký hiệu/đồ thị, không phải file thô.** Một phép
-   phân tích tree-sitter trích xuất định nghĩa và chữ ký hàm; một lượt xếp
-   hạng đồ thị (PageRank trên đồ thị định nghĩa/tham chiếu) làm nổi bật
-   các thực thể được tham chiếu nhiều nhất. Nạp một lát cắt **có ngân
-   sách token** của bản đồ đó, không phải toàn bộ.
-2. **Ưu tiên truy xuất theo yêu cầu hơn nhồi sẵn.** Bản đồ dùng để định
-   hướng; nội dung thực tế được lấy theo yêu cầu bằng `grep`/`glob`/đọc.
-   Đây là lý do các agent ưu tiên grep thắng "nhúng toàn bộ repo" đối với
-   code — recall của embedding suy giảm khi codebase lớn lên, trong khi
-   bản đồ ký hiệu + đọc có mục tiêu vẫn giữ độ chính xác (xem
-   `retrieval-tuning.md` cho phía RAG).
+1. **Cho agent một bản đồ ký hiệu/đồ thị, thay vì file thô.** Một lượt
+   phân tích tree-sitter sẽ trích xuất định nghĩa và chữ ký hàm; một lượt
+   xếp hạng đồ thị (PageRank trên đồ thị định nghĩa/tham chiếu) làm nổi
+   bật các thực thể được tham chiếu nhiều nhất. Chỉ nạp một lát cắt **có
+   giới hạn ngân sách token** của bản đồ đó, không nạp toàn bộ.
+2. **Ưu tiên truy xuất theo yêu cầu hơn là nhồi sẵn dữ liệu.** Bản đồ chỉ
+   dùng để định hướng; nội dung thực tế được lấy theo yêu cầu bằng
+   `grep`/`glob`/đọc file. Đây cũng là lý do các agent ưu tiên grep thắng
+   thế so với cách "nhúng toàn bộ repo" khi làm việc với code: recall của
+   embedding giảm dần khi codebase lớn lên, trong khi kết hợp bản đồ ký
+   hiệu với đọc có mục tiêu vẫn giữ được độ chính xác (xem
+   `retrieval-tuning.md` về phía RAG).
 3. **Đóng gói một lần cho các câu hỏi về toàn bộ repo.** Với các tác vụ
-   "hiểu repo này", một biểu diễn đóng gói duy nhất (kèm số token mỗi file
-   để bạn có thể thấy và cắt bớt các file nặng) thắng các lần đọc tùy hứng
-   — nhưng *hãy đặt ngân sách*: đóng gói một repo lớn không lọc có thể tự
-   nó làm nổ cửa sổ, nên hãy nén và loại trừ code sinh ra/thư viện bên thứ
-   ba trước.
-4. **Lưu giữ một gói context để xóa bỏ chi phí cold-start.** Sinh một
-   artifact context dự án gọn nhẹ một lần và check-in / cache nó, để mỗi
-   phiên mới không phải tốn lại 25–60K token khám phá lại cùng một bố cục.
-   Tái sinh khi có thay đổi cấu trúc đáng kể, không phải mỗi phiên.
-5. **Bản đồ tự viết tay vẫn có giá trị.** Một file `CLAUDE.md`/rules gọn
-   nhẹ nêu tên các module chính, điểm vào, và quy ước là một bản đồ code
-   do con người viết — giữ nó *gọn nhẹ* (nó đi theo mọi request, nguyên
-   nhân 6.4) và trỏ tới chi tiết thay vì nhúng trực tiếp.
+   kiểu "hãy hiểu repo này", một bản đóng gói duy nhất (kèm số token của
+   từng file để bạn thấy và cắt bớt các file nặng) hiệu quả hơn việc đọc
+   tùy hứng từng file — nhưng *phải đặt ngân sách*: đóng gói một repo lớn
+   mà không lọc có thể tự nó làm tràn cửa sổ context, nên hãy nén lại và
+   loại trừ code sinh tự động/thư viện bên thứ ba trước.
+4. **Lưu giữ một gói context để xóa bỏ chi phí cold-start.** Hãy sinh một
+   artifact context dự án gọn nhẹ một lần, rồi check-in hoặc cache nó lại,
+   để mỗi phiên mới không phải tốn thêm 25–60K token khám phá lại cùng một
+   bố cục dự án. Chỉ tái sinh khi có thay đổi cấu trúc đáng kể, không cần
+   làm lại mỗi phiên.
+5. **Bản đồ viết tay vẫn có giá trị.** Một file `CLAUDE.md`/rules gọn nhẹ,
+   nêu tên các module chính, điểm vào, và quy ước, chính là một bản đồ code
+   do con người viết. Hãy giữ nó *gọn nhẹ* (vì nó đi kèm theo mọi request,
+   nguyên nhân 6.4) và để nó trỏ tới chi tiết thay vì nhúng trực tiếp chi
+   tiết vào trong.
 
 ## Công cụ hiện đại nhất (SOTA)
 
@@ -67,43 +71,46 @@ flowchart TD
 
 | Nhà cung cấp / agent | Tính năng | Ghi chú |
 | --- | --- | --- |
-| Claude Code / Codex CLI / Gemini CLI | Truy xuất theo yêu cầu `Grep`/`Glob`/`Read` | Đường cơ sở có sẵn "định hướng, đừng nạp hết" — chỉ đọc file khi bản đồ chỉ tới |
-| Claude Code | File định hướng `CLAUDE.md` | Một bản đồ code viết tay được tải từ đầu; giữ gọn nhẹ và nhiều tham chiếu |
+| Claude Code / Codex CLI / Gemini CLI | Truy xuất theo yêu cầu `Grep`/`Glob`/`Read` | Đường cơ sở có sẵn "định hướng trước, đừng nạp hết" — chỉ đọc file khi bản đồ chỉ tới |
+| Claude Code | File định hướng `CLAUDE.md` | Một bản đồ code viết tay được tải ngay từ đầu; giữ gọn nhẹ và nhiều tham chiếu |
 
 ### Bên thứ ba — không phụ thuộc agent (ưu tiên mã nguồn mở)
 
 | Công cụ | Giấy phép | Ghi chú |
 | --- | --- | --- |
-| Bản đồ repo của aider (`Aider-AI/aider`) | Apache-2.0 | Bản đồ ký hiệu xếp hạng tree-sitter + PageRank, có ngân sách token qua `--map-tokens`; 130+ ngôn ngữ; triển khai tham chiếu |
-| Repomix (`yamadashy/repomix`) | MIT | Đóng gói một repo vào một file thân thiện với AI với `--token-count-tree` (xem các file nặng) và `--compress` (chế độ chỉ chữ ký tree-sitter) |
-| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói context `.codesight/` gọn nhẹ để agent bỏ qua 25–60K token khám phá cold-start |
-| TokenSave (`aovestdipaperino/tokensave`) | Mã nguồn mở | Server trí tuệ code MCP: đồ thị ngữ nghĩa đã index sẵn được truy vấn qua tool MCP thay vì các vòng lặp grep/glob/read; hoàn toàn cục bộ |
-| tree-sitter | MIT | Lớp phân tích cú pháp bên dưới hầu hết các công cụ trên; tự viết bản đồ có ngân sách riêng cho các stack đặc thù |
+| Bản đồ repo của aider (`Aider-AI/aider`) | Apache-2.0 | Bản đồ ký hiệu xếp hạng bằng tree-sitter + PageRank, giới hạn ngân sách token qua `--map-tokens`; hỗ trợ 130+ ngôn ngữ; đây là cách triển khai tham chiếu |
+| Repomix (`yamadashy/repomix`) | MIT | Đóng gói một repo thành một file thân thiện với AI, có `--token-count-tree` (xem các file nặng) và `--compress` (chế độ chỉ giữ chữ ký tree-sitter) |
+| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói context `.codesight/` gọn nhẹ, giúp agent bỏ qua 25–60K token khám phá cold-start |
+| TokenSave (`aovestdipaperino/tokensave`) | Mã nguồn mở | Server trí tuệ code MCP: đồ thị ngữ nghĩa được index sẵn, truy vấn qua tool MCP thay vì lặp grep/glob/read; chạy hoàn toàn cục bộ |
+| tree-sitter | MIT | Lớp phân tích cú pháp nằm dưới hầu hết các công cụ trên; có thể dùng để tự viết bản đồ riêng có ngân sách cho các stack đặc thù |
 
 ## Đánh đổi
 
-- **Bản đồ có thể lỗi thời.** Một bản đồ được sinh trước một lần chỉnh sửa
-  sẽ mô tả sai code; tái sinh khi có thay đổi cấu trúc và đừng tin tưởng
-  mù quáng một gói cũ.
-- **Xếp hạng đồ thị ≠ độ liên quan với tác vụ.** PageRank làm nổi bật code
-  *trung tâm*, không phải lúc nào cũng là thứ *tác vụ này* cần — giữ đọc
-  theo yêu cầu như lối thoát.
-- **Bản thân việc đóng gói có thể lớn.** Các gói toàn repo phải được nén
-  và lọc (loại trừ `node_modules`, code sinh ra, fixture) nếu không chúng
-  sẽ tái tạo lại chính vấn đề chúng giải quyết.
-- **Một server đồ thị code MCP thêm schema tool** vào mỗi request (nguyên
-  nhân 3.4) — kết hợp với tải tool trì hoãn (`tool-search.md`).
+- **Bản đồ có thể lỗi thời.** Một bản đồ được sinh ra trước một lần chỉnh
+  sửa sẽ mô tả sai code hiện tại; hãy tái sinh khi có thay đổi cấu trúc và
+  đừng tin tưởng mù quáng vào một gói bản đồ cũ.
+- **Xếp hạng đồ thị không đồng nghĩa với mức độ liên quan tới tác vụ.**
+  PageRank làm nổi bật code *trung tâm*, chứ không hẳn là thứ *tác vụ hiện
+  tại* cần — luôn giữ khả năng đọc theo yêu cầu như một lối thoát dự phòng.
+- **Bản thân việc đóng gói cũng có thể trở nên rất lớn.** Các gói đóng gói
+  toàn repo phải được nén và lọc (loại trừ `node_modules`, code sinh tự
+  động, fixture), nếu không chúng sẽ tái tạo lại chính vấn đề mà chúng
+  định giải quyết.
+- **Một server đồ thị code MCP sẽ thêm schema tool** vào mỗi request
+  (nguyên nhân 3.4) — nên kết hợp với cách tải tool trì hoãn
+  (`tool-search.md`) để bù lại.
 
 ## Tác động dự kiến
 
-- Tấn công trực tiếp vào dòng chi phí lớn nhất của coding agent: **chi phí
-  67–76% dành cho tìm file** thu nhỏ về mức chi phí của một bản đồ nhỏ
-  cộng với vài lần đọc có mục tiêu.
-- Các gói context lưu giữ loại bỏ việc khám phá lại tốn **25–60K token
-  cold-start** khỏi mỗi phiên mới trên một repo.
-- Cộng dồn với việc lịch sử tồn tại lâu (nguyên nhân 2.1) — các file không
-  bao giờ mở thì không bao giờ tích lũy trong transcript — và với caching
-  (một bản đồ ổn định đã check-in nằm trong prefix có thể cache).
+- Tấn công trực tiếp vào khoản chi phí lớn nhất của coding agent: **67–76%
+  chi phí dành cho việc tìm file** giờ thu nhỏ về mức chi phí của một bản
+  đồ nhỏ cộng thêm vài lần đọc có mục tiêu.
+- Các gói context được lưu giữ loại bỏ khoản **25–60K token khám phá
+  cold-start** khỏi mỗi phiên mới trên cùng một repo.
+- Cộng dồn hiệu quả với việc lịch sử tồn tại lâu (nguyên nhân 2.1) — file
+  không bao giờ được mở thì không bao giờ tích lũy trong transcript — và
+  với caching (một bản đồ ổn định đã check-in sẽ nằm trong prefix có thể
+  cache).
 
 ---
 
