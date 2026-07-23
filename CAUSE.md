@@ -72,22 +72,25 @@ khác lại phụ thuộc vào **năng lực và giá cả mà chỉ nhà cung c
 soát được** — một công cụ phía client có thể *tận dụng* một mức giảm giá hay
 nút điều chỉnh của nhà cung cấp, nhưng không bao giờ *tạo ra* được nó.
 
-| Danh mục | Giải quyết được bằng công cụ bên thứ ba / kiến trúc của bạn | Phụ thuộc vào nhà cung cấp |
-| --- | --- | --- |
-| 1 Caching | Kỷ luật ổn định prompt, render tất định, kiểm thử byte trong CI; đo lường cache-hit (Langfuse/Helicone/LiteLLM); tái sử dụng prefix tự host (vLLM/SGLang) | Chính mức giảm giá: sự tồn tại của cache, giá đọc (~0.1×), TTL, breakpoint, phụ phí ghi |
-| 2 Tích lũy context | Gần như hoàn toàn bên thứ ba: cắt tỉa/nén trong harness hoặc framework (LangGraph, LlamaIndex), registry hash, kho lưu bộ nhớ | Các API nén/quản lý context phía server chỉ là tiện lợi, không phải bắt buộc |
-| 3 Dùng tool | Chủ yếu bên thứ ba: ngân sách output, proxy nén (RTK/Headroom), cắt gọt MCP, hạ tầng hướng sự kiện (Temporal, webhook) | Tải tool trì hoãn / tìm kiếm tool, gọi tool theo chương trình (Code Mode), định dạng gọi tool tiết kiệm token |
-| 4 Loại nội dung | Giảm độ phân giải (sharp/Pillow), trích xuất (Docling/unstructured), reranker mã nguồn mở (BGE), bản đồ mã nguồn (aider/Repomix) | Công thức token thị giác và nút `detail`, API file/caching, endpoint `count_tokens` |
-| 5 Phía sinh (generation) | Hợp đồng output trong prompt, định dạng edit dạng diff (Aider), retry có kiểm định (Instructor), nén output (Caveman) | Các nút điều chỉnh chính là của nhà cung cấp: ngân sách reasoning-effort/thinking, `verbosity`, chế độ structured-output |
-| 6 Kiến trúc | Định tuyến/gateway (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), framework điều phối, logic warm-then-fan, gói context | Bậc thang giá qua các tier model, tier batch giảm 50%, khả năng fine-tuning/distillation |
+| Danh mục | Chủ yếu do ai giải quyết | Giải quyết được bằng công cụ bên thứ ba / kiến trúc của bạn | Phụ thuộc vào nhà cung cấp |
+| --- | --- | --- | --- |
+| 1 Caching | **Nhà cung cấp** — hygiene chỉ giúp bạn *đủ điều kiện* nhận giảm giá, không tạo ra nó | Kỷ luật ổn định prompt, render tất định, kiểm thử byte trong CI; đo lường cache-hit (Langfuse/Helicone/LiteLLM); tái sử dụng prefix tự host (vLLM/SGLang) | Chính mức giảm giá: sự tồn tại của cache, giá đọc (~0.1×), TTL, breakpoint, phụ phí ghi |
+| 2 Tích lũy context | **Bên thứ ba** — gần như toàn bộ nằm trong tay bạn | Gần như hoàn toàn bên thứ ba: cắt tỉa/nén trong harness hoặc framework (LangGraph, LlamaIndex), registry hash, kho lưu bộ nhớ | Các API nén/quản lý context phía server chỉ là tiện lợi, không phải bắt buộc |
+| 3 Dùng tool | **Bên thứ ba** — phần lớn tự bạn kiểm soát được | Chủ yếu bên thứ ba: ngân sách output, proxy nén (RTK/Headroom), cắt gọt MCP, hạ tầng hướng sự kiện (Temporal, webhook) | Tải tool trì hoãn / tìm kiếm tool, gọi tool theo chương trình (Code Mode), định dạng gọi tool tiết kiệm token |
+| 4 Loại nội dung | **Bên thứ ba** — giảm độ phân giải/trích xuất không cần nhà cung cấp làm gì cả | Giảm độ phân giải (sharp/Pillow), trích xuất (Docling/unstructured), reranker mã nguồn mở (BGE), bản đồ mã nguồn (aider/Repomix) | Công thức token thị giác và nút `detail`, API file/caching, endpoint `count_tokens` |
+| 5 Phía sinh (generation) | **Nhà cung cấp** — đòn bẩy lớn nhất (ngân sách reasoning-effort, `verbosity`) chỉ nhà cung cấp mới có | Hợp đồng output trong prompt, định dạng edit dạng diff (Aider), retry có kiểm định (Instructor), nén output (Caveman) | Các nút điều chỉnh chính là của nhà cung cấp: ngân sách reasoning-effort/thinking, `verbosity`, chế độ structured-output |
+| 6 Kiến trúc | **Cả hai** — chia đều: định tuyến/khử trùng lặp là của bạn, bậc giá/fine-tuning là của họ | Định tuyến/gateway (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), framework điều phối, logic warm-then-fan, gói context | Bậc thang giá qua các tier model, tier batch giảm 50%, khả năng fine-tuning/distillation |
 
 Quy tắc chung: **vệ sinh (hygiene) là việc của bạn, giảm giá là việc của họ.**
 Mọi thứ giúp giữ token *không* lọt vào request (context, output tool, prompt,
-trùng lặp) đều di động và giải quyết được bằng bên thứ ba. Còn các đòn bẩy
-làm cho những token còn lại *rẻ hơn* — giá cache tiền tố, tier batch, tier
-model rẻ hơn, nút effort/verbosity — đều do nhà cung cấp kiểm soát. Việc của
-bạn ở phần đó chỉ là đủ điều kiện để nhận các ưu đãi ấy, và nhà cung cấp bạn
-chọn sẽ giới hạn mức họ có thể cho bạn.
+trùng lặp) đều di động và giải quyết được bằng bên thứ ba — nên các danh mục
+2, 3, 4 nghiêng hẳn về phía bạn. Còn các đòn bẩy làm cho những token còn lại
+*rẻ hơn* — giá cache tiền tố, tier batch, tier model rẻ hơn, nút
+effort/verbosity — đều do nhà cung cấp kiểm soát, nên các danh mục 1 và 5
+nghiêng hẳn về phía họ. Việc của bạn ở phần đó chỉ là đủ điều kiện để nhận
+các ưu đãi ấy, và nhà cung cấp bạn chọn sẽ giới hạn mức họ có thể cho bạn.
+Danh mục 6 là ngoại lệ chia đều: một nửa nằm trong tay bạn, nửa còn lại
+nằm trong tay họ.
 
 ---
 
@@ -664,21 +667,24 @@ portable across providers), while others hinge on **capabilities and
 pricing only the provider controls** — a client-side tool can *exploit* a
 provider discount or dial, but it can never *create* one.
 
-| Category | Solvable with third-party tools / your architecture | Depends on the provider |
-| --- | --- | --- |
-| 1 Caching | Prompt-stability discipline, deterministic rendering, CI byte-tests; cache-hit telemetry (Langfuse/Helicone/LiteLLM); self-hosted prefix reuse (vLLM/SGLang) | The discount itself: cache existence, read pricing (~0.1×), TTLs, breakpoints, write surcharges |
-| 2 Context accumulation | Almost fully third-party: pruning/compaction in the harness or framework (LangGraph, LlamaIndex), hash registries, memory stores | Server-side compaction/context-management APIs are a convenience, not a requirement |
-| 3 Tool usage | Mostly third-party: output budgets, compression proxies (RTK/Headroom), MCP trimming, event-driven infra (Temporal, webhooks) | Deferred tool loading / tool search, programmatic tool calling (Code Mode), token-efficient tool-call formats |
-| 4 Content types | Downscaling (sharp/Pillow), extraction (Docling/unstructured), open rerankers (BGE), code maps (aider/Repomix) | Vision token formulas and `detail` dials, file/caching APIs, `count_tokens` endpoints |
-| 5 Generation-side | Output contracts in prompts, diff edit formats (Aider), validation-aware retries (Instructor), output compression (Caveman) | The main dials are provider knobs: reasoning-effort/thinking budgets, `verbosity`, structured-output modes |
-| 6 Architecture | Routing/gateways (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), orchestration frameworks, warm-then-fan logic, context packs | The price ladder across model tiers, the 50% batch tier, fine-tuning/distillation availability |
+| Category | Primarily solved by | Solvable with third-party tools / your architecture | Depends on the provider |
+| --- | --- | --- | --- |
+| 1 Caching | **Provider** — hygiene only makes you *eligible* for the discount, it doesn't create it | Prompt-stability discipline, deterministic rendering, CI byte-tests; cache-hit telemetry (Langfuse/Helicone/LiteLLM); self-hosted prefix reuse (vLLM/SGLang) | The discount itself: cache existence, read pricing (~0.1×), TTLs, breakpoints, write surcharges |
+| 2 Context accumulation | **Third-party** — almost entirely in your hands | Almost fully third-party: pruning/compaction in the harness or framework (LangGraph, LlamaIndex), hash registries, memory stores | Server-side compaction/context-management APIs are a convenience, not a requirement |
+| 3 Tool usage | **Third-party** — mostly under your control | Mostly third-party: output budgets, compression proxies (RTK/Headroom), MCP trimming, event-driven infra (Temporal, webhooks) | Deferred tool loading / tool search, programmatic tool calling (Code Mode), token-efficient tool-call formats |
+| 4 Content types | **Third-party** — downscaling/extraction need no provider involvement | Downscaling (sharp/Pillow), extraction (Docling/unstructured), open rerankers (BGE), code maps (aider/Repomix) | Vision token formulas and `detail` dials, file/caching APIs, `count_tokens` endpoints |
+| 5 Generation-side | **Provider** — the biggest lever (reasoning-effort budgets, `verbosity`) exists only on the provider side | Output contracts in prompts, diff edit formats (Aider), validation-aware retries (Instructor), output compression (Caveman) | The main dials are provider knobs: reasoning-effort/thinking budgets, `verbosity`, structured-output modes |
+| 6 Architecture | **Both** — split down the middle: routing/dedup is yours, price tiers/fine-tuning are theirs | Routing/gateways (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), orchestration frameworks, warm-then-fan logic, context packs | The price ladder across model tiers, the 50% batch tier, fine-tuning/distillation availability |
 
 Rule of thumb: **hygiene is yours, discounts are theirs.** Everything that
 keeps tokens *out* of requests (context, tool output, prompts, duplication)
-is portable and third-party-solvable; the levers that make remaining tokens
-*cheaper* (prefix caching rates, batch tier, cheaper model tiers,
-effort/verbosity dials) are provider-controlled — your job there is to
-qualify for them, and a provider choice caps how much they can give you.
+is portable and third-party-solvable — which is why categories 2, 3, and 4
+tilt firmly your way. The levers that make remaining tokens *cheaper*
+(prefix caching rates, batch tier, cheaper model tiers, effort/verbosity
+dials) are provider-controlled — which is why categories 1 and 5 tilt
+firmly theirs. Your job there is to qualify for those discounts, and a
+provider choice caps how much they can give you. Category 6 is the even
+split: half in your hands, half in theirs.
 
 ---
 
