@@ -1,37 +1,39 @@
-# Nguyên nhân gây tiêu tốn Token cao (Tiếng Việt)
+# Nguyên nhân gây tiêu tốn token cao (Tiếng Việt)
 
-Tài liệu này liệt kê các nguyên nhân đã xác định gây tiêu tốn token cao trong
-**các agent và ứng dụng dựa trên LLM**. Các nguyên nhân này không phụ thuộc
-vào nhà cung cấp (provider-agnostic): chúng áp dụng cho mọi stack (Claude,
-GPT, Gemini, các model mã nguồn mở, v.v.) vì bắt nguồn từ chính cách các API
-LLM hoạt động — request không trạng thái (stateless), tính phí theo token, và
-context window có giới hạn. Các chi tiết riêng của từng nhà cung cấp chỉ xuất
-hiện như ví dụ minh họa.
+Tài liệu này liệt kê các nguyên nhân đã biết khiến **agent và ứng dụng dùng
+LLM** tiêu tốn nhiều token. Chúng không phụ thuộc nhà cung cấp
+(provider-agnostic): stack nào cũng gặp (Claude, GPT, Gemini, model mã nguồn
+mở…), vì gốc rễ nằm ở chính cách API LLM vận hành — request không lưu trạng
+thái (stateless), tính tiền theo token, và context window có giới hạn. Chi
+tiết riêng của từng nhà cung cấp chỉ xuất hiện làm ví dụ minh họa.
 
-Mỗi nguyên nhân mô tả **nó là gì**, **tại sao nó làm tăng mức sử dụng
-token**, và **cách nhận biết nó**. Liên kết đến tài liệu tương ứng trong
-`solutions/` khi có giải pháp khắc phục.
+Mỗi nguyên nhân trả lời ba câu hỏi: **nó là gì**, **vì sao nó tốn token**,
+và **nhận biết nó bằng cách nào**. Khi có cách khắc phục, mục đó dẫn link
+sang tài liệu tương ứng trong `solutions/`; nguyên nhân nào phụ thuộc hoàn
+toàn vào nhà cung cấp thì ghi chú thẳng như vậy, không cần tài liệu
+solution riêng.
 
-> Trạng thái: tài liệu sống (living document). Danh mục dưới đây bao quát
-> các *loại* nguyên nhân chính, được nhóm theo danh mục. Các mục riêng lẻ có
-> thể được mở rộng với phân tích và số liệu đo lường sâu hơn theo thời gian.
+> Trạng thái: tài liệu sống. Danh mục dưới đây bao quát các *loại* nguyên
+> nhân chính, gom theo nhóm. Từng mục có thể được bổ sung phân tích và số
+> liệu đo lường theo thời gian.
 
-## Bối cảnh: tại sao các nguyên nhân này mang tính phổ quát
+## Bối cảnh: vì sao các nguyên nhân này mang tính phổ quát
 
-Hầu như mọi API LLM đều có chung ba đặc điểm, và chính ba đặc điểm này tạo ra
-mọi nguyên nhân trong danh mục này:
+Hầu như mọi API LLM đều có chung ba đặc điểm, và chính chúng sinh ra mọi
+nguyên nhân trong danh mục này:
 
-1. **Không trạng thái (Statelessness).** API không lưu bộ nhớ giữa các lần
-   gọi — client phải gửi lại mọi thứ mà model cần biết trong mỗi request.
-   Hễ "mọi thứ" đó phình to thì mọi request về sau cũng phình to theo.
-2. **Định giá theo token, bất đối xứng.** Input và output được tính phí theo
-   token, với output thường đắt gấp 3–5× giá input, và input được cache
-   thường chỉ bằng ~10–25% giá input (khi nhà cung cấp hỗ trợ caching).
-3. **Context có giới hạn.** Context window là hữu hạn. Khi gần chạm giới
-   hạn, hệ thống buộc phải cắt bớt, tóm tắt, hoặc thất bại — và mọi thứ nằm
-   bên trong nó đều bị tính phí trên mỗi lần gọi.
+1. **Không lưu trạng thái (stateless).** API không nhớ gì giữa các lần gọi
+   — client phải gửi lại mọi thứ model cần biết trong từng request. Cái
+   "mọi thứ" đó phình ra bao nhiêu thì mọi request về sau phình theo bấy
+   nhiêu.
+2. **Tính tiền theo token, giá bất đối xứng.** Cả input lẫn output đều tính
+   theo token: output thường đắt gấp 3–5 lần input, còn input đọc từ cache
+   thường chỉ bằng ~10–25% giá input (khi nhà cung cấp có caching).
+3. **Context có giới hạn.** Context window là hữu hạn. Càng gần giới hạn,
+   hệ thống càng buộc phải cắt bớt, tóm tắt, hoặc chịu lỗi — và mọi thứ
+   đang nằm trong đó đều bị tính tiền ở mỗi lần gọi.
 
-## Mẫu (Template) cho một mục mới
+## Mẫu cho một mục mới
 
 Sao chép mẫu này khi thêm một nguyên nhân mới.
 
@@ -40,216 +42,218 @@ Sao chép mẫu này khi thêm một nguyên nhân mới.
 
 **Tóm tắt:** Mô tả nguyên nhân trong một câu.
 
-**Tại sao nó tiêu tốn token:** Giải thích cơ chế làm tăng mức sử dụng token.
+**Vì sao nó tốn token:** Giải thích cơ chế làm tăng lượng token.
 
-**Cách nhận biết:** Các triệu chứng, chỉ số, hoặc mẫu hình cho thấy nguyên
-nhân này đang hiện diện.
+**Cách nhận biết:** Triệu chứng, chỉ số, hoặc mẫu hình cho thấy nguyên nhân
+này đang xảy ra.
 
-**Giải pháp liên quan:** Liên kết đến (các) tệp liên quan trong `solutions/`.
+**Giải pháp liên quan:** Link đến (các) tài liệu trong `solutions/`. Nếu
+nguyên nhân phụ thuộc nhà cung cấp (phía mình không tự sửa được), ghi rõ
+như vậy thay vì link.
 ```
 
 ---
 
 ## Danh mục
 
-Các nguyên nhân được nhóm thành sáu danh mục:
+Các nguyên nhân được gom thành sáu nhóm:
 
-| # | Danh mục | Vấn đề cốt lõi |
+| # | Nhóm | Vấn đề cốt lõi |
 | --- | --- | --- |
-| 1 | Lỗi caching | Trả giá đầy đủ cho các token tiền tố (prefix) lẽ ra có thể được phục vụ với giá cache-read |
-| 2 | Tích lũy context | Lịch sử hội thoại tăng trưởng không giới hạn và được gửi lại mỗi lượt |
-| 3 | Cách dùng tool | Các lệnh gọi tool và kết quả làm tràn ngập context bằng nội dung ít giá trị |
-| 4 | Loại nội dung đắt đỏ | Hình ảnh, tài liệu, và dữ liệu truy xuất tốn kém hơn nhiều so với dự kiến |
-| 5 | Chi tiêu phía sinh (generation) | Token output (suy luận + phản hồi) — loại token đắt nhất — bị chi tiêu quá mức |
-| 6 | Lựa chọn kiến trúc | Thiết kế hệ thống nhân bội chi phí token trên nhiều request và agent |
+| 1 | Lỗi caching | Trả nguyên giá cho những token prefix lẽ ra chỉ tốn giá cache-read |
+| 2 | Tích lũy context | Lịch sử hội thoại phình không giới hạn và bị gửi lại ở mỗi lượt |
+| 3 | Cách dùng tool | Lệnh gọi tool và kết quả của chúng nhồi vào context toàn nội dung ít giá trị |
+| 4 | Loại nội dung đắt đỏ | Ảnh, tài liệu, và dữ liệu truy xuất tốn hơn nhiều so với hình dung |
+| 5 | Chi tiêu phía sinh (generation) | Token output (reasoning + câu trả lời) — loại token đắt nhất — bị tiêu quá tay |
+| 6 | Lựa chọn kiến trúc | Thiết kế hệ thống nhân chi phí token lên qua nhiều request và agent |
 
-## Giải pháp nằm ở đâu: Bên thứ ba so với Nhà cung cấp
+## Giải pháp nằm ở đâu: bên thứ ba hay nhà cung cấp
 
-Trước khi vào danh mục, cần định hướng nhanh một điều: một số nguyên nhân có
-thể được giải quyết hoàn toàn bằng **công cụ bên thứ ba, không phụ thuộc
-agent** (thường mã nguồn mở, di động qua các nhà cung cấp). Những nguyên nhân
-khác lại phụ thuộc vào **năng lực và giá cả mà chỉ nhà cung cấp mới kiểm
-soát được** — một công cụ phía client có thể *tận dụng* một mức giảm giá hay
-nút điều chỉnh của nhà cung cấp, nhưng không bao giờ *tạo ra* được nó.
+Trước khi vào danh mục, cần định vị nhanh một điều: có những nguyên nhân
+xử lý được trọn vẹn bằng **công cụ bên thứ ba, không phụ thuộc agent**
+(thường là mã nguồn mở, mang theo được qua các nhà cung cấp). Có những
+nguyên nhân lại nằm ở **năng lực và bảng giá mà chỉ nhà cung cấp kiểm
+soát** — công cụ phía client có thể *tận dụng* một mức giảm giá hay một
+nút chỉnh của nhà cung cấp, nhưng không bao giờ *tự tạo ra* được nó.
 
-| Danh mục | Chủ yếu do ai giải quyết | Giải quyết được bằng công cụ bên thứ ba / kiến trúc của bạn | Phụ thuộc vào nhà cung cấp |
+| Nhóm | Ai giải quyết là chính | Xử lý được bằng công cụ bên thứ ba / kiến trúc của bạn | Phần phụ thuộc nhà cung cấp |
 | --- | --- | --- | --- |
-| 1 Caching | **Nhà cung cấp** — hygiene chỉ giúp bạn *đủ điều kiện* nhận giảm giá, không tạo ra nó | Kỷ luật ổn định prompt, render tất định, kiểm thử byte trong CI; đo lường cache-hit (Langfuse/Helicone/LiteLLM); tái sử dụng prefix tự host (vLLM/SGLang) | Chính mức giảm giá: sự tồn tại của cache, giá đọc (~0.1×), TTL, breakpoint, phụ phí ghi |
-| 2 Tích lũy context | **Bên thứ ba** — gần như toàn bộ nằm trong tay bạn | Gần như hoàn toàn bên thứ ba: cắt tỉa/nén trong harness hoặc framework (LangGraph, LlamaIndex), registry hash, kho lưu bộ nhớ | Các API nén/quản lý context phía server chỉ là tiện lợi, không phải bắt buộc |
-| 3 Dùng tool | **Bên thứ ba** — phần lớn tự bạn kiểm soát được | Chủ yếu bên thứ ba: ngân sách output, proxy nén (RTK/Headroom), cắt gọt MCP, hạ tầng hướng sự kiện (Temporal, webhook) | Tải tool trì hoãn / tìm kiếm tool, gọi tool theo chương trình (Code Mode), định dạng gọi tool tiết kiệm token |
-| 4 Loại nội dung | **Bên thứ ba** — giảm độ phân giải/trích xuất không cần nhà cung cấp làm gì cả | Giảm độ phân giải (sharp/Pillow), trích xuất (Docling/unstructured), reranker mã nguồn mở (BGE), bản đồ mã nguồn (aider/Repomix) | Công thức token thị giác và nút `detail`, API file/caching, endpoint `count_tokens` |
-| 5 Phía sinh (generation) | **Nhà cung cấp** — đòn bẩy lớn nhất (ngân sách reasoning-effort, `verbosity`) chỉ nhà cung cấp mới có | Hợp đồng output trong prompt, định dạng edit dạng diff (Aider), retry có kiểm định (Instructor), nén output (Caveman) | Các nút điều chỉnh chính là của nhà cung cấp: ngân sách reasoning-effort/thinking, `verbosity`, chế độ structured-output |
-| 6 Kiến trúc | **Cả hai** — chia đều: định tuyến/khử trùng lặp là của bạn, bậc giá/fine-tuning là của họ | Định tuyến/gateway (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), framework điều phối, logic warm-then-fan, gói context | Bậc thang giá qua các tier model, tier batch giảm 50%, khả năng fine-tuning/distillation |
+| 1 Caching | **Nhà cung cấp** — vệ sinh prompt chỉ giúp bạn *đủ điều kiện* nhận giảm giá, không tạo ra nó | Kỷ luật giữ prompt ổn định, render tất định, test byte trong CI; đo cache-hit (Langfuse/Helicone/LiteLLM); tự host để tái dùng prefix (vLLM/SGLang) | Bản thân mức giảm giá: có cache hay không, giá đọc (~0.1×), TTL, breakpoint, phụ phí ghi |
+| 2 Tích lũy context | **Bên thứ ba** — gần như nằm trọn trong tay bạn | Cắt tỉa/nén trong harness hoặc framework (LangGraph, LlamaIndex), registry hash, kho bộ nhớ | API nén/quản lý context phía server chỉ là tiện, không bắt buộc |
+| 3 Dùng tool | **Bên thứ ba** — phần lớn bạn tự kiểm soát được | Ngân sách output, proxy nén (RTK/Headroom), tỉa MCP, hạ tầng hướng sự kiện (Temporal, webhook) | Tải tool trì hoãn / tool search, gọi tool bằng code (Code Mode), định dạng gọi tool tiết kiệm token |
+| 4 Loại nội dung | **Bên thứ ba** — giảm độ phân giải/trích xuất không cần nhà cung cấp nhúng tay | Giảm độ phân giải (sharp/Pillow), trích xuất (Docling/unstructured), reranker mã nguồn mở (BGE), bản đồ code (aider/Repomix) | Công thức token cho ảnh và nút `detail`, API file/caching, endpoint `count_tokens` |
+| 5 Phía sinh (generation) | **Nhà cung cấp** — đòn bẩy lớn nhất (ngân sách reasoning, `verbosity`) chỉ họ mới có | Hợp đồng output trong prompt, sửa file theo diff (Aider), retry có kiểm định (Instructor), nén output (Caveman) | Các nút chính đều của nhà cung cấp: ngân sách reasoning/thinking, `verbosity`, chế độ structured output |
+| 6 Kiến trúc | **Cả hai** — chia đôi: định tuyến/khử trùng lặp là của bạn, bậc giá/fine-tuning là của họ | Định tuyến/gateway (RouteLLM/LiteLLM/Portkey), semantic caching (GPTCache), framework điều phối, làm ấm rồi mới fan-out, gói context | Thang giá giữa các tier model, tier batch giảm 50%, có fine-tuning/distillation hay không |
 
-Quy tắc chung: **vệ sinh (hygiene) là việc của bạn, giảm giá là việc của họ.**
-Mọi thứ giúp giữ token *không* lọt vào request (context, output tool, prompt,
-trùng lặp) đều di động và giải quyết được bằng bên thứ ba — nên các danh mục
-2, 3, 4 nghiêng hẳn về phía bạn. Còn các đòn bẩy làm cho những token còn lại
-*rẻ hơn* — giá cache tiền tố, tier batch, tier model rẻ hơn, nút
-effort/verbosity — đều do nhà cung cấp kiểm soát, nên các danh mục 1 và 5
-nghiêng hẳn về phía họ. Việc của bạn ở phần đó chỉ là đủ điều kiện để nhận
-các ưu đãi ấy, và nhà cung cấp bạn chọn sẽ giới hạn mức họ có thể cho bạn.
-Danh mục 6 là ngoại lệ chia đều: một nửa nằm trong tay bạn, nửa còn lại
-nằm trong tay họ.
+Quy tắc nằm lòng: **vệ sinh là việc của bạn, giảm giá là việc của họ.**
+Mọi thứ giúp giữ token *đứng ngoài* request (context, output tool, prompt,
+nội dung trùng lặp) đều mang theo được và xử lý được bằng bên thứ ba — vì
+vậy nhóm 2, 3, 4 nghiêng hẳn về phía bạn. Còn các đòn bẩy làm cho số token
+còn lại *rẻ đi* — giá cache prefix, tier batch, tier model rẻ hơn, nút
+effort/verbosity — đều nằm trong tay nhà cung cấp, nên nhóm 1 và 5 nghiêng
+hẳn về phía họ. Ở hai nhóm đó, việc của bạn chỉ là làm cho mình đủ điều
+kiện hưởng ưu đãi, và lựa chọn nhà cung cấp sẽ định trần mức ưu đãi bạn
+nhận được. Nhóm 6 chia đôi: nửa trong tay bạn, nửa trong tay họ.
 
 ---
 
 ## 1. Lỗi Caching
 
-Hầu hết các nhà cung cấp lớn đều cung cấp một dạng **caching prompt/prefix**
-nào đó (breakpoint tường minh, prefix caching tự động, hoặc nội dung cache
-đăng ký sẵn). Tất cả đều có chung cơ chế cốt lõi: cache khớp với một
-**prefix** của request, và các token được cache sẽ được tính phí ở mức giảm
-giá sâu. Các nguyên nhân dưới đây đều xoay quanh việc không đạt được mức
-giảm giá đó.
+Hầu hết nhà cung cấp lớn đều có một dạng **prompt/prefix caching**
+(breakpoint tường minh, prefix caching tự động, hoặc nội dung cache đăng
+ký trước). Tất cả chung một cơ chế lõi: cache khớp theo **prefix** của
+request, và token nằm trong cache được tính giá giảm rất sâu. Các nguyên
+nhân dưới đây đều là những kiểu để vuột mất khoản giảm giá đó.
 
-> **Caching prefix không phải là lớp caching duy nhất.** Nó làm cho một
-> *request lặp lại* rẻ hơn, nhưng vẫn chạy model. Có một dạng lãng phí khác,
-> hoàn toàn tách biệt: toàn hệ thống (fleet) phải trả lời đi trả lời lại
-> **các request gần giống hệt nhau** (cùng một câu hỏi hỗ trợ, cùng một truy
-> vấn phân tích, cùng một prompt đánh giá) — mỗi lần đều tốn một lệnh gọi
-> model đầy đủ, trong khi một cache ở *cấp độ phản hồi* (semantic) lẽ ra có
-> thể bỏ qua hoàn toàn. Đây là một cơ hội khác, tách biệt với mức giảm giá
-> prefix nói trên — được liệt kê là nguyên nhân 6.6; xem
+> **Prefix caching không phải lớp cache duy nhất.** Nó làm một *request
+> lặp lại* rẻ đi, nhưng model vẫn phải chạy. Có một kiểu lãng phí khác,
+> tách biệt hoàn toàn: cả hệ thống trả lời đi trả lời lại **những request
+> gần giống hệt nhau** (cùng một câu hỏi hỗ trợ, cùng một truy vấn phân
+> tích, cùng một prompt đánh giá) — lần nào cũng là một lệnh gọi model
+> trọn vẹn, trong khi một cache ở *mức câu trả lời* (semantic cache) có
+> thể bỏ qua hẳn. Đó là một cơ hội khác, nằm ở nguyên nhân 6.6; xem
 > `solutions/semantic-caching.md`.
 
-### 1.1 Không có caching prompt
+### 1.1 Không dùng prompt caching
 
-**Tóm tắt:** Các request có prefix lớn, ổn định (system prompt, định nghĩa
-tool, tài liệu chung) được gửi mà không sử dụng cơ chế caching của nhà cung
-cấp — hoặc trên một provider/cấu hình mà caching không khả dụng.
+**Tóm tắt:** Request có phần prefix lớn và ổn định (system prompt, định
+nghĩa tool, tài liệu dùng chung) nhưng không dùng cơ chế caching của nhà
+cung cấp — hoặc chạy trên provider/cấu hình không có caching.
 
-**Tại sao nó tiêu tốn token:** API không trạng thái, nên toàn bộ prompt được
-xử lý ở giá input đầy đủ trên mỗi request. Giá cache-read thường chỉ bằng
-~10–25% giá input thông thường, nên nếu bỏ qua caching, bạn phải trả nhiều
-hơn 4–10× cho mỗi prefix lặp lại, ở mọi lệnh gọi.
+**Vì sao nó tốn token:** API không lưu trạng thái, nên toàn bộ prompt bị
+xử lý ở nguyên giá input trong mỗi request. Giá cache-read thường chỉ bằng
+~10–25% giá input, nên bỏ qua caching nghĩa là trả đắt hơn 4–10 lần cho
+mỗi đoạn prefix lặp lại, ở mọi lần gọi.
 
-**Cách nhận biết:** Metadata sử dụng của nhà cung cấp báo cáo số token được
-cache bằng 0 (ví dụ `cache_read_input_tokens` trên Anthropic, `cached_tokens`
-trên OpenAI) trên mọi phản hồi, trong khi số token input thô vẫn lớn và
-tương đối ổn định qua các request.
+**Cách nhận biết:** Metadata usage của nhà cung cấp báo số token cache
+bằng 0 (ví dụ `cache_read_input_tokens` bên Anthropic, `cached_tokens`
+bên OpenAI) trên mọi phản hồi, trong khi tổng token input vẫn lớn và gần
+như không đổi giữa các request.
+
+**Giải pháp liên quan:** Không có tài liệu riêng — nguyên nhân này phụ
+thuộc nhà cung cấp: hãy chọn nhà cung cấp/cấu hình có prompt caching và
+bật nó lên; mức giảm giá là thứ chỉ họ tạo ra được.
+
+### 1.2 Cache bị vô hiệu hóa âm thầm
+
+**Tóm tắt:** Caching đã được cấu hình (hoặc chạy tự động) nhưng không bao
+giờ trúng (hit), vì có thứ gì đó làm prefix của prompt thay đổi ở mỗi
+request.
+
+**Vì sao nó tốn token:** Prefix caching khớp **chính xác đến từng byte**
+— chỉ một byte khác đi là mọi thứ phía sau nó mất hiệu lực. Thủ phạm quen
+mặt: timestamp hay "ngày hôm nay" được chèn vào system prompt, request
+ID/UUID nằm ở đầu nội dung, JSON serialize với thứ tự khóa không cố định,
+dữ liệu riêng của người dùng đặt lên đầu, và các đoạn prompt render theo
+điều kiện. Kết cục là tệ cả đôi đường: phụ phí ghi cache (nếu có) bị trả
+ở mỗi request mà không có lấy một lần đọc.
+
+**Cách nhận biết:** Metadata usage cho thấy toàn *ghi* cache (hoặc đơn
+giản là không có token cache nào) ở mọi request, dù các request nhìn
+giống hệt nhau. Diff bản prompt đã render đầy đủ của hai request liên
+tiếp sẽ chỉ ra ngay đoạn nào đang thay đổi.
 
 **Giải pháp liên quan:** `solutions/prompt-caching.md`
 
-### 1.2 Yếu tố vô hiệu hóa cache âm thầm
+### 1.3 Thay đổi giữa phiên khiến cache phải xây lại
 
-**Tóm tắt:** Caching được cấu hình (hoặc tự động) nhưng không bao giờ trúng
-(hit), vì một thứ gì đó làm thay đổi prefix của prompt trên mỗi request.
+**Tóm tắt:** Sửa system prompt, đổi model, hoặc thêm/bớt/đảo thứ tự định
+nghĩa tool giữa cuộc hội thoại làm toàn bộ prefix đã cache mất hiệu lực.
 
-**Tại sao nó tiêu tốn token:** Caching prefix là khớp **chính xác từng
-byte** — chỉ cần một byte thay đổi là vô hiệu hóa mọi thứ phía sau nó. Các
-thủ phạm phổ biến: timestamp hoặc "ngày hiện tại" được nội suy vào system
-prompt, ID request/UUID ở đầu nội dung, JSON được serialize với thứ tự khóa
-không xác định, dữ liệu riêng của người dùng đặt ở đầu, và các phần prompt
-có điều kiện. Kết quả là tệ nhất của cả hai thế giới: bất kỳ phụ phí ghi
-cache nào cũng bị trả trên mỗi request mà không có lần đọc nào.
+**Vì sao nó tốn token:** Định nghĩa tool và system prompt được render ở
+ngay đầu request. Đổi bất cứ thứ gì ở phần đầu là toàn bộ lịch sử hội
+thoại phía sau phải được xử lý lại không qua cache — trong một phiên
+agentic dài, đó có thể là hàng trăm nghìn token bị tính lại nguyên giá
+chỉ trong một request. Cache cũng luôn gắn với từng model: đổi model giữa
+phiên là chắc chắn bắt đầu lại từ cache nguội.
 
-**Cách nhận biết:** Metadata sử dụng cho thấy các lần *ghi* cache (hoặc đơn
-giản là không có token được cache) trên mỗi request dù các request trông
-giống hệt nhau. So sánh (diff) các prompt đã render đầy đủ của hai request
-liên tiếp sẽ lộ ra đoạn gây thay đổi.
-
-**Giải pháp liên quan:** `solutions/prompt-caching.md`
-
-### 1.3 Thay đổi giữa phiên làm mới lại cache
-
-**Tóm tắt:** Chỉnh sửa system prompt, đổi model, hoặc thêm/xóa/sắp xếp lại
-định nghĩa tool giữa cuộc hội thoại sẽ vô hiệu hóa toàn bộ prefix đã cache.
-
-**Tại sao nó tiêu tốn token:** Định nghĩa tool và system prompt được render
-ở ngay đầu request. Thay đổi bất cứ điều gì ở đầu sẽ buộc toàn bộ lịch sử
-hội thoại phía sau phải được xử lý lại không cache — trong một phiên agentic
-dài, đó có thể là hàng trăm nghìn token bị tính lại ở giá đầy đủ trong một
-request. Cache cũng luôn gắn với model cụ thể: đổi model giữa phiên luôn bắt
-đầu lại từ đầu (cold).
-
-**Cách nhận biết:** Đột ngột tăng vọt input không được cache (và sụt giảm
-input được cache) giữa phiên, tương quan với một thay đổi cấu hình: chuyển
-chế độ, xây lại bộ tool, đổi model, hoặc "chỉnh sửa nhỏ" vào system prompt.
+**Cách nhận biết:** Input không cache tăng vọt (và input cache sụp xuống)
+giữa phiên, trùng thời điểm với một thay đổi cấu hình: chuyển chế độ,
+dựng lại bộ tool, đổi model, hay một lần "sửa nhỏ" system prompt.
 
 **Giải pháp liên quan:** `solutions/prompt-caching.md`,
 `solutions/stable-prompt-architecture.md`
 
 ### 1.4 Cache hết hạn giữa các request
 
-**Tóm tắt:** Lưu lượng dồn cục hoặc thưa thớt khiến cache hết hạn giữa các
-request (thời gian sống điển hình từ vài phút đến ~1 giờ tùy nhà cung cấp và
-cấu hình), nên mỗi đợt lại bắt đầu lại từ đầu (cold).
+**Tóm tắt:** Lưu lượng dồn cục hoặc thưa thớt để cache kịp hết hạn giữa
+hai request (thời gian sống điển hình từ vài phút đến ~1 giờ, tùy nhà
+cung cấp và cấu hình), nên mỗi đợt lại bắt đầu từ cache nguội.
 
-**Tại sao nó tiêu tốn token:** Một mục cache đã hết hạn phải được xử lý lại
-— và trên các nhà cung cấp có phụ phí ghi cache tường minh, được ghi lại với
-giá cao hơn. Lưu lượng có khoảng cách vượt quá thời gian sống của cache sẽ
-không bao giờ hưởng lợi từ các request trước đó.
+**Vì sao nó tốn token:** Mục cache đã hết hạn phải được xử lý lại — và ở
+những nhà cung cấp có phụ phí ghi cache, còn phải ghi lại với giá cao
+hơn. Lưu lượng có khoảng nghỉ dài hơn thời gian sống của cache thì không
+bao giờ hưởng lợi gì từ các request trước.
 
-**Cách nhận biết:** Cache hit thành công trong một đợt, nhưng request đầu
-tiên sau mỗi khoảng nghỉ cho thấy một lượt xử lý không cache (hoặc ghi
-cache) đầy đủ.
+**Cách nhận biết:** Trong một đợt thì cache hit đều đặn, nhưng request
+đầu tiên sau mỗi khoảng nghỉ lại là một lượt xử lý không cache (hoặc ghi
+cache) trọn vẹn.
 
-**Giải pháp liên quan:** `solutions/prompt-caching.md` (TTL dài hơn,
-pre-warming, lưu lượng giữ ấm)
+**Giải pháp liên quan:** Không có tài liệu riêng — TTL và phụ phí ghi là
+cấu hình/bảng giá của nhà cung cấp: chọn TTL dài hơn ở nơi họ cho phép.
 
 ---
 
 ## 2. Tích lũy context
 
-> **Danh mục này là một vấn đề chất lượng, không chỉ là vấn đề chi phí.**
-> Các nghiên cứu có kiểm soát ("context rot") trên 18 model frontier cho
-> thấy mọi model đều suy giảm khi input tăng lên, và điều này xảy ra *trước
-> khi* cửa sổ đầy. Ngân sách thực tế để giữ độ chính xác cao chỉ nằm trong
-> khoảng 150–400K token, ngay cả trên các model có cửa sổ 2M token. Độ chính
-> xác giảm nhanh nhất khi nhiễu tích lũy *tương đồng về mặt ngữ nghĩa* với
-> câu trả lời — đúng là tình huống thường gặp trong một phiên lập trình dài
-> đầy các bước khám phá gần đúng. Vì vậy, cắt tỉa lịch sử (xem bên dưới) vừa
-> cải thiện độ chính xác vừa tiết kiệm token — hai động lực này cùng hướng
-> về một phía.
+> **Nhóm này là vấn đề chất lượng, không chỉ là vấn đề chi phí.** Các
+> nghiên cứu có kiểm soát về "context rot" trên 18 model frontier cho
+> thấy model nào cũng kém đi khi input dài ra — và kém đi từ *trước khi*
+> cửa sổ đầy: ngân sách thực dụng để giữ độ chính xác cao chỉ quanh mức
+> 150–400K token, kể cả trên model có cửa sổ 2M. Độ chính xác rơi nhanh
+> nhất khi phần nhiễu tích tụ *na ná về nghĩa* với câu trả lời — đúng
+> kiểu một phiên lập trình dài đầy những lần dò sai suýt đúng. Vì vậy cắt
+> tỉa lịch sử (bên dưới) vừa được chất lượng vừa được token — hai động cơ
+> cùng chiều.
 
 ### 2.1 Lịch sử hội thoại không giới hạn
 
-**Tóm tắt:** Toàn bộ lịch sử tin nhắn được gửi lại trên mỗi lượt (API không
-trạng thái) và không có gì từng cắt tỉa, tóm tắt, hoặc hết hạn nó.
+**Tóm tắt:** Toàn bộ lịch sử tin nhắn bị gửi lại ở mỗi lượt (API không
+lưu trạng thái) mà không có gì cắt tỉa, tóm tắt, hay cho nó hết hạn.
 
-**Tại sao nó tiêu tốn token:** Chi phí input mỗi lượt tăng gần như tuyến
-tính theo độ dài hội thoại, nên tổng chi phí trên một phiên tăng theo **bậc
-hai (quadratic)**. Một phiên agentic 100 lượt có thể tiêu phần lớn ngân sách
-để gửi lại các lượt 1–99. Caching làm dịu bớt điều này (lịch sử được cache
-thì rẻ) nhưng không loại bỏ nó, và mỗi lần cache trượt (miss) sẽ tính lại
-toàn bộ lịch sử ở giá đầy đủ.
+**Vì sao nó tốn token:** Chi phí input mỗi lượt tăng gần như tuyến tính
+theo độ dài hội thoại, nên tổng chi phí cả phiên tăng theo **bậc hai
+(quadratic)**. Một phiên agentic 100 lượt có thể tiêu phần lớn ngân sách
+chỉ để gửi đi gửi lại các lượt 1–99. Caching làm dịu chuyện này (lịch sử
+nằm trong cache thì rẻ) nhưng không xóa được nó, và mỗi lần cache trượt
+là toàn bộ lịch sử bị tính lại nguyên giá.
 
-**Cách nhận biết:** Kích thước prompt tổng (input cached + uncached) tăng
-đều đặn qua từng lượt; các request cuối phiên lớn hơn 10–100× so với các
-request đầu; các phiên cuối cùng chạm giới hạn context window.
+**Cách nhận biết:** Tổng kích thước prompt (input cache + không cache)
+tăng đều qua từng lượt; các request cuối phiên lớn gấp 10–100 lần các
+request đầu; phiên chạy đủ lâu thì chạm trần context window.
 
 **Giải pháp liên quan:** `solutions/compaction.md`,
 `solutions/context-editing.md`
 
-### 2.2 Kết quả tool cũ vẫn được giữ trong lịch sử
+### 2.2 Kết quả tool cũ vẫn nằm lại trong lịch sử
 
-**Tóm tắt:** Các output tool cũ (dump file, kết quả tìm kiếm, output lệnh)
-vẫn còn trong bản ghi (transcript) rất lâu sau khi chúng không còn liên quan.
+**Tóm tắt:** Những output tool cũ (dump file, kết quả tìm kiếm, output
+lệnh) vẫn nằm trong transcript rất lâu sau khi đã hết liên quan.
 
-**Tại sao nó tiêu tốn token:** Trong các vòng lặp agentic, kết quả tool
-thường chiếm phần lớn transcript. Một lần đọc file ở lượt 3 mà đã bị thay
-thế ở lượt 20 vẫn được gửi lại (và tính phí lại) ở các lượt 21–100.
+**Vì sao nó tốn token:** Trong vòng lặp agentic, kết quả tool thường
+chiếm phần lớn transcript. Một lần đọc file ở lượt 3, dù đã bị thay thế ở
+lượt 20, vẫn bị gửi lại (và tính tiền lại) suốt các lượt 21–100.
 
-**Cách nhận biết:** Kiểm tra transcript cho thấy các khối kết quả tool lớn
-có nội dung trùng lặp hoặc đã bị thay thế sau đó; tỷ trọng kết quả tool
-trong prompt tiếp tục tăng trong khi tỷ trọng hữu ích thì không.
+**Cách nhận biết:** Soi transcript thấy các khối kết quả tool lớn có nội
+dung trùng nhau hoặc đã bị phiên bản mới hơn thay thế; tỷ trọng kết quả
+tool trong prompt cứ tăng, còn tỷ trọng thông tin hữu ích thì không.
 
 **Giải pháp liên quan:** `solutions/context-editing.md`
-(cắt tỉa các kết quả tool / khối reasoning cũ)
+(cắt tỉa kết quả tool / khối reasoning cũ)
 
 ### 2.3 Chèn context trùng lặp
 
-**Tóm tắt:** Cùng một nội dung (một file, một schema, tài liệu truy xuất)
-được chèn vào cuộc hội thoại nhiều lần.
+**Tóm tắt:** Cùng một nội dung (một file, một schema, một bộ tài liệu
+truy xuất) bị chèn vào cuộc hội thoại nhiều lần.
 
-**Tại sao nó tiêu tốn token:** Mỗi lần chèn được tính phí độc lập, và mỗi
-bản sao sau đó tiếp tục tồn tại trong lịch sử suốt phần còn lại của phiên
-(nguyên nhân 2.1 làm trầm trọng thêm điều này).
+**Vì sao nó tốn token:** Mỗi lần chèn được tính tiền riêng, và mỗi bản
+sao sau đó lại nằm trong lịch sử cho đến hết phiên (nguyên nhân 2.1
+khuếch đại thêm).
 
-**Cách nhận biết:** Đọc lại cùng một file nhiều lần qua các lượt; pipeline
-truy xuất gắn lại cùng top-k tài liệu vào mỗi tin nhắn người dùng; nội dung
-cấp hệ thống được dán vào lượt người dùng "để đảm bảo model nhìn thấy nó".
+**Cách nhận biết:** Cùng một file bị đọc lại nhiều lần qua các lượt;
+pipeline truy xuất gắn lại đúng top-k tài liệu cũ vào mỗi tin nhắn người
+dùng; nội dung vốn thuộc cấp hệ thống bị dán vào lượt người dùng "cho
+chắc là model nhìn thấy".
 
 **Giải pháp liên quan:** `solutions/context-hygiene.md`
 
@@ -259,75 +263,75 @@ cấp hệ thống được dán vào lượt người dùng "để đảm bảo
 
 ### 3.1 Output tool quá lớn
 
-**Tóm tắt:** Tool trả về nhiều nội dung hơn nhiều so với những gì model cần
-— toàn bộ file thay vì phần liên quan, toàn bộ phản hồi API thay vì các
-trường cần thiết, danh sách không phân trang.
+**Tóm tắt:** Tool trả về nhiều hơn hẳn mức model cần — nguyên cả file
+thay vì phần liên quan, nguyên phản hồi API thay vì vài trường cần thiết,
+danh sách không phân trang.
 
-**Tại sao nó tiêu tốn token:** Mỗi byte của kết quả tool là token input
-trên request tiếp theo *và trên mọi request sau đó* khi nó vẫn còn trong
-lịch sử. Một lần đọc file 5.000 dòng không lọc sẽ tốn số token của nó hàng
+**Vì sao nó tốn token:** Mỗi byte của kết quả tool là token input ở
+request kế tiếp *và ở mọi request sau đó* chừng nào nó còn trong lịch sử.
+Một lần đọc file 5.000 dòng không lọc sẽ bị tính số token của nó hàng
 chục lần trong một phiên dài.
 
-**Cách nhận biết:** Các kết quả tool riêng lẻ lên đến hàng chục nghìn token;
-các kết quả tool mà model chỉ rõ ràng sử dụng một phần nhỏ.
+**Cách nhận biết:** Có những kết quả tool đơn lẻ lên tới hàng chục nghìn
+token; nhìn là thấy model chỉ dùng một phần rất nhỏ của kết quả.
 
 **Giải pháp liên quan:** `solutions/tool-output-budgets.md`,
 `solutions/tool-output-compression.md`
 
-### 3.2 Nhiều round-trip thay vì kết hợp (composition)
+### 3.2 Round-trip vụn vặt thay vì gộp lại (composition)
 
-**Tóm tắt:** Nhiều lệnh gọi tool tuần tự nơi mỗi kết quả trung gian đều chảy
-qua context của model, dù model chỉ cần câu trả lời cuối cùng.
+**Tóm tắt:** Nhiều lệnh gọi tool nối đuôi nhau, kết quả trung gian nào
+cũng chảy qua context của model, dù model chỉ cần đáp số cuối cùng.
 
-**Tại sao nó tiêu tốn token:** Mỗi round-trip gửi lại lịch sử đang lớn
-dần và đưa thêm một kết quả trung gian vào đó. Ba lần tra cứu nối tiếp
-(profile → đơn hàng → tồn kho) tốn ba lượt xử lý context đầy đủ, và dữ liệu
-trung gian thường không bao giờ cần lại nữa.
+**Vì sao nó tốn token:** Mỗi round-trip gửi lại cả khối lịch sử đang
+phình và bỏ thêm một kết quả trung gian vào đó. Ba lần tra cứu nối tiếp
+(hồ sơ → đơn hàng → tồn kho) là ba lượt xử lý trọn context, và dữ liệu
+trung gian thường chẳng bao giờ cần đến lần thứ hai.
 
-**Cách nhận biết:** Chuỗi dài các lệnh gọi tool nhỏ cho mỗi request người
-dùng; transcript đầy dữ liệu trung gian mà câu trả lời cuối không tham
-chiếu đến.
+**Cách nhận biết:** Chuỗi dài các lệnh gọi tool lặt vặt cho mỗi yêu cầu
+người dùng; transcript đầy dữ liệu trung gian mà câu trả lời cuối không
+hề nhắc tới.
 
 **Giải pháp liên quan:** `solutions/tool-composition.md`
-(điều phối tool thực thi bằng code, kết hợp phía server, gộp lô)
+(điều phối tool bằng code, gộp phía server, gộp lô)
 
 ### 3.3 Vòng lặp thử lại và polling
 
-**Tóm tắt:** Các lệnh gọi tool thất bại được thử lại với cùng context, hoặc
-agent poll trạng thái bên ngoài ("kiểm tra lại trong vòng lặp") với một
-request model đầy đủ cho mỗi lần poll.
+**Tóm tắt:** Lệnh gọi tool thất bại được thử lại với nguyên context cũ,
+hoặc agent poll trạng thái bên ngoài ("cứ kiểm tra lại trong vòng lặp")
+và mỗi lần poll là một request model đầy đủ.
 
-**Tại sao nó tiêu tốn token:** Mỗi lần thử lại/poll đều tính lại toàn bộ
-prompt. Một vòng lặp poll 10 lần trên context 100K token tiêu tốn 1M token
-input chỉ để biết "chưa xong" tới chín lần. Một biến thể tương tự trong bối
-cảnh agentic là **doom loop**: model lặp đi lặp lại một bản sửa lỗi thất bại
-(sửa → test → thất bại → sửa tương tự), mỗi vòng đều tính phí lại context
-ngày càng lớn rồi cộng thêm một lần thất bại nữa vào đó — chi phí cứ tăng
-dồn trong khi tiến độ không nhích lên.
+**Vì sao nó tốn token:** Mỗi lần thử lại/poll đều tính lại toàn bộ
+prompt. Một vòng poll 10 lần trên context 100K token đốt 1 triệu token
+input chỉ để nghe "chưa xong" chín lần. Người anh em phía agentic là
+**doom loop**: model cứ lặp một bản sửa đang thất bại (sửa → test → fail
+→ sửa gần giống), mỗi vòng tính lại cả khối context đang phình rồi nhét
+thêm một lần thất bại nữa vào — chi phí cộng dồn trong khi tiến độ đứng
+yên.
 
-**Cách nhận biết:** Các đợt request gần giống hệt nhau trong log sử dụng;
-các kết quả tool bị lỗi lặp lại với input không đổi; các mẫu hình
-sleep-and-check được triển khai *thông qua* model thay vì *xung quanh* nó;
-nhiều diff/thất bại test tương tự liên tiếp trong một phiên (giới hạn số
-lần thử trong harness và buộc lập lại kế hoạch hoặc leo thang thay thế).
+**Cách nhận biết:** Từng đợt request gần giống hệt nhau trong log usage;
+kết quả tool lỗi lặp lại với input y nguyên; các mẫu sleep-and-check chạy
+*xuyên qua* model thay vì *vòng ngoài* model; nhiều diff/lần test fail na
+ná liên tiếp trong một phiên (hãy giới hạn số lần thử trong harness và
+buộc lập kế hoạch lại hoặc leo thang).
 
 **Giải pháp liên quan:** `solutions/event-driven-waiting.md`
 
-### 3.4 Quá nhiều schema tool được tải sẵn từ đầu
+### 3.4 Tải sẵn quá nhiều schema tool
 
-**Tóm tắt:** Mọi định nghĩa tool mà ứng dụng sở hữu đều được đưa vào mỗi
-request, dù chỉ một vài trong số đó liên quan đến từng tác vụ.
+**Tóm tắt:** Mọi định nghĩa tool mà ứng dụng có đều bị nhét vào từng
+request, dù mỗi tác vụ chỉ cần vài cái.
 
-**Tại sao nó tiêu tốn token:** Schema tool được serialize vào mỗi request.
-Hàng trăm định nghĩa JSON-schema có thể thêm hàng chục nghìn token chi phí
-cố định cho mỗi lệnh gọi — và trên các nhà cung cấp có prefix caching, bất
-kỳ thay đổi nào với tập hợp đó đều vô hiệu hóa toàn bộ cache (nguyên nhân
-1.3). Điều này đặc biệt phổ biến trong các thiết lập kiểu MCP nơi toàn bộ
-tool server được gắn vào một cách trọn gói.
+**Vì sao nó tốn token:** Schema tool được serialize vào mỗi request. Hàng
+trăm định nghĩa JSON-schema có thể cộng thêm hàng chục nghìn token chi
+phí cố định mỗi lần gọi — và ở nhà cung cấp có prefix caching, chỉ cần bộ
+tool thay đổi là cả cache mất hiệu lực (nguyên nhân 1.3). Chuyện này đặc
+biệt hay gặp ở các thiết lập kiểu MCP, nơi nguyên cả tool server được gắn
+vào một cục.
 
-**Cách nhận biết:** Khoảng cách lớn giữa token input của một request có kèm
-tool so với cùng request không kèm tool; danh sách tool lớn hơn nhiều so
-với tập hợp thực sự được gọi.
+**Cách nhận biết:** Chênh lệch lớn giữa token input của request có kèm
+tool và cùng request đó không kèm tool; danh sách tool dài hơn hẳn tập
+tool thực sự được gọi.
 
 **Giải pháp liên quan:** `solutions/tool-search.md` (khám phá tool động /
 tải trì hoãn)
@@ -336,62 +340,59 @@ tải trì hoãn)
 
 ## 4. Loại nội dung đắt đỏ
 
-### 4.1 Hình ảnh độ phân giải đầy đủ
+### 4.1 Ảnh giữ nguyên độ phân giải gốc
 
-**Tóm tắt:** Hình ảnh được gửi ở độ phân giải gốc/cao trong khi tác vụ
-không cần độ trung thực đó.
+**Tóm tắt:** Ảnh được gửi ở độ phân giải gốc/cao trong khi tác vụ không
+cần độ nét đến vậy.
 
-**Tại sao nó tiêu tốn token:** Input thị giác được token hóa theo diện
-tích/tile trên mọi nhà cung cấp lớn, nên chi phí token tỷ lệ với độ phân
-giải — một hình ảnh độ phân giải đầy đủ có thể tốn vài nghìn token trong
-khi một hình đã giảm độ phân giải chỉ tốn vài trăm. Các vòng lặp nhiều
-screenshot (computer/browser use) nhân điều này lên theo từng bước, và hình
-ảnh cũng tồn tại trong lịch sử (nguyên nhân 2.1).
+**Vì sao nó tốn token:** Mọi nhà cung cấp lớn đều token hóa ảnh theo diện
+tích/tile, nên chi phí token tỷ lệ với độ phân giải — một tấm ảnh nguyên
+cỡ có thể tốn vài nghìn token trong khi bản thu nhỏ chỉ tốn vài trăm. Các
+vòng lặp nhiều screenshot (computer/browser use) nhân con số đó theo từng
+bước, và ảnh cũng nằm lại trong lịch sử (nguyên nhân 2.1).
 
-**Cách nhận biết:** Các request có hình ảnh với số token input cao hơn
-nhiều so với độ dài văn bản; chi phí mỗi bước của các vòng lặp computer-use
-bị chi phối bởi screenshot.
+**Cách nhận biết:** Request có ảnh với số token input cao hơn hẳn phần
+chữ; chi phí mỗi bước của vòng lặp computer-use bị screenshot chiếm gần
+hết.
 
 **Giải pháp liên quan:** `solutions/image-downsampling.md`
 
 ### 4.2 Đổ nguyên tài liệu (PDF / RAG truy xuất quá rộng)
 
-**Tóm tắt:** Toàn bộ tài liệu hoặc kết quả truy xuất quá rộng được đính kèm
-khi chỉ một phần nhỏ là liên quan.
+**Tóm tắt:** Nguyên cả tài liệu, hoặc kết quả truy xuất quá rộng, được
+đính kèm trong khi chỉ một lát cắt nhỏ là liên quan.
 
-**Tại sao nó tiêu tốn token:** Một PDF vài trăm trang hoặc truy xuất top-20
-chunk có thể thêm hàng chục hoặc hàng trăm nghìn token input mỗi request.
-Không có caching, điều đó bị tính lại cho mỗi câu hỏi; không có cắt tỉa, nó
-tồn tại trong lịch sử mãi mãi.
+**Vì sao nó tốn token:** Một file PDF vài trăm trang hay một lần truy
+xuất top-20 chunk có thể cộng thêm hàng chục đến hàng trăm nghìn token
+input mỗi request. Không có caching thì khoản đó bị tính lại theo từng
+câu hỏi; không cắt tỉa thì nó nằm trong lịch sử mãi.
 
-**Cách nhận biết:** Các luồng hỏi-đáp nơi mỗi câu hỏi gửi lại cùng tài liệu
-lớn; truy xuất được cấu hình cho recall (k lớn, chunk lớn) với câu trả lời
-chỉ trích dẫn một phần rất nhỏ những gì đã gửi.
+**Cách nhận biết:** Các luồng hỏi-đáp mà câu hỏi nào cũng gửi lại đúng
+tài liệu lớn đó; truy xuất được cấu hình thiên về recall (k lớn, chunk
+to) trong khi câu trả lời chỉ trích dẫn một phần tí xíu những gì đã gửi.
 
 **Giải pháp liên quan:** `solutions/document-reuse.md`,
 `solutions/retrieval-tuning.md`, `solutions/code-maps.md` (cho codebase)
 
 ### 4.3 Nội dung tốn kém khi tokenize
 
-**Tóm tắt:** Nội dung tokenize không hiệu quả — code đậm đặc, JSON đã
-minify, blob base64, nhiều script không phải tiếng Anh — hoặc một thay đổi
-model/tokenizer khiến cùng văn bản tính ra số token cao hơn.
+**Tóm tắt:** Nội dung tokenize kém hiệu quả — code đậm đặc, JSON minify,
+blob base64, nhiều hệ chữ ngoài tiếng Anh — hoặc một lần đổi
+model/tokenizer làm cùng một đoạn văn bản bị đếm ra nhiều token hơn.
 
-**Tại sao nó tiêu tốn token:** Số token phụ thuộc vào tokenizer cụ thể, và
-các tokenizer khác nhau giữa các nhà cung cấp *và giữa các thế hệ model
-trong cùng một nhà cung cấp* (các bản nâng cấp đã làm thay đổi số token hơn
-30% cho cùng một văn bản). Log nguyên văn, bundle đã minify, và payload
-base64 nằm trong số những thứ tệ nhất tính trên mỗi đơn vị thông tin hữu ích
-— chỉ riêng base64 đã làm phình to số byte thêm ~33% trước khi tokenization
-bắt đầu.
+**Vì sao nó tốn token:** Số token phụ thuộc vào từng tokenizer, và
+tokenizer khác nhau giữa các nhà cung cấp *lẫn giữa các thế hệ model của
+cùng một nhà* (đã có lần nâng cấp làm lệch số token hơn 30% trên cùng một
+văn bản). Log nguyên văn, bundle minify, và payload base64 thuộc nhóm tệ
+nhất tính trên mỗi đơn vị thông tin hữu ích — riêng base64 đã thổi phồng
+số byte thêm ~33% trước cả khi tokenize.
 
-**Cách nhận biết:** Ngân sách được hiệu chỉnh trên một model đột nhiên bị
-cắt bớt hoặc tốn kém hơn sau khi đổi model; endpoint đếm token của nhà cung
-cấp cho ra số cao hơn nhiều so với ước lượng chars/4 trên nội dung thực tế
-của bạn.
+**Cách nhận biết:** Ngân sách hiệu chỉnh trên model này bỗng bị cắt cụt
+hoặc đắt lên sau khi đổi model; endpoint đếm token của nhà cung cấp cho
+con số cao hơn hẳn ước lượng ký-tự/4 trên nội dung thật của bạn.
 
 **Giải pháp liên quan:** `solutions/token-counting.md`
-(hiệu chỉnh lại bằng bộ đếm của nhà cung cấp cho đúng model mục tiêu)
+(hiệu chỉnh lại bằng bộ đếm của chính nhà cung cấp, đúng model đích)
 
 ---
 
@@ -399,54 +400,55 @@ của bạn.
 
 ### 5.1 Token reasoning/thinking
 
-**Tóm tắt:** Các model có khả năng suy luận tạo ra (và bị tính phí) các
-token chuỗi suy nghĩ (chain-of-thought) trước câu trả lời hiển thị — thường
-bị ẩn hoặc tóm tắt trong phản hồi, nhưng vẫn phải trả tiền dù sao.
+**Tóm tắt:** Model có khả năng suy luận sinh ra (và tính tiền) các token
+chain-of-thought trước phần trả lời hiển thị — thường bị ẩn hoặc tóm tắt
+trong phản hồi, nhưng kiểu gì cũng phải trả tiền.
 
-**Tại sao nó tiêu tốn token:** Token output thường đắt gấp 3–5× giá input,
-và reasoning được tính phí như output trên mọi nhà cung cấp lớn. Các thiết
-lập reasoning-effort cao áp dụng đồng loạt sẽ chi tiêu suy luận sâu cho các
-route không cần đến nó; một số nhà cung cấp bật reasoning theo mặc định,
-nên chi phí xuất hiện mà không cần bật tùy chọn nào.
+**Vì sao nó tốn token:** Token output thường đắt gấp 3–5 lần input, và
+reasoning được tính là output ở mọi nhà cung cấp lớn. Đặt mức
+reasoning-effort cao đồng loạt nghĩa là tiêu suy luận sâu cho cả những
+route không cần; vài nhà cung cấp còn bật reasoning mặc định, nên chi phí
+xuất hiện dù bạn chưa hề bật gì.
 
-**Cách nhận biết:** Số token output báo cáo vượt xa độ dài phản hồi hiển
-thị; các route đơn giản (phân loại, tra cứu) cho thấy cùng mức chi tiêu
-output như các route phức tạp.
+**Cách nhận biết:** Số token output báo cáo vượt xa độ dài câu trả lời
+nhìn thấy; các route đơn giản (phân loại, tra cứu) tiêu output ngang các
+route phức tạp.
 
-**Giải pháp liên quan:** `solutions/reasoning-effort-tuning.md`
-(thiết lập effort/ngân sách theo từng route)
+**Giải pháp liên quan:** Không có tài liệu riêng — ngân sách
+reasoning/effort là nút chỉnh của nhà cung cấp: đặt mức effort phù hợp
+cho từng route ngay trong cấu hình gọi API.
 
 ### 5.2 Output dài dòng
 
-**Tóm tắt:** Model tạo ra nhiều văn xuôi hơn cần thiết — phát lại toàn bộ
-file thay vì diff, tường thuật từng bước, lời mở đầu và tóm tắt dài dòng.
+**Tóm tắt:** Model viết nhiều hơn mức cần — in lại nguyên file thay vì
+diff, tường thuật từng bước, mở bài và tổng kết lê thê.
 
-**Tại sao nó tiêu tốn token:** Output là loại token đắt nhất, và trong các
-phiên nhiều lượt, mỗi câu trả lời dài dòng cũng trở thành *input* trên mọi
-lượt sau đó — sự dài dòng bị tính phí một lần dưới dạng output và N lần
-dưới dạng lịch sử.
+**Vì sao nó tốn token:** Output là loại token đắt nhất, và trong phiên
+nhiều lượt, mỗi câu trả lời dài dòng còn quay lại làm *input* cho mọi
+lượt sau — sự dài dòng bị tính một lần là output và N lần nữa dưới dạng
+lịch sử.
 
-**Cách nhận biết:** Các phản hồi lặp lại câu hỏi, in lại code không đổi,
-hoặc tóm tắt những gì vừa được hiển thị; số token output không tương xứng
-với lượng thông tin được cung cấp.
+**Cách nhận biết:** Câu trả lời nhắc lại câu hỏi, in lại code không đổi,
+hay tóm tắt thứ vừa hiển thị xong; số token output không tương xứng với
+lượng thông tin thực nhận được.
 
 **Giải pháp liên quan:** `solutions/concise-output-prompting.md`,
 `solutions/diff-based-edits.md`
 
-### 5.3 Chu kỳ cắt bớt và thử lại
+### 5.3 Bị cắt output giữa chừng rồi thử lại
 
-**Tóm tắt:** Giới hạn token output đặt quá thấp làm cắt bớt phản hồi giữa
-chừng sinh, và ứng dụng thử lại toàn bộ request.
+**Tóm tắt:** Trần token output đặt quá thấp làm câu trả lời bị cắt giữa
+chừng, và ứng dụng thử lại nguyên cả request.
 
-**Tại sao nó tiêu tốn token:** Mỗi lần thử lại tính lại toàn bộ input cộng
-với phần output bị lãng phí. Hai lần thử bị cắt bớt trước khi thành công ở
-lần thứ ba tốn khoảng 3× input và ~2 câu trả lời output bị bỏ đi. Động lực
-tương tự áp dụng cho các thất bại kiểm định schema trên structured output —
-mỗi lần sinh không hợp lệ kích hoạt một request lại đầy đủ.
+**Vì sao nó tốn token:** Mỗi lần thử lại tính lại toàn bộ input, cộng
+thêm phần output dở dang đã vứt đi. Hai lần bị cắt trước khi lần thứ ba
+thành công tốn cỡ 3 lần input và ~2 câu trả lời output bỏ phí. Cùng cơ
+chế đó áp cho các lỗi kiểm định schema của structured output — mỗi lần
+sinh không hợp lệ là một request lại từ đầu.
 
-**Cách nhận biết:** Lý do dừng length/max-token trong log theo sau bởi các
-request thử lại gần giống hệt nhau; các thất bại phân tích structured-output
-dẫn vào một vòng lặp thử lại.
+**Cách nhận biết:** Log có lý do dừng length/max-token, theo sau là các
+request thử lại gần giống hệt; lỗi parse structured output đổ vào một
+vòng thử lại.
 
 **Giải pháp liên quan:** `solutions/output-cap-sizing.md`
 
@@ -454,144 +456,142 @@ dẫn vào một vòng lặp thử lại.
 
 ## 6. Lựa chọn kiến trúc
 
-### 6.1 Subagent cold-start
+### 6.1 Subagent khởi động nguội
 
-**Tóm tắt:** Các subagent được sinh ra cho từng tác vụ con mà không có
-cache hay bàn giao context chung, mỗi cái tự suy ra lại những gì agent cha
-đã biết.
+**Tóm tắt:** Subagent được sinh ra cho từng tác vụ con mà không có cache
+chung hay bàn giao context, con nào cũng tự mò lại những gì agent cha đã
+biết.
 
-**Tại sao nó tiêu tốn token:** Mỗi lần sinh gửi lại (và thường khám phá lại
-qua các lệnh gọi tool) context mà orchestrator đã trả tiền. Các lệnh gọi
-fork xây lại system prompt / danh sách tool / lựa chọn model với bất kỳ khác
-biệt nào cũng bỏ lỡ hoàn toàn cache prefix của agent cha.
+**Vì sao nó tốn token:** Mỗi lần sinh subagent là gửi lại (và thường là
+khám phá lại qua các lệnh gọi tool) phần context mà orchestrator đã trả
+tiền rồi. Lệnh fork nào dựng lại system prompt / danh sách tool / lựa
+chọn model mà lệch đi dù chỉ một chút cũng trượt hoàn toàn khỏi prefix
+cache của agent cha.
 
-**Cách nhận biết:** Transcript của subagent mở đầu bằng đúng những khám phá
-mà agent cha đã làm; mẫu hình fan-out nơi N worker đều phải trả giá cho một
-context lạnh đầy đủ; cache-hit bằng 0 trên các request fork dù agent cha
-đang "ấm" (warm).
+**Cách nhận biết:** Transcript của subagent mở màn bằng đúng chuỗi khám
+phá agent cha vừa làm; mẫu fan-out mà N worker đều trả nguyên giá một
+context nguội; request fork không có cache hit nào dù agent cha đang ấm.
 
 **Giải pháp liên quan:** `solutions/subagent-context-handoff.md`,
-`solutions/prompt-caching.md` (các fork phải tái sử dụng chính xác prefix
+`solutions/prompt-caching.md` (fork phải dùng lại đúng y nguyên prefix
 của agent cha)
 
-### 6.2 Model quá lớn so với tác vụ
+### 6.2 Model quá cỡ so với tác vụ
 
-**Tóm tắt:** Mọi route đều dùng model lớn nhất, kể cả những route mà một
-tier nhỏ hơn vẫn phục vụ tốt.
+**Tóm tắt:** Route nào cũng dùng model lớn nhất, kể cả những route mà một
+tier nhỏ hơn thừa sức phục vụ.
 
-**Tại sao nó tiêu tốn token:** Đây thuần túy là một hệ số nhân *chi phí*
-chứ không phải *số lượng token*, nhưng nó khuếch đại mọi nguyên nhân khác:
-các model tier frontier trên các nhà cung cấp có giá cao hơn khoảng 5–25×
-mỗi token so với các model tier nhỏ cùng dòng, nên cùng một sự lãng phí
-token lại tốn kém hơn nhiều đến vậy.
+**Vì sao nó tốn token:** Đây thuần túy là hệ số nhân về *chi phí* chứ
+không phải về *số token*, nhưng nó khuếch đại mọi nguyên nhân khác: model
+tier frontier ở các nhà cung cấp đắt hơn khoảng 5–25 lần mỗi token so với
+đàn em tier nhỏ cùng dòng, nên cùng một lượng token lãng phí sẽ đắt lên
+chừng đó lần.
 
-**Cách nhận biết:** Lưu lượng phân loại/trích xuất/định dạng đơn giản chạy
-qua model tier cao nhất; không có lớp định tuyến; không sử dụng tier
-async/batch giảm giá của nhà cung cấp cho công việc không nhạy cảm về độ
-trễ.
+**Cách nhận biết:** Lưu lượng phân loại/trích xuất/định dạng đơn giản vẫn
+chạy qua model tier cao nhất; không có lớp định tuyến; không dùng tier
+async/batch giảm giá của nhà cung cấp cho việc không cần phản hồi ngay.
 
 **Giải pháp liên quan:** `solutions/model-routing.md`,
 `solutions/batch-processing.md`, `solutions/semantic-caching.md`
 
-### 6.3 Fan-out cache lạnh đồng thời
+### 6.3 Fan-out song song khi cache còn nguội
 
-**Tóm tắt:** N request song song với cùng một prefix được bắn ra cùng lúc
-trước khi bất kỳ request nào kịp điền vào cache.
+**Tóm tắt:** N request song song, chung một prefix, được bắn ra cùng lúc
+trước khi có cái nào kịp ghi vào cache.
 
-**Tại sao nó tiêu tốn token:** Một mục cache thường chỉ có thể đọc được sau
-khi request đầu tiên đã được xử lý. Cả N request song song đều trả giá input
-đầy đủ — không ai đọc được thứ mà những cái khác vẫn đang ghi.
+**Vì sao nó tốn token:** Một mục cache thường chỉ đọc được sau khi
+request đầu tiên xử lý xong. Cả N request song song đều trả nguyên giá
+input — không cái nào đọc được thứ mà những cái kia còn đang ghi dở.
 
-**Cách nhận biết:** Các đợt fan-out nơi mọi request đều báo cáo 0 token
-được cache dù chia sẻ chung một prefix, trong khi các lượt chạy tuần tự của
-cùng các request đó cho thấy hit từ lần thứ hai trở đi.
+**Cách nhận biết:** Các đợt fan-out mà request nào cũng báo 0 token cache
+dù chung prefix, trong khi chạy tuần tự đúng các request đó thì từ cái
+thứ hai đã hit.
 
 **Giải pháp liên quan:** `solutions/fan-out-warming.md` (làm ấm bằng một
-request, sau đó mới bắn phần còn lại)
+request, rồi mới bắn phần còn lại)
 
-### 6.4 Prompt và scaffolding quá quy định
+### 6.4 Prompt và scaffolding thừa chỉ dẫn
 
-**Tóm tắt:** System prompt mang theo scaffolding cũ — cập nhật tiến độ bắt
-buộc, quy trình từng bước, vòng lặp xác minh "kiểm tra lại X", các bộ
-few-shot dài — được tinh chỉnh cho các model cũ hơn hoặc khác.
+**Tóm tắt:** System prompt cõng theo scaffolding đời cũ — bắt cập nhật
+tiến độ, quy trình từng bước, vòng "kiểm tra lại X", những bộ few-shot
+dài — vốn được tinh chỉnh cho các model đời trước hoặc model khác.
 
-**Tại sao nó tiêu tốn token:** Bản thân scaffolding là chi phí prompt cố
-định trên mỗi lệnh gọi, và nó gây ra thêm output: tường thuật bắt buộc, các
-lệnh gọi tool xác minh dư thừa, và giải thích lại những gì model hiện tại
-sẽ không tự sinh ra. Các prompt tích lũy qua nhiều thế hệ model hiếm khi
-được rà soát lại.
+**Vì sao nó tốn token:** Bản thân scaffolding là chi phí prompt cố định
+mỗi lần gọi, và nó còn kéo theo output thừa: tường thuật bắt buộc, các
+lệnh gọi tool kiểm tra lại không cần thiết, và những lời giải thích mà
+model hiện tại vốn sẽ không tự viết ra. Prompt bồi đắp qua nhiều thế hệ
+model thì hiếm khi được rà soát lại.
 
-**Cách nhận biết:** Các phần prompt lặp lại hành vi mặc định của model hiện
-tại ("sau mỗi 3 lệnh gọi tool, tóm tắt tiến độ"); output chứa các phần mang
-tính nghi thức không ai đọc; ví dụ few-shot cho các hành vi mà model hiện đã
-làm được mà không cần ví dụ.
+**Cách nhận biết:** Có những đoạn prompt lặp lại hành vi mặc định của
+model hiện tại ("cứ 3 lệnh gọi tool thì tóm tắt tiến độ"); output chứa
+các phần nghi thức chẳng ai đọc; ví dụ few-shot cho những hành vi model
+giờ làm được không cần ví dụ.
 
 **Giải pháp liên quan:** `solutions/prompt-de-scaffolding.md`
 
-### 6.5 Cold-start giữa các phiên (không có kiến thức bền vững)
+### 6.5 Khởi động nguội giữa các phiên (kiến thức không được giữ lại)
 
-**Tóm tắt:** Mỗi phiên mới đều bắt đầu từ số không — agent khám phá lại
-codebase hoặc lĩnh vực và suy luận lại những hiểu biết mà các phiên trước đã
-trả tiền cho nó rồi.
+**Tóm tắt:** Phiên mới nào cũng bắt đầu từ con số không — agent khám phá
+lại codebase hay lĩnh vực và suy ra lại những hiểu biết mà các phiên
+trước đã trả tiền mua rồi.
 
-**Tại sao nó tiêu tốn token:** Tính không trạng thái áp dụng *giữa các
-phiên*, không chỉ bên trong chúng. Để định hướng trên một repo lớn, agent
-phải thực hiện rất nhiều lệnh gọi tool lớn (thường tốn 25–60K token trước
-khi công việc thực sự bắt đầu), và hóa đơn đó lặp lại cho mỗi phiên mới, mỗi
-kỹ sư, mỗi agent trong hệ thống — cùng một kiến thức bị mua đi mua lại nhiều
-lần.
+**Vì sao nó tốn token:** Tính không trạng thái áp dụng *giữa* các phiên,
+chứ không chỉ bên trong một phiên. Để định vị trên một repo lớn, agent
+phải tốn rất nhiều lệnh gọi tool nặng (thường 25–60K token trước khi công
+việc thật bắt đầu), và hóa đơn đó lặp lại cho từng phiên mới, từng kỹ sư,
+từng agent trong hệ thống — cùng một mớ kiến thức bị mua đi mua lại.
 
-**Cách nhận biết:** Transcript phiên mở đầu bằng cùng một chuỗi khám phá
-(liệt kê → đọc → grep cùng các file cốt lõi); chi tiêu N lượt đầu tiên bị
-chi phối bởi các lần đọc mà một phiên trước đã từng làm; không có gì học
-được trong một phiên khả dụng cho phiên tiếp theo.
+**Cách nhận biết:** Transcript phiên nào cũng mở màn bằng đúng một chuỗi
+khám phá (liệt kê → đọc → grep đúng mấy file lõi ấy); chi tiêu N lượt đầu
+bị chiếm bởi những lần đọc mà phiên trước đã đọc rồi; những gì học được
+trong phiên này không phiên sau nào dùng lại được.
 
-**Giải pháp liên quan:** `solutions/code-maps.md` (bản đồ/gói context đã
-lưu sẵn), `solutions/subagent-context-handoff.md` (kho lưu artifact),
-`solutions/compaction.md` (mang tóm tắt sang các ranh giới phiên)
+**Giải pháp liên quan:** `solutions/code-maps.md` (bản đồ/gói context
+commit sẵn), `solutions/subagent-context-handoff.md` (kho artifact),
+`solutions/compaction.md` (mang bản tóm tắt vượt qua ranh giới phiên)
 
 ### 6.6 Request trùng lặp trên toàn hệ thống (fleet)
 
-**Tóm tắt:** Cùng một request hoặc gần giống hệt nhau được trả lời nhiều
-lần trên các người dùng, phiên, hoặc lượt chạy theo lịch — mỗi lần đều ở giá
-model đầy đủ.
+**Tóm tắt:** Cùng một request, hoặc gần giống hệt, được trả lời nhiều lần
+trên nhiều người dùng, nhiều phiên, hay các lượt chạy theo lịch — lần nào
+cũng nguyên giá model.
 
-**Tại sao nó tiêu tốn token:** Caching prefix giảm giá cho *prompt* lặp lại
-nhưng vẫn chạy model; không có tái sử dụng ở cấp độ phản hồi, N câu hỏi gần
-giống hệt nhau tốn N lần sinh đầy đủ. Hỏi-đáp hỗ trợ/tài liệu, các câu hỏi
-phân tích lặp lại, và các bộ đánh giá (eval) chạy lại là những hình mẫu điển
-hình.
+**Vì sao nó tốn token:** Prefix caching giảm giá cho phần *prompt* lặp
+lại nhưng model vẫn chạy; không có tái sử dụng ở mức câu trả lời thì N
+câu hỏi gần trùng nhau tốn N lượt sinh trọn vẹn. Hỏi-đáp hỗ trợ/tài liệu,
+các câu hỏi phân tích định kỳ, và bộ eval chạy đi chạy lại là những hình
+mẫu kinh điển.
 
-**Cách nhận biết:** Log sử dụng gom cụm thành các nhóm prompt gần giống hệt
-nhau với câu trả lời gần giống hệt nhau; độ trùng lặp truy vấn cao trong lưu
-lượng chủ yếu đọc; các job theo lịch tái sinh output hầu như không đổi.
+**Cách nhận biết:** Log usage vón thành từng cụm prompt gần giống nhau
+với câu trả lời gần giống nhau; độ trùng truy vấn cao trong lưu lượng
+thiên về đọc; các job theo lịch sinh lại những output gần như không đổi.
 
 **Giải pháp liên quan:** `solutions/semantic-caching.md`;
 `solutions/batch-processing.md` cho biến thể chạy lại theo lịch
 
 ---
 
-## Cẩm nang Đo lường
+## Cẩm nang đo lường
 
-Để quy chi phí về đúng nguyên nhân, hãy dựa vào metadata sử dụng đi kèm mỗi
-phản hồi — đó chính là sự thật nền tảng (ground truth). Tên trường khác nhau
-tùy nhà cung cấp, nhưng cùng bốn đại lượng này tồn tại ở hầu hết mọi nơi:
+Muốn quy chi phí về đúng nguyên nhân, hãy bám vào metadata usage trả về
+cùng mỗi phản hồi — đó là nguồn số liệu chuẩn (ground truth). Tên trường
+mỗi nhà một kiểu, nhưng bốn đại lượng sau thì gần như đâu cũng có:
 
 | Đại lượng | Giá tương đối điển hình | Tên trường ví dụ |
 | --- | --- | --- |
 | Token input không cache | 1× input | Anthropic `input_tokens`; OpenAI `prompt_tokens` trừ `cached_tokens`; Gemini `prompt_token_count` trừ `cached_content_token_count` |
 | Token input đã cache | ~0.1–0.25× input | Anthropic `cache_read_input_tokens`; OpenAI `prompt_tokens_details.cached_tokens`; Gemini `cached_content_token_count` |
-| Token ghi cache (nơi có phụ phí) | ~1.25–2× input | Anthropic `cache_creation_input_tokens` (nơi khác tính phí ghi theo giá input thông thường) |
-| Token output, **bao gồm cả reasoning ẩn** | ~3–5× input | Anthropic `output_tokens`; OpenAI `completion_tokens` (+ chi tiết `reasoning_tokens`); Gemini `candidates_token_count` + `thoughts_token_count` |
+| Token ghi cache (nơi có phụ phí) | ~1.25–2× input | Anthropic `cache_creation_input_tokens` (nơi khác tính phí ghi theo giá input thường) |
+| Token output, **gồm cả reasoning ẩn** | ~3–5× input | Anthropic `output_tokens`; OpenAI `completion_tokens` (+ chi tiết `reasoning_tokens`); Gemini `candidates_token_count` + `thoughts_token_count` |
 
 Hai quy tắc phổ quát:
 
-- **Tổng kích thước prompt = input không cache + đã cache (+ ghi cache).**
-  Nếu chỉ đánh giá chi tiêu dựa vào trường không cache, bạn sẽ quy chi phí
-  thiếu hoặc thừa.
-- **Đếm token bằng bộ đếm riêng của nhà cung cấp cho đúng model mục tiêu.**
-  Tokenizer là đặc thù theo từng model; mượn bộ đếm của nhà cung cấp khác
-  (hoặc của thế hệ model khác) sẽ luôn cho kết quả sai một cách có hệ thống.
+- **Tổng kích thước prompt = input không cache + input cache (+ phần ghi
+  cache).** Chỉ nhìn vào trường không cache là quy chi phí thiếu hoặc
+  thừa.
+- **Đếm token bằng bộ đếm của chính nhà cung cấp, đúng model đích.**
+  Tokenizer gắn với từng model; mượn bộ đếm của nhà khác (hay của thế hệ
+  model khác) là sai một cách có hệ thống.
 
 ---
 
@@ -606,7 +606,8 @@ only as illustrative examples.
 
 Each cause describes **what it is**, **why it inflates token usage**, and
 **how to recognize it**. Link to a matching document in `solutions/` when a
-mitigation exists.
+mitigation exists; causes that hinge entirely on the provider say so
+instead of linking to a solution doc.
 
 > Status: living document. The catalog below covers the major cause *types*,
 > grouped by category. Individual entries may be expanded with deeper
@@ -642,6 +643,8 @@ Copy this template when adding a new cause.
 cause is present.
 
 **Related solution(s):** Link to the relevant file(s) under `solutions/`.
+If the cause is provider-dependent (nothing to build on our side), say so
+instead of linking.
 ```
 
 ---
@@ -720,7 +723,9 @@ tokens (e.g. `cache_read_input_tokens` on Anthropic, `cached_tokens` on
 OpenAI) on every response, while raw input token counts stay large and
 roughly constant across requests.
 
-**Related solution(s):** `solutions/prompt-caching.md`
+**Related solution(s):** None — this cause is provider-dependent: pick a
+provider/config that offers prompt caching and enable it; the discount
+itself is theirs to create.
 
 ### 1.2 Silent cache invalidators
 
@@ -776,8 +781,8 @@ requests.
 **How to recognize it:** Cache hits succeed within a burst, but the first
 request after each idle gap shows a full uncached (or cache-write) pass.
 
-**Related solution(s):** `solutions/prompt-caching.md` (longer
-TTLs, pre-warming, keep-alive traffic)
+**Related solution(s):** None — cache TTLs and write surcharges are
+provider configuration/pricing: pick a longer TTL where offered.
 
 ---
 
@@ -997,8 +1002,8 @@ appears without any opt-in.
 response length; simple routes (classification, lookups) showing the same
 output spend as complex ones.
 
-**Related solution(s):** `solutions/reasoning-effort-tuning.md`
-(per-route effort/budget settings)
+**Related solution(s):** None — reasoning-effort/thinking budgets are
+provider knobs: set the right effort per route in your API call config.
 
 ### 5.2 Output verbosity
 
