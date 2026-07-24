@@ -1,80 +1,69 @@
 # token-optimizer (Tiếng Việt)
 
-Đây là kho tài liệu để khám phá **nguyên nhân gây tiêu tốn token cao** và
-**cách giảm thiểu nó**. Repo này được cố tình thiết kế tối giản: nó chỉ chứa
-ghi chú, phân tích, và tài liệu tham khảo — không phải mã ứng dụng.
+Hóa đơn LLM của bạn phần lớn là những token lẽ ra không cần gửi đi. Đây là
+cẩm nang chỉ ra chỗ chúng rò rỉ — và cách bịt lại.
 
-## Mục đích
+Không có gì để cài đặt, không có code để chạy. Đây là một tập hợp ghi chú
+viết bằng ngôn ngữ dễ hiểu: điều gì khiến lượng token phình to, và những cách
+cụ thể để kéo nó xuống.
 
-- Xác định và ghi lại các nguyên nhân gốc rễ gây tiêu tốn token cao.
-- Thu thập các giải pháp cụ thể, khả thi để giảm mức sử dụng token.
-- Đóng vai trò là kho kiến thức chung, ngày càng phát triển khi có phát hiện mới.
+## Vì sao có kho tài liệu này
 
-## Cấu trúc kho lưu trữ
+Mỗi lần gọi một LLM đều bị tính tiền theo token, và hầu hết ứng dụng lặng lẽ
+lãng phí rất nhiều — gửi lại cùng một context, đổ ra kết quả tool quá khổ,
+trả giá đầy đủ cho những thứ mà một bộ cache lẽ ra đã lo được. Lãng phí kiểu
+này thường vô hình, cho đến khi hóa đơn về tới.
 
-| Đường dẫn | Mô tả |
+Kho này làm ba việc:
+
+- Gọi tên các nguyên nhân gốc rễ gây tốn token, gom về một chỗ.
+- Ghép mỗi nguyên nhân với cách khắc phục cụ thể, làm được ngay.
+- Lớn dần theo hiểu biết của chúng ta — đây là một cuốn sổ tay sống, không
+  phải cẩm nang đã đóng khung.
+
+## Bên trong có gì
+
+| Ở đâu | Bạn sẽ thấy gì |
 | --- | --- |
-| `README.md` | Tệp này — tổng quan và quy ước. |
-| `CAUSE.md` | Danh mục các nguyên nhân gây tiêu tốn token cao đã xác định. |
-| `solutions/` | Mỗi tài liệu tương ứng với một giải pháp / chiến lược giảm thiểu. |
-| `setups/` | Hướng dẫn thiết lập chuyên biệt cho các nhà cung cấp và công cụ. |
+| `CAUSE.md` | Danh mục những thứ đẩy lượng token lên cao — hãy bắt đầu từ đây. |
+| `solutions/` | Mỗi cách khắc phục là một tài liệu ngắn, đều dẫn ngược về một nguyên nhân. |
+| `setups/` | Các thiết lập dựng sẵn cho từng nhà cung cấp và công cụ cụ thể. |
 
-## Cách sử dụng
+## Dùng nó thế nào
 
-1. Đọc `CAUSE.md` để hiểu các nguyên nhân đã biết.
-2. Duyệt `solutions/` để tìm các giải pháp tương ứng với những nguyên nhân đó.
-3. Xem `setups/` để có hướng dẫn thiết lập chuyên biệt cho nhà cung cấp hoặc công cụ cụ thể của bạn.
-4. Khi bạn phát hiện điều gì mới, hãy thêm vào `CAUSE.md` và, nếu có cách khắc
-   phục, hãy thêm tài liệu tương ứng trong `solutions/`.
+1. **Đọc `CAUSE.md`** để nhận ra vấn đề nào khớp với điều bạn đang gặp.
+2. **Theo các liên kết sang `solutions/`** để tìm cách khắc phục tương ứng.
+3. **Ghé `setups/`** nếu bạn muốn một cấu hình dựng sẵn cho nhà cung cấp hoặc
+   công cụ của mình.
+4. **Phát hiện điều gì mới?** Thêm vào `CAUSE.md`, và nếu đã biết cách sửa,
+   hãy để lại ghi chú trong `solutions/`.
 
-## Ghi chú đóng góp
+## Đóng góp
 
-Kho lưu trữ này **chỉ dành cho tài liệu**. Không có bước build, không có
-kiểm thử, và không có ứng dụng nào để chạy — chỉ có Markdown.
+Đây là kho chỉ gồm tài liệu — thuần Markdown, không build, không test, không
+có gì để chạy.
 
-- **Không cần nhánh (branch).** Làm việc trực tiếp trên `main`.
-- **Không cần pull request.** Commit và push thẳng lên `main`.
-- Giữ mỗi thay đổi tập trung vào chất lượng và độ chính xác của tài liệu.
+- Làm việc thẳng trên `main`. Không nhánh, không pull request.
+- Giữ mỗi thay đổi gọn và tập trung, và giữ cho nó chính xác.
 
-Xem [Quy tắc thông điệp commit](#quy-tắc-thông-điệp-commit) bên dưới trước khi commit.
+### Thông điệp commit
 
-## Quy tắc thông điệp commit
-
-Vì repo này chỉ dành riêng cho tài liệu, thông điệp commit tuân theo một
-quy ước đơn giản, nhất quán.
-
-### Định dạng
+Ngắn gọn và nhất quán. Định dạng:
 
 ```
-<type>: <tóm tắt ngắn gọn ở thể mệnh lệnh>
-
-<phần thân tùy chọn: cái gì và tại sao, ngắt dòng ở ~72 ký tự>
+<type>: <bạn đã làm gì, ở thể mệnh lệnh — "add", "fix", "clarify">
 ```
 
-### Type
+Chọn một type:
 
-Sử dụng một trong các tiền tố sau:
-
-| Type | Dùng cho |
+| Type | Dùng khi bạn đang... |
 | --- | --- |
-| `docs` | Thêm hoặc chỉnh sửa nội dung tài liệu (mặc định cho repo này). |
-| `cause` | Thêm hoặc cập nhật một mục trong `CAUSE.md`. |
-| `solution` | Thêm hoặc cập nhật một tài liệu trong `solutions/`. |
-| `chore` | Việc dọn dẹp repo (cấu trúc, đổi tên, định dạng, metadata). |
+| `docs` | Viết hoặc sửa tài liệu nói chung (trường hợp thường gặp nhất). |
+| `cause` | Đụng tới một mục trong `CAUSE.md`. |
+| `solution` | Đụng tới một tài liệu trong `solutions/`. |
+| `chore` | Dọn dẹp — cấu trúc, đổi tên, định dạng. |
 
-### Quy tắc
-
-1. **Dòng tiêu đề**
-   - Dùng thể mệnh lệnh: "add", "fix", "clarify" — không dùng "added" / "adds".
-   - Giữ dưới ~72 ký tự.
-   - Viết thường sau tiền tố `type:`; không có dấu chấm cuối câu.
-2. **Phạm vi** thông điệp cho một thay đổi logic duy nhất.
-3. **Phần thân** (tùy chọn) giải thích *cái gì* đã thay đổi và *tại sao*,
-   không phải *cách* thực hiện.
-4. Tham chiếu đến tệp bị ảnh hưởng khi điều đó giúp rõ ràng hơn, ví dụ:
-   `cause: document large-context re-sends in CAUSE.md`.
-
-### Ví dụ
+Vài ví dụ:
 
 ```
 docs: add repository overview and layout
@@ -82,85 +71,77 @@ cause: document redundant system-prompt re-sends
 solution: add prompt-caching guide
 chore: restructure solutions folder
 ```
+
+Về cơ bản chỉ vậy. Giữ dòng tiêu đề dưới ~72 ký tự, viết thường sau tiền tố,
+không dấu chấm cuối. Nếu một commit cần giải thích "tại sao", thêm một đoạn
+thân ngắn bên dưới dòng tiêu đề.
 
 ---
 
 # token-optimizer
 
-A documentation repository for exploring **what causes high token consumption**
-and **how to reduce it**. This repo is intentionally lightweight: it holds
-notes, analysis, and reference material — not application code.
+Your LLM bill is mostly tokens you never needed to send. This is a field
+guide to where they leak — and how to plug the leaks.
 
-## Purpose
+There's nothing to install and no code to run. It's a collection of
+plain-language notes: what makes token usage balloon, and the concrete moves
+that bring it back down.
 
-- Identify and document the root causes of high token consumption.
-- Collect concrete, actionable solutions to reduce token usage.
-- Serve as a shared knowledge base that grows as new findings emerge.
+## Why this exists
 
-## Repository Layout
+Every call to an LLM is priced by the token, and most apps quietly waste a
+lot of them — re-sending the same context, dumping oversized tool output,
+paying full price for things a cache could have covered. The waste is usually
+invisible until the bill arrives.
 
-| Path | Description |
+This repo does three things:
+
+- Names the root causes of high token usage, all in one place.
+- Pairs each cause with concrete fixes you can actually apply.
+- Grows as we learn more — it's a living notebook, not a finished manual.
+
+## What's inside
+
+| Where | What you'll find |
 | --- | --- |
-| `README.md` | This file — overview and conventions. |
-| `CAUSE.md` | Catalog of identified causes of high token consumption. |
-| `solutions/` | One document per solution / mitigation strategy. |
-| `setups/` | Specialized setup guides for vendors and tools. |
+| `CAUSE.md` | The catalog of what drives token usage up — start here. |
+| `solutions/` | One short guide per fix, each mapped back to a cause. |
+| `setups/` | Ready-made setups for specific vendors and tools. |
 
-## How to Use
+## How to use it
 
-1. Read `CAUSE.md` to understand the known causes.
-2. Browse `solutions/` for mitigations mapped to those causes.
-3. See `setups/` for specialized setup guides for your vendor or tool.
-4. When you discover something new, add it to `CAUSE.md` and, if you have a
-   fix, add a matching document under `solutions/`.
+1. **Read `CAUSE.md`** to spot which problems match what you're seeing.
+2. **Follow the links into `solutions/`** for the matching fixes.
+3. **Check `setups/`** if you want a ready-made configuration for your vendor
+   or tool.
+4. **Found something new?** Add it to `CAUSE.md`, and if you know the fix,
+   leave a note in `solutions/`.
 
-## Contributing Notes
+## Contributing
 
-This repository is **documentation-only**. There is no build step, no tests,
-and no application to run — just Markdown.
+This is a docs-only repo — just Markdown, no build, no tests, nothing to run.
 
-- **No branches required.** Work directly on `main`.
-- **No pull requests required.** Commit and push straight to `main`.
-- Keep every change focused on documentation quality and accuracy.
+- Work straight on `main`. No branches, no pull requests.
+- Keep each change small and focused, and keep it accurate.
 
-See [Commit Message Rules](#commit-message-rules) below before committing.
+### Commit messages
 
-## Commit Message Rules
-
-Because this repo is strictly for documentation, commit messages follow a
-simple, consistent convention.
-
-### Format
+Short and consistent. Format:
 
 ```
-<type>: <short summary in imperative mood>
-
-<optional body: what and why, wrapped at ~72 chars>
+<type>: <what you did, in the imperative — "add", "fix", "clarify">
 ```
 
-### Type
+Pick a type:
 
-Use one of the following prefixes:
-
-| Type | Use for |
+| Type | Use it when you're... |
 | --- | --- |
-| `docs` | Adding or editing documentation content (the default for this repo). |
-| `cause` | Adding or updating an entry in `CAUSE.md`. |
-| `solution` | Adding or updating a document under `solutions/`. |
-| `chore` | Repo housekeeping (structure, renames, formatting, metadata). |
+| `docs` | Writing or editing general documentation (the usual case). |
+| `cause` | Touching an entry in `CAUSE.md`. |
+| `solution` | Touching a guide in `solutions/`. |
+| `chore` | Tidying up — structure, renames, formatting. |
 
-### Rules
-
-1. **Subject line**
-   - Use the imperative mood: "add", "fix", "clarify" — not "added" / "adds".
-   - Keep it under ~72 characters.
-   - Lowercase after the `type:` prefix; no trailing period.
-2. **Scope** the message to a single logical change.
-3. **Body** (optional) explains *what* changed and *why*, not *how*.
-4. Reference the affected file when it adds clarity, e.g.
-   `cause: document large-context re-sends in CAUSE.md`.
-
-### Examples
+A few examples:
 
 ```
 docs: add repository overview and layout
@@ -168,3 +149,7 @@ cause: document redundant system-prompt re-sends
 solution: add prompt-caching guide
 chore: restructure solutions folder
 ```
+
+That's basically it. Keep subject lines under ~72 characters, lowercase after
+the prefix, no trailing period. If a commit needs a "why," add a short body
+below the subject line.
