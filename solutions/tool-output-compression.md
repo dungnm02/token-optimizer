@@ -73,11 +73,11 @@ flowchart LR
 
 | Công cụ | Giấy phép | Ghi chú |
 | --- | --- | --- |
-| RTK (Rust Token Killer, `rtk-ai/rtk`) | Apache-2.0 | Proxy/hook CLI nén 100+ lệnh dev (git, trình chạy test, công cụ build, `kubectl`, `aws`) 60–90%; giữ nguyên thất bại/diff; tích hợp có sẵn với Claude Code / Cline / Codex / Gemini |
-| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Thư viện / proxy / MCP / agent-wrap; JSON 60–95%, shell ~85%, build log ~94%; `CacheAligner` giữ prefix ổn định cho cache; ma trận hỗ trợ gồm Claude Code, Codex, Cline, Aider, Cursor |
+| RTK (Rust Token Killer, `rtk-ai/rtk`) | Apache-2.0 | Proxy/hook CLI nén 100+ lệnh dev (git, trình chạy test, công cụ build, `kubectl`, `aws`) 60–90% **trên chính văn bản**; giữ nguyên thất bại/diff. ⚠️ **Đây là tỉ lệ nén, không phải mức giảm hóa đơn** — A/B độc lập trên Claude Code đo ra **+7.6% chi phí**; xem [`../PROOF.md`](../PROOF.md) |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Thư viện / proxy / MCP / agent-wrap; `CacheAligner` giữ prefix ổn định cho cache. Con số của chính nhà phát triển: **~20% cho coding agent**, 60–95% cho JSON — đừng dùng con số JSON để dự đoán mức tiết kiệm khi lập trình |
 | Trafilatura / mozilla-readability | Apache-2.0 | HTML → văn bản sạch (nhỏ hơn 5–20×) trước khi vào context của bất kỳ agent nào |
 | `jq` / định dạng lại có cấu trúc tại ranh giới | MIT | Chọn trường tất định và làm phẳng mảng→bảng, không tốn chi phí model |
-| Caveman (`wilpel/caveman-compression`) | MIT | Nén *output mà model viết ra* — người anh em của việc nén phía input (`concise-output-prompting.md`) |
+| Caveman (`wilpel/caveman-compression`) | MIT | ⚠️ **Hai thứ khác nhau hay bị lẫn.** *Thư viện* này nén **văn bản bạn tự đưa vào** (system prompt, tài liệu, chunk RAG) và **không ghi nhận tích hợp với bất kỳ agent framework nào** — nó thuộc nguyên nhân 6.4/4.2, không phải 3.1. *Skill* "caveman mode" mới là thứ ép model viết cộc lốc, và đo được **8.5%**; xem [`../PROOF.md`](../PROOF.md) |
 
 ## Đánh đổi
 
@@ -96,9 +96,14 @@ flowchart LR
 
 ## Tác động dự kiến
 
-- **Giảm 60–90% trên output lệnh dev nhiễu** là điển hình (JSON có cấu
-  trúc ở đầu khoảng đó, build/test log 85–94%); các dấu vết phiên đã công
-  bố cho thấy ~118K → ~24K token trong một phiên lập trình 30 phút.
+- **Nén 60–90% trên chính văn bản output** là điển hình (JSON có cấu trúc ở
+  đầu khoảng đó, build/test log 85–94%).
+- ⚠️ **Nhưng mức nén văn bản không tự động thành mức giảm hóa đơn.** Nếu
+  harness của bạn *đã* cắt bớt output tool (Claude Code có làm), thì trình
+  nén chỉ đang nén thứ vốn đã bị vứt đi. Thử nghiệm A/B ghép cặp trên Claude
+  Code đo ra **+7.6% chi phí** cho RTK, và trần lý thuyết ở đó chỉ ≈3%. Giá
+  trị thật của giải pháp này nằm ở harness **không** tự cắt bớt. Xem
+  [`../PROOF.md`](../PROOF.md) trước khi kỳ vọng con số nào.
 - Mức tiết kiệm cộng dồn với việc lịch sử tồn tại lâu (nguyên nhân 2.1):
   một build log chỉ chấp nhận ở mức 2K thay vì 40K token sẽ được tiết kiệm
   trên *mọi lượt sau đó*.
@@ -179,11 +184,11 @@ flowchart LR
 
 | Tool | License | Notes |
 | --- | --- | --- |
-| RTK (Rust Token Killer, `rtk-ai/rtk`) | Apache-2.0 | CLI proxy/hook compressing 100+ dev commands (git, test runners, build tools, `kubectl`, `aws`) 60–90%; preserves failures/diffs; native Claude Code / Cline / Codex / Gemini integration |
-| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Library / proxy / MCP / agent-wrap; JSON 60–95%, shell ~85%, build logs ~94%; `CacheAligner` keeps prefixes cache-stable; matrix includes Claude Code, Codex, Cline, Aider, Cursor |
+| RTK (Rust Token Killer, `rtk-ai/rtk`) | Apache-2.0 | CLI proxy/hook compressing 100+ dev commands (git, test runners, build tools, `kubectl`, `aws`) 60–90% **on the text itself**; preserves failures/diffs. ⚠️ **That is a compression ratio, not a bill reduction** — an independent A/B on Claude Code measured **+7.6% cost**; see [`../PROOF.md`](../PROOF.md) |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Library / proxy / MCP / agent-wrap; `CacheAligner` keeps prefixes cache-stable. The vendor's own split: **~20% for coding agents**, 60–95% for JSON — don't use the JSON figure to predict coding savings |
 | Trafilatura / mozilla-readability | Apache-2.0 | HTML → clean text (5–20× smaller) before it enters any agent |
 | `jq` / structured reshaping at the boundary | MIT | Deterministic field selection and array→table flattening, zero model cost |
-| Caveman (`wilpel/caveman-compression`) | MIT | Compresses *output the model writes* — the sibling to input-side compression (`concise-output-prompting.md`) |
+| Caveman (`wilpel/caveman-compression`) | MIT | ⚠️ **Two different things, routinely conflated.** This *library* compresses **text you pass in** (system prompts, docs, RAG chunks) and **documents no integration with any agent framework** — it belongs to causes 6.4/4.2, not 3.1. The "caveman mode" *skill* is the one that makes the model write tersely, and it measured **8.5%**; see [`../PROOF.md`](../PROOF.md) |
 
 ## Trade-offs
 
@@ -199,9 +204,15 @@ flowchart LR
 
 ## Expected impact
 
-- **60–90% reduction on noisy dev-command output** is typical (structured
-  JSON at the top of that range, build/test logs 85–94%); published
-  session traces show ~118K → ~24K tokens over a 30-minute coding session.
+- **60–90% compression on the output text itself** is typical (structured
+  JSON at the top of that range, build/test logs 85–94%).
+- ⚠️ **But text compression does not automatically become bill reduction.**
+  If your harness *already* truncates tool output — Claude Code does — the
+  compressor is squeezing what was going to be discarded anyway. A paired
+  A/B on Claude Code measured **+7.6% cost** for RTK, against a theoretical
+  ceiling there of ≈3%. This solution's real value is on harnesses that do
+  **not** truncate. Read [`../PROOF.md`](../PROOF.md) before expecting a
+  number.
 - The savings compound with history persistence (cause 2.1): a build log
   admitted at 2K instead of 40K tokens is saved on *every subsequent turn*.
 - Because it needs no tool redesign, it's often the fastest win available on

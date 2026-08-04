@@ -83,7 +83,8 @@ nên hãy ưu tiên áp dụng chúng cho những agent chạy dài nhất của
 
 | Công cụ | Giấy phép | Ghi chú |
 | --- | --- | --- |
-| Caveman (`wilpel/caveman-compression`) | MIT | Nén output theo ngữ nghĩa — loại bỏ phần ngữ pháp có thể đoán trước, chỉ giữ lại sự kiện. Cung cấp dưới dạng một prompt skill dùng được trên Claude Code, Codex, Gemini CLI, Cursor, Cline và các agent khác (biến thể skill công bố cắt giảm tới ~75% output; các chế độ đo được của thư viện gốc thường ở mức 15–58%). Chỉ nên dùng cho lưu lượng nội bộ/agent — không dùng cho văn xuôi hướng đến người dùng, nơi giọng điệu vẫn quan trọng |
+| Caveman — **skill** ("caveman mode") | MIT | Prompt skill ép agent viết cộc lốc, dùng được trên Claude Code, Codex, Gemini CLI, Cursor, Cline. Quảng cáo 65%; A/B độc lập trên Claude Code đo được **8.5%** — và đó là **trần** (skill bị ép kích hoạt), kèm rủi ro đuôi nặng: một tác vụ vọt lên $8.29 so với $0.33 ở nhánh đối chứng. Xem [`../PROOF.md`](../PROOF.md) |
+| Caveman — **thư viện** (`wilpel/caveman-compression`) | MIT | ⚠️ **Không phải cùng một thứ với skill ở trên.** Đây là thư viện Python nén **văn bản bạn tự đưa vào** (system prompt, tài liệu, chunk RAG): LLM 40–58%, MLM 20–30%, NLP 15–30%. README của nó **không ghi nhận tích hợp với bất kỳ agent framework nào** — nên nó thuộc nguyên nhân 6.4/4.2, không phải 5.2. Chính họ khuyến cáo tránh dùng cho nội dung người dùng đọc, marketing, văn bản pháp lý |
 | Instructor / output có kiểu Zod | MIT | Schema có kiểu dữ liệu, đồng thời đóng vai trò như một hợp đồng về độ dài, dùng được trên nhiều nhà cung cấp |
 | Đánh giá promptfoo / Langfuse | MIT | Kiểm thử hồi quy để đảm bảo các chỉnh sửa cho ngắn gọn không cắt mất *nội dung*; theo dõi số token output theo từng route; Braintrust là lựa chọn thương mại |
 
@@ -188,7 +189,8 @@ prioritize them for your longest-running agents.
 
 | Tool | License | Notes |
 | --- | --- | --- |
-| Caveman (`wilpel/caveman-compression`) | MIT | Semantic output compression — strips predictable grammar, keeps facts. Ships as a prompt skill usable across Claude Code, Codex, Gemini CLI, Cursor, Cline and other agents (skill variant claims up to ~75% output cut; the library's measured modes run 15–58%). Internal/agent traffic only — not for user-facing prose where tone matters |
+| Caveman — the **skill** ("caveman mode") | MIT | Prompt skill making the agent terse, usable across Claude Code, Codex, Gemini CLI, Cursor, Cline. Advertised 65%; an independent A/B on Claude Code measured **8.5%** — and that is the **ceiling** (the skill was force-activated), with severe tail risk: one task spiked to $8.29 against a $0.33 baseline. See [`../PROOF.md`](../PROOF.md) |
+| Caveman — the **library** (`wilpel/caveman-compression`) | MIT | ⚠️ **Not the same artifact as the skill above.** A Python library that compresses **text you pass in** (system prompts, docs, RAG chunks): LLM 40–58%, MLM 20–30%, NLP 15–30%. Its README **documents no integration with any agent framework** — so it belongs to causes 6.4/4.2, not 5.2. Its own caveats: avoid user-facing content, marketing copy, legal text |
 | Instructor / Zod-typed outputs | MIT | Typed schemas that double as verbosity contracts, portable across providers |
 | promptfoo / Langfuse evals | MIT | Regression-test that concision edits don't cut *content*; track output tokens per route; Braintrust is the commercial option |
 

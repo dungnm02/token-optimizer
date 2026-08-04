@@ -80,9 +80,18 @@ flowchart TD
 | --- | --- | --- |
 | Bản đồ repo của aider (`Aider-AI/aider`) | Apache-2.0 | Bản đồ ký hiệu xếp hạng bằng tree-sitter + PageRank, giới hạn ngân sách token qua `--map-tokens`; hỗ trợ 130+ ngôn ngữ; đây là cách triển khai tham chiếu |
 | Repomix (`yamadashy/repomix`) | MIT | Đóng gói một repo thành một file thân thiện với AI, có `--token-count-tree` (xem các file nặng) và `--compress` (chế độ chỉ giữ chữ ký tree-sitter) |
-| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói context `.codesight/` gọn nhẹ, giúp agent bỏ qua 25–60K token khám phá cold-start |
+| **CodeGraph** (`colbymchenry/codegraph`) | Mã nguồn mở | ✅ **Lựa chọn có bằng chứng tốt nhất cho vai trò này.** Knowledge graph dựng sẵn, chạy local, agent truy vấn qua MCP. Benchmark tái lập được trên 7 repo: **−89% lượt gọi tool, −69% token, −60% chi phí**, số lần đọc file về 0. Không hỗ trợ Cline; dưới ~150 file thì không đáng, và OkHttp (645 file) cho thấy chi phí có thể đảo chiều. Xem [`../PROOF.md`](../PROOF.md) |
+| Codesight (`Houseofmvps/codesight`) | MIT | Sinh một gói context `.codesight/` gọn nhẹ để agent đọc thay vì quét lại repo. ⚠️ Con số "25–60K token" là **ước lượng không có nguồn** (xem ghi chú dưới bảng) |
 | TokenSave (`aovestdipaperino/tokensave`) | Mã nguồn mở | Server trí tuệ code MCP: đồ thị ngữ nghĩa được index sẵn, truy vấn qua tool MCP thay vì lặp grep/glob/read; chạy hoàn toàn cục bộ |
 | tree-sitter | MIT | Lớp phân tích cú pháp nằm dưới hầu hết các công cụ trên; có thể dùng để tự viết bản đồ riêng có ngân sách cho các stack đặc thù |
+
+> ⚠️ **Về con số "25–60K token cold-start" xuất hiện nhiều lần trong kho
+> này:** đây là **ước lượng, không truy được nguồn**. Nó hợp lý về độ lớn và
+> khớp với trải nghiệm thực tế, nhưng chưa có phép đo công bố nào chống lưng.
+> Hãy tự đo trên repo của bạn bằng
+> [`token-counting.md`](token-counting.md) trước khi lấy nó làm cơ sở tính
+> ROI. Ngược lại, CodeGraph **có** số liệu công bố — nếu bạn cần một con số
+> để biện minh cho công sức bỏ ra, hãy dùng số của họ.
 
 ## Đánh đổi
 
@@ -188,9 +197,18 @@ flowchart TD
 | --- | --- | --- |
 | aider repo map (`Aider-AI/aider`) | Apache-2.0 | tree-sitter + PageRank ranked symbol map, token-budgeted via `--map-tokens`; 130+ languages; the reference implementation |
 | Repomix (`yamadashy/repomix`) | MIT | Packs a repo into one AI-friendly file with `--token-count-tree` (see the heavy files) and `--compress` (tree-sitter signature-only mode) |
-| Codesight (`Houseofmvps/codesight`) | MIT | Generates a compact `.codesight/` context pack so agents skip 25–60K tokens of cold-start exploration |
+| **CodeGraph** (`colbymchenry/codegraph`) | Open source | ✅ **Best-evidenced option for this role.** Pre-indexed knowledge graph, fully local, queried by the agent over MCP. Reproducible benchmark across 7 repos: **−89% tool calls, −69% tokens, −60% cost**, file reads to zero. No Cline support; not worth it under ~150 files, and OkHttp (645 files) shows cost can still invert. See [`../PROOF.md`](../PROOF.md) |
+| Codesight (`Houseofmvps/codesight`) | MIT | Generates a compact `.codesight/` context pack agents read instead of re-scanning. ⚠️ The "25–60K tokens" figure is an **unsourced estimate** (see the note below) |
 | TokenSave (`aovestdipaperino/tokensave`) | Open source | MCP code-intelligence server: pre-indexed semantic graph queried via MCP tools instead of grep/glob/read loops; 100% local |
 | tree-sitter | MIT | The parsing layer under most of the above; roll your own budgeted map for bespoke stacks |
+
+> ⚠️ **About the "25–60K-token cold start" figure repeated across this
+> repo:** it is an **estimate with no traceable source**. The order of
+> magnitude is plausible and matches lived experience, but no published
+> measurement backs it. Measure your own repo with
+> [`token-counting.md`](token-counting.md) before building an ROI case on
+> it. CodeGraph, by contrast, **does** publish figures — if you need a
+> number to justify the effort, use theirs.
 
 ## Trade-offs
 

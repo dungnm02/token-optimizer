@@ -46,11 +46,17 @@ giảm một lúc, đó là lý do vì sao giải pháp này giờ đã được
    Mode").** Thay vì liệt kê hàng trăm tool, cho model *một* tool thực thi
    code cùng với một API có kiểu mà nó có thể gọi theo chương trình; nó
    viết một script dựa trên bề mặt API thay vì chọn từ một menu JSON phình
-   to. Trên các API rất lớn (ví dụ 2.500+ endpoint), điều này đã cắt giảm
-   input định nghĩa tool tới **~99,9%**, và nó kết hợp nhiều lệnh gọi trong
-   một lượt — xem [`tool-composition.md`](tool-composition.md). Tải trì
-   hoãn và Code Mode bổ sung cho nhau: trì hoãn những gì vẫn giữ dạng tool,
-   biến thành code những bề mặt API khổng lồ.
+   to. Con số công bố duy nhất kiểm chứng được là của Anthropic:
+   **150.000 → 2.000 token (98,7%)** trên **một** workflow Google Drive →
+   Salesforce. Nó kết hợp nhiều lệnh gọi trong một lượt — xem
+   [`tool-composition.md`](tool-composition.md). Tải trì hoãn và Code Mode
+   bổ sung cho nhau: trì hoãn những gì vẫn giữ dạng tool, biến thành code
+   những bề mặt API khổng lồ.
+
+   ⚠️ 98,7% là **một ví dụ minh họa, không phải benchmark**, và chính
+   Anthropic lưu ý chi phí sandbox/hạ tầng đi kèm. Các con số ~99,9% trên
+   "2.500+ endpoint" lưu hành trên mạng không truy được nguồn — xem
+   [`../PROOF.md`](../PROOF.md).
 
 ```mermaid
 flowchart LR
@@ -151,12 +157,18 @@ natively now.
 5. **Or expose the catalog as code, not schemas ("Code Mode").** Instead of
    listing hundreds of tools, give the model *one* code-execution tool plus a
    typed API it can call programmatically; it writes a script against the API
-   surface rather than picking from an inflated JSON menu. On very large APIs
-   (e.g. 2,500+ endpoints) this has cut tool-definition input by **~99.9%**,
-   and it composes multiple calls in one pass — see
+   surface rather than picking from an inflated JSON menu. The only
+   verifiable published figure is Anthropic's: **150,000 → 2,000 tokens
+   (98.7%)** on **one** Google Drive → Salesforce workflow. It also composes
+   multiple calls in one pass — see
    [`tool-composition.md`](tool-composition.md). Deferred loading and Code
    Mode are complementary: defer what stays as tools, code-ify the giant
    API surfaces.
+
+   ⚠️ 98.7% is **an illustrative example, not a benchmark**, and Anthropic
+   itself flags the sandboxing and infrastructure overhead that comes with
+   it. The ~99.9%-on-"2,500+ endpoints" figures circulating online trace to
+   no source — see [`../PROOF.md`](../PROOF.md).
 
 ```mermaid
 flowchart LR
