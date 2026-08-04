@@ -537,9 +537,10 @@ trước đã trả tiền mua rồi.
 
 **Vì sao nó tốn token:** Tính không trạng thái áp dụng *giữa* các phiên,
 chứ không chỉ bên trong một phiên. Để định vị trên một repo lớn, agent
-phải tốn rất nhiều lệnh gọi tool nặng (thường 25–60K token trước khi công
-việc thật bắt đầu), và hóa đơn đó lặp lại cho từng phiên mới, từng kỹ sư,
-từng agent trong hệ thống — cùng một mớ kiến thức bị mua đi mua lại.
+phải tốn rất nhiều lệnh gọi tool nặng (ước lượng thường gặp là 25–60K token
+trước khi công việc thật bắt đầu — con số này **không truy được nguồn**, hãy
+tự đo), và hóa đơn đó lặp lại cho từng phiên mới, từng kỹ sư, từng agent
+trong hệ thống — cùng một mớ kiến thức bị mua đi mua lại.
 
 **Cách nhận biết:** Transcript phiên nào cũng mở màn bằng đúng một chuỗi
 khám phá (liệt kê → đọc → grep đúng mấy file lõi ấy); chi tiêu N lượt đầu
@@ -1120,7 +1121,8 @@ already paid for.
 
 **Why it consumes tokens:** Statelessness applies *across* sessions, not
 just within them. Orienting on a large repo is many large tool calls
-(commonly 25–60K tokens before real work begins), and that bill repeats for
+(a commonly cited 25–60K tokens before real work begins — that figure is
+**unsourced**, so measure your own), and that bill repeats for
 every new session, every engineer, every agent in the fleet — the same
 knowledge purchased over and over.
 
