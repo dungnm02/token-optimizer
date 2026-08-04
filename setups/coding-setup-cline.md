@@ -155,8 +155,16 @@ thẳng vào context, không được cắt bớt.
 
 | Công cụ | Giấy phép | Cách dùng với Cline |
 | --- | --- | --- |
-| RTK (`rtk-ai/rtk`) | Apache-2.0 | Nén output của hơn 100 lệnh dev đi 60–90% trước khi vào context; **có sẵn cấu hình theo dự án cho Cline**; giữ nguyên phần test fail/diff/lỗi |
-| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Proxy local hoặc MCP server, nén kết quả tool ngay trên đường truyền (JSON 60–95%, build log ~94%); `CacheAligner` giữ cho prefix cache tiếp tục trúng; **Cline nằm trong danh sách hỗ trợ** |
+| RTK (`rtk-ai/rtk`) | Apache-2.0 | Nén output hơn 100 lệnh dev đi 60–90% **trên chính văn bản**; giữ nguyên test fail/diff/lỗi. Tích hợp với Cline ở **tầng rules-file** (`.clinerules`) — tức là model phải *tự nguyện* tuân theo, không có hook cưỡng chế |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Proxy local hoặc MCP server, nén kết quả tool trên đường truyền; `CacheAligner` giữ prefix cache tiếp tục trúng; **Cline nằm trong danh sách hỗ trợ**. Con số của chính nhà phát triển: **~20% cho coding agent** (60–95% là cho JSON) |
+
+⚠️ **Chưa có công cụ nào trong bảng này từng được đo trên Cline.** Con số
+60–90% của RTK là tỉ lệ nén *văn bản*; khi đo hóa đơn thật trên Claude Code
+nó ra **+7.6% chi phí**. Lý do thất bại ở đó — harness đã tự cắt bớt output
+tool, và `Read`/`Grep` không đi qua hook — về nguyên tắc **ít áp dụng cho
+Cline hơn**, vì Cline đưa thẳng output vào context (đúng như chỗ trống nêu ở
+trên). Nghĩa là ở đây RTK có dư địa thật, nhưng **chưa ai xác nhận bằng số**.
+Hãy đo trước, đừng tin con số quảng cáo. Xem [`../PROOF.md`](../PROOF.md).
 
 ### Khởi động nguội & làm quen repo — nguyên nhân 6.5, 4.2 → [`code-maps.md`](../solutions/code-maps.md)
 
@@ -178,7 +186,7 @@ tầng mới, nhưng nó đi kèm mọi request nên phải giữ gọn (nguyên
 
 | Công cụ | Giấy phép | Cách dùng với Cline |
 | --- | --- | --- |
-| Caveman (`wilpel/caveman-compression`) | MIT | Bộ rules/skill nén phần trả lời, có hỗ trợ Cline; lược bỏ phần kể lể đưa đẩy, giữ lại code và dữ kiện — chỉ dùng cho việc nội bộ, không dùng cho văn bản người dùng sẽ đọc |
+| Caveman (skill "caveman mode") | MIT | Bộ rules/skill nén phần trả lời, có hỗ trợ Cline; lược bỏ kể lể, giữ code và dữ kiện — chỉ dùng nội bộ. ⚠️ Quảng cáo 65%, **đo được 8.5%** trên Claude Code và đó là trần; rủi ro đuôi lớn. Lưu ý *thư viện* `wilpel/caveman-compression` là **thứ khác** và không tích hợp agent — xem [`../PROOF.md`](../PROOF.md) |
 
 ### Mức hệ thống: request trùng lặp, đo lường, định tuyến — nguyên nhân 6.6, 4.3, 6.2
 
@@ -199,12 +207,22 @@ tầng mới, nhưng nó đi kèm mọi request nên phải giữ gọn (nguyên
 | --- | --- | --- |
 | vLLM / SGLang | Apache-2.0 | Đặt phía trước các setup kiểu Ollama/LM Studio để APC/RadixAttention tái sử dụng prefix cho phần lịch sử mà Cline gửi lại — điều một server local trần không làm được |
 
-Bộ ba **RTK + Headroom + Caveman** được cộng đồng xem là "stack tiết
-kiệm token" cho các agent VS Code: nén output lệnh ở phía đầu vào, nén
-kết quả tool ở tầng API, và nén câu trả lời ở phía đầu ra; cả ba đều ghi
-Cline trong danh sách hỗ trợ. Thêm **OpenMemory hoặc một file Repomix đã
-commit sẵn** nữa là hai chỗ trống cấu trúc còn lại (output tool quá lớn
-và khởi động nguội) đều được lấp.
+Bộ ba **RTK + Headroom + Caveman** được cộng đồng xem là "stack tiết kiệm
+token" cho các agent VS Code: nén output lệnh ở đầu vào, nén kết quả tool ở
+tầng API, nén câu trả lời ở đầu ra; cả ba đều ghi Cline trong danh sách hỗ
+trợ.
+
+⚠️ **Hãy coi đây là giả thuyết, không phải khuyến nghị.** Khi bộ ba này được
+đem đo trên Claude Code, RTK ra **+7.6% chi phí** và Caveman ra **8.5%**
+(so với 65% quảng cáo); Headroom chưa từng có A/B độc lập. Không cái nào
+từng được đo trên Cline. Cấu trúc ba tầng vẫn hợp lý và chỗ trống của Cline
+là có thật — nhưng "cộng đồng khuyên dùng" đã hai lần không trụ được trước
+phép đo. Bật **từng cái một**, đo bằng
+[`token-counting.md`](../solutions/token-counting.md), giữ lại cái nào chứng
+minh được giá trị. Chi tiết ở [`../PROOF.md`](../PROOF.md).
+
+Thêm **OpenMemory hoặc một file Repomix đã commit sẵn** nữa là hai chỗ trống
+cấu trúc còn lại (output tool quá lớn và khởi động nguội) đều được lấp.
 
 Những thứ **không nên** thêm: bộ nén context kiểu LLMLingua (rủi ro sai
 lệch khi nén code — `recommended-setup.md` Tier 3), một tầng nén thứ hai
@@ -225,9 +243,11 @@ của profile này rồi).
 5. ☐ Thói quen: một tác vụ = một mục tiêu, `/smol` ở điểm dừng,
    `/newtask` ở điểm chuyển giai đoạn, bật Focus Chain
 6. ☐ (Cấp đội) Gateway LiteLLM + Langfuse với ba cảnh báo
-7. ☐ Chỉ thêm add-on khi số liệu cho thấy cần: RTK/Headroom cho output
-   tool quá lớn, Repomix hoặc OpenMemory MCP cho khởi động nguội,
-   Caveman cho các luồng nội bộ dài dòng
+7. ☐ Chỉ thêm add-on khi số liệu cho thấy cần, và **thêm từng cái một kèm
+   phép đo trước/sau**: RTK/Headroom cho output tool quá lớn, Repomix hoặc
+   OpenMemory MCP cho khởi động nguội, Caveman cho các luồng nội bộ dài
+   dòng. Không cái nào trong số này từng được benchmark trên Cline —
+   xem [`../PROOF.md`](../PROOF.md)
 
 ## Tác động dự kiến
 
@@ -383,8 +403,17 @@ unsliced.
 
 | Tool | License | How it plugs into Cline |
 | --- | --- | --- |
-| RTK (`rtk-ai/rtk`) | Apache-2.0 | Compresses 100+ dev commands' output 60–90% before it hits context; **native Cline project-scoped config**; preserves test failures/diffs/errors |
-| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Local proxy or MCP server compressing tool results in-flight (JSON 60–95%, build logs ~94%); `CacheAligner` keeps the prefix cache hitting; **Cline in its support matrix** |
+| RTK (`rtk-ai/rtk`) | Apache-2.0 | Compresses 100+ dev commands' output 60–90% **on the text itself**; preserves test failures/diffs/errors. Integrates with Cline at the **rules-file tier** (`.clinerules`) — meaning the model must *voluntarily* comply; there is no enforcing hook |
+| Headroom (`headroomlabs-ai/headroom`) | Apache-2.0 | Local proxy or MCP server compressing tool results in-flight; `CacheAligner` keeps the prefix cache hitting; **Cline in its support matrix**. The vendor's own split: **~20% for coding agents** (60–95% is the JSON figure) |
+
+⚠️ **Nothing in this table has ever been measured on Cline.** RTK's 60–90% is
+a *text* compression ratio; measured against a real bill on Claude Code it
+came out at **+7.6% cost**. The reasons it failed there — the harness already
+truncates tool output, and `Read`/`Grep` bypass the hook — **apply less to
+Cline**, which passes output into context unsliced (exactly the gap noted
+above). So there is genuine headroom here — but **nobody has confirmed it
+with numbers**. Measure first; don't trust the advertised figure. See
+[`../PROOF.md`](../PROOF.md).
 
 ### Cold starts & repo orientation — causes 6.5, 4.2 → [`code-maps.md`](../solutions/code-maps.md)
 
@@ -405,7 +434,7 @@ infrastructure, but it rides in every request, so keep it lean (cause 6.4).
 
 | Tool | License | How it plugs into Cline |
 | --- | --- | --- |
-| Caveman (`wilpel/caveman-compression`) | MIT | Output-compression rules/skill, Cline supported; strips narration/filler while keeping code and facts — internal work only, not user-facing prose |
+| Caveman (the "caveman mode" skill) | MIT | Output-compression rules/skill, Cline supported; strips narration/filler while keeping code and facts — internal work only. ⚠️ Advertised 65%, **measured 8.5%** on Claude Code and that is the ceiling; severe tail risk. Note the `wilpel/caveman-compression` *library* is a **different artifact** with no agent integration — see [`../PROOF.md`](../PROOF.md) |
 
 ### Fleet-level: duplicates, telemetry, routing — causes 6.6, 4.3, 6.2
 
@@ -429,9 +458,19 @@ infrastructure, but it rides in every request, so keep it lean (cause 6.4).
 The **RTK + Headroom + Caveman** trio is the community's "token-saving
 stack" for VS Code agents — input-side CLI compression, API-layer
 tool-result compression, and output-side response compression respectively;
-all three list Cline as supported. Add **OpenMemory or a checked-in
-Repomix map** on top and the two remaining structural gaps (tool-output
-bloat and cold starts) are both covered.
+all three list Cline as supported.
+
+⚠️ **Treat that as a hypothesis, not a recommendation.** When this trio was
+measured on Claude Code, RTK came out at **+7.6% cost** and Caveman at
+**8.5%** (against an advertised 65%); Headroom has no independent A/B at all.
+None of them has ever been measured on Cline. The three-layer structure is
+still sound and Cline's gaps are real — but "the community's stack" has now
+failed the measurement twice. Enable them **one at a time**, measure with
+[`token-counting.md`](../solutions/token-counting.md), and keep whichever
+earns its place. Details in [`../PROOF.md`](../PROOF.md).
+
+Add **OpenMemory or a checked-in Repomix map** on top and the two remaining
+structural gaps (tool-output bloat and cold starts) are both covered.
 
 What you should **not** add: LLMLingua-style context compressors (fidelity
 risk on code — `recommended-setup.md` Tier 3), a second compaction layer
@@ -449,9 +488,10 @@ model router (the Plan/Act split *is* the router for this profile).
 5. ☐ Habits: one task = one goal, `/smol` at pauses, `/newtask` at
    transitions, Focus Chain on
 6. ☐ (Team) LiteLLM gateway + Langfuse with the three alerts
-7. ☐ Gap add-ons where telemetry justifies them: RTK/Headroom for tool-output
-   bloat, Repomix map or OpenMemory MCP for cold starts, Caveman for verbose
-   internal routes
+7. ☐ Gap add-ons where telemetry justifies them, **one at a time with a
+   before/after**: RTK/Headroom for tool-output bloat, Repomix map or
+   OpenMemory MCP for cold starts, Caveman for verbose internal routes. None
+   of these has been benchmarked on Cline — see [`../PROOF.md`](../PROOF.md)
 
 ## Expected impact
 

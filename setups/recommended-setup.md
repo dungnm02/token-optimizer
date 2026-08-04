@@ -163,7 +163,7 @@ phí-trên-lợi-ích tốt nhất trong toàn bộ danh mục.
 | Xuất hiện các fan-out map-reduce trên context chung | Cổng làm-ấm-một-rồi-fan | `fan-out-warming.md` |
 | Agent bắt đầu tiêu thụ screenshot (browser/computer use) | Ngân sách độ phân giải + cắt tỉa screenshot cũ | `image-downsampling.md` |
 | Một khối lượng công việc tài liệu/hỏi-đáp gia nhập hệ thống | Tái sử dụng tài liệu + tinh chỉnh truy xuất | `document-reuse.md`, `retrieval-tuning.md` |
-| Đo lường cho thấy output tool/CLI nhiễu (build log, chạy test, JSON) chi phối input | Proxy/hook nén output tool lắp trực tiếp (RTK/Headroom) — không cần thiết kế lại tool | `tool-output-compression.md` |
+| Đo lường cho thấy output tool/CLI nhiễu (build log, chạy test, JSON) chi phối input | Proxy/hook nén output tool lắp trực tiếp (RTK/Headroom) — không cần thiết kế lại tool. ⚠️ Chỉ đáng làm nếu harness của bạn **không** tự cắt bớt output tool; trên Claude Code (có tự cắt) RTK đo ra +7.6% chi phí — xem [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
 | Agent tốn phần lớn token khám phá repo để định hướng (chi phí 67–76% tìm file) | Bản đồ code/gói context đã check-in; đọc theo yêu cầu ưu tiên grep | `code-maps.md` |
 | Một endpoint hỏi-đáp/phân tích chỉ-đọc, lặp lại cao gia nhập hệ thống | Cache cấp phản hồi (ngữ nghĩa) tại gateway — tránh xa các route chỉnh sửa code | `semantic-caching.md` |
 
@@ -202,7 +202,7 @@ dạng* mới là điều quan trọng.
 | Batch Tier 2 | API batch của nhà cung cấp qua **LiteLLM** | Gọi SDK trực tiếp | Gửi thống nhất nếu bạn dùng nhiều nhà cung cấp |
 | CI hướng sự kiện Tier 2 | **Đăng ký PR của harness + webhook GitHub** | Temporal (MIT) khi workflow vượt quá khả năng của harness | Không hạ tầng mới lúc đầu |
 | Gỡ scaffolding Tier 2 | Lượt loại bỏ bằng **promptfoo (MIT)** | DSPy (MIT) khi hạ tầng đánh giá đã trưởng thành | Các biến thể song song với chi phí token mỗi biến thể |
-| Ép output tùy chọn | Skill **Caveman (MIT)** trên các agent nội bộ dài dòng | Chỉ hợp đồng output cấp prompt | Skill lắp trực tiếp; cắt token output trên lưu lượng agent — chỉ route nội bộ |
+| Ép output tùy chọn | Skill **Caveman (MIT)** trên các agent nội bộ dài dòng | Chỉ hợp đồng output cấp prompt | ⚠️ Quảng cáo 65%, **đo được 8.5%** và đó là trần; một tác vụ trong thử nghiệm vọt lên $8.29 so với $0.33. Chỉ route nội bộ, và hãy đo trước — xem [`../PROOF.md`](../PROOF.md) |
 
 ### Tier 1.1 — Lắp dây đo lường
 
@@ -443,7 +443,7 @@ the best effort-to-payoff ratio in the entire catalog.
 | Map-reduce fan-outs over shared context appear | Warm-one-then-fan gate | `fan-out-warming.md` |
 | Agents start consuming screenshots (browser/computer use) | Resolution budgeting + stale-screenshot pruning | `image-downsampling.md` |
 | A docs/Q&A workload joins the fleet | Document reuse + retrieval tuning | `document-reuse.md`, `retrieval-tuning.md` |
-| Telemetry shows noisy tool/CLI output (build logs, test runs, JSON) dominating input | Drop-in tool-output compression proxy/hook (RTK/Headroom) — no tool redesign | `tool-output-compression.md` |
+| Telemetry shows noisy tool/CLI output (build logs, test runs, JSON) dominating input | Drop-in tool-output compression proxy/hook (RTK/Headroom) — no tool redesign. ⚠️ Only worth it if your harness does **not** already truncate tool output; on Claude Code (which does) RTK measured +7.6% cost — see [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
 | Agents spend most tokens exploring the repo to orient (the 67–76% file-finding tax) | Checked-in code map / context pack; grep-first just-in-time reads | `code-maps.md` |
 | A high-repeat, read-only Q&A/analytics endpoint joins the fleet | Response-level (semantic) cache at the gateway — keep off coding-edit routes | `semantic-caching.md` |
 
@@ -481,7 +481,7 @@ piece for its listed alternative — the *shape* is what matters.
 | Tier 2 batch | Provider batch API via **LiteLLM** | Direct SDK calls | Uniform submission if you're multi-provider |
 | Tier 2 event-driven CI | **Harness PR subscriptions + GitHub webhooks** | Temporal (MIT) when workflows outgrow the harness | Zero new infra at first |
 | Tier 2 de-scaffolding | **promptfoo (MIT)** ablation runs | DSPy (MIT) once eval infra matures | Side-by-side variants with token cost per variant |
-| Optional output squeeze | **Caveman (MIT)** skill on chatty internal agents | Prompt-level output contracts only | Drop-in skill; output-token cut on agent traffic — internal routes only |
+| Optional output squeeze | **Caveman (MIT)** skill on chatty internal agents | Prompt-level output contracts only | ⚠️ Advertised 65%, **measured 8.5%** and that is the ceiling; one trial task spiked to $8.29 against $0.33. Internal routes only, and measure first — see [`../PROOF.md`](../PROOF.md) |
 
 ### Tier 1.1 — telemetry wiring
 
