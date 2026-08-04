@@ -11,6 +11,11 @@ dụng. Ô trống nghĩa là bạn tự giải quyết được bằng công c�
 kiến trúc của mình. Cột "Công cụ" để trống khi cách khắc phục thuần là kỷ
 luật prompt/kiến trúc, không có công cụ rời để cài.
 
+> ⚠️ **Việc một công cụ có tên ở đây không có nghĩa nó đã được chứng minh.**
+> Cột "Công cụ" liệt kê thứ *nhắm vào* nguyên nhân đó. Xem
+> [`PROOF.md`](PROOF.md) để biết cái nào thực sự có kết quả đo được — RTK,
+> Caveman và Headroom đều xuất hiện ở đây nhưng đều không đạt như quảng cáo.
+
 ### 1 — Lỗi caching
 
 | Nguyên nhân | Giải pháp | Công cụ | NCC |
@@ -82,6 +87,11 @@ cheaper model/batch tiers. Those are things you can't create yourself, only
 qualify for. A blank means you can solve it with third-party tooling or your
 own architecture. The "Tool(s)" column is left blank when the fix is purely
 prompt/architecture discipline with no separate tool to install.
+
+> ⚠️ **A tool being listed here does not mean it is proven.** The "Tool(s)"
+> column names what *targets* that cause. See [`PROOF.md`](PROOF.md) for
+> which ones have measured results — RTK, Caveman and Headroom all appear
+> here and all underdelivered against their advertised claims.
 
 ### 1 — Caching failures
 

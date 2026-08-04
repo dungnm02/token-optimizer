@@ -25,17 +25,22 @@ Kho này làm ba việc:
 
 | Ở đâu | Bạn sẽ thấy gì |
 | --- | --- |
-| `CAUSE.md` | Danh mục những thứ đẩy lượng token lên cao — hãy bắt đầu từ đây. |
-| `solutions/` | Mỗi cách khắc phục là một tài liệu ngắn, đều dẫn ngược về một nguyên nhân. |
-| `setups/` | Các thiết lập dựng sẵn cho từng nhà cung cấp và công cụ cụ thể. |
+| [`CAUSE.md`](CAUSE.md) | Danh mục những thứ đẩy lượng token lên cao — hãy bắt đầu từ đây. |
+| [`solutions/`](solutions/README.md) | Mỗi cách khắc phục là một tài liệu ngắn, đều dẫn ngược về một nguyên nhân. |
+| [`setups/`](setups/) | Các thiết lập dựng sẵn cho từng nhà cung cấp và công cụ cụ thể. |
+| [`PROOF.md`](PROOF.md) | **Cái gì đã thực sự được đo.** Đối chiếu tuyên bố quảng cáo với kết quả A/B có đối chứng — và loại những tuyên bố không trụ được. Đọc trước khi tin bất kỳ con số phần trăm nào trong kho này. |
+| [`SUMMARY.md`](SUMMARY.md) | Bảng tra nhanh nguyên nhân → giải pháp → công cụ. |
 
 ## Dùng nó thế nào
 
 1. **Đọc `CAUSE.md`** để nhận ra vấn đề nào khớp với điều bạn đang gặp.
 2. **Theo các liên kết sang `solutions/`** để tìm cách khắc phục tương ứng.
-3. **Ghé `setups/`** nếu bạn muốn một cấu hình dựng sẵn cho nhà cung cấp hoặc
-   công cụ của mình.
-4. **Phát hiện điều gì mới?** Thêm vào `CAUSE.md`, và nếu đã biết cách sửa,
+3. **Đối chiếu với [`PROOF.md`](PROOF.md)** trước khi cài thêm công cụ. Nhiều
+   công cụ nổi tiếng đo ra gần bằng 0 — có cái còn làm hóa đơn *tăng*.
+4. **Ghé `setups/`** nếu bạn muốn một cấu hình dựng sẵn cho nhà cung cấp hoặc
+   công cụ của mình. Nếu nơi làm việc chặn plugin/extension/npm, xem
+   [`setups/install-without-package-managers.md`](setups/install-without-package-managers.md).
+5. **Phát hiện điều gì mới?** Thêm vào `CAUSE.md`, và nếu đã biết cách sửa,
    hãy để lại ghi chú trong `solutions/`.
 
 ## Đóng góp
@@ -104,17 +109,22 @@ This repo does three things:
 
 | Where | What you'll find |
 | --- | --- |
-| `CAUSE.md` | The catalog of what drives token usage up — start here. |
-| `solutions/` | One short guide per fix, each mapped back to a cause. |
-| `setups/` | Ready-made setups for specific vendors and tools. |
+| [`CAUSE.md`](CAUSE.md) | The catalog of what drives token usage up — start here. |
+| [`solutions/`](solutions/README.md) | One short guide per fix, each mapped back to a cause. |
+| [`setups/`](setups/) | Ready-made setups for specific vendors and tools. |
+| [`PROOF.md`](PROOF.md) | **What has actually been measured.** Advertised claims against controlled A/B results — and the claims that didn't survive. Read it before trusting any percentage in this repo. |
+| [`SUMMARY.md`](SUMMARY.md) | Quick cause → solution → tool lookup. |
 
 ## How to use it
 
 1. **Read `CAUSE.md`** to spot which problems match what you're seeing.
 2. **Follow the links into `solutions/`** for the matching fixes.
-3. **Check `setups/`** if you want a ready-made configuration for your vendor
-   or tool.
-4. **Found something new?** Add it to `CAUSE.md`, and if you know the fix,
+3. **Check them against [`PROOF.md`](PROOF.md)** before installing anything.
+   Several well-known tools measured near zero — one made the bill *go up*.
+4. **Check `setups/`** if you want a ready-made configuration for your vendor
+   or tool. If your workplace blocks plugins/extensions/npm, see
+   [`setups/install-without-package-managers.md`](setups/install-without-package-managers.md).
+5. **Found something new?** Add it to `CAUSE.md`, and if you know the fix,
    leave a note in `solutions/`.
 
 ## Contributing

@@ -4,6 +4,11 @@ Thư mục này gồm các tài liệu, mỗi tài liệu ứng với một gi�
 lược để giảm mức tiêu tốn token. Mỗi giải pháp nên trỏ về một hoặc nhiều
 nguyên nhân được liệt kê trong [`../CAUSE.md`](../CAUSE.md).
 
+> ⚠️ **Về các con số "Tác động nổi bật" bên dưới:** phần lớn là con số nhà
+> phát triển tự công bố. [`../PROOF.md`](../PROOF.md) đối chiếu chúng với
+> các thử nghiệm A/B có đối chứng — vài con số không trụ được. Hãy đọc trước
+> khi lấy bất kỳ phần trăm nào ở đây làm cơ sở tính toán.
+
 ## Thêm một giải pháp
 
 1. Tạo một file Markdown mới trong thư mục này, đặt tên theo chiến lược, ví
@@ -91,10 +96,10 @@ cơ chế hoạt động.
 | Tài liệu | Giải quyết | Tác động nổi bật |
 | --- | --- | --- |
 | [`tool-output-budgets.md`](tool-output-budgets.md) | 3.1 | Giảm 2–5× input mỗi phiên trong khối lượng công việc nặng về tool |
-| [`tool-output-compression.md`](tool-output-compression.md) | 3.1, 2.1 | Giảm 60–90% output CLI/log/JSON nhiễu, không cần thiết kế lại tool |
+| [`tool-output-compression.md`](tool-output-compression.md) | 3.1, 2.1 | Nén 60–90% *văn bản* output CLI/log/JSON nhiễu. ⚠️ Chỉ thành tiền nếu harness chưa tự cắt bớt — trên Claude Code đo ra +7.6% chi phí |
 | [`tool-composition.md`](tool-composition.md) | 3.2 | K round-trip → ~1 lượt xử lý context; dữ liệu trung gian không bao giờ bị tính phí |
 | [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Chi phí chờ đợi O(số lần poll × context) → ~0 |
-| [`tool-search.md`](tool-search.md) | 3.4 | Giảm 10–50× chi phí schema tool mỗi request; Code Mode giảm ~99.9% trên các API lớn |
+| [`tool-search.md`](tool-search.md) | 3.4 | Giảm 10–50× chi phí schema tool mỗi request; Code Mode 98,7% trên **một** workflow đã công bố |
 
 ### Danh mục 4 — Loại nội dung đắt đỏ
 
@@ -103,7 +108,7 @@ cơ chế hoạt động.
 | [`image-downsampling.md`](image-downsampling.md) | 4.1 | Giảm 3–5× input thị giác; 50–80% trên các vòng lặp screenshot |
 | [`document-reuse.md`](document-reuse.md) | 4.2 | doc×số câu hỏi → doc×1 + các lần đọc cache rẻ |
 | [`retrieval-tuning.md`](retrieval-tuning.md) | 4.2 | Giảm ~5× tỷ trọng truy xuất nhờ rerank với k nhỏ; chất lượng cũng cải thiện |
-| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Xóa bỏ 67–76% chi phí tìm file; tiết kiệm 25–60K token cold-start |
+| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Xóa bỏ 67–76% chi phí tìm file; CodeGraph đo được −69% token trên 7 repo (con số 25–60K cold-start là ước lượng không nguồn) |
 | [`token-counting.md`](token-counting.md) | 4.3 (+ tất cả) | Lớp đo lường — biến mọi giải pháp khác thành một bất biến được thực thi |
 
 ### Danh mục 5 — Chi tiêu phía sinh (generation)
@@ -142,6 +147,11 @@ cơ chế hoạt động.
 This folder holds one document per solution or mitigation strategy for reducing
 token consumption. Each solution should map back to one or more causes listed in
 [`../CAUSE.md`](../CAUSE.md).
+
+> ⚠️ **About the "Headline impact" figures below:** most are vendor
+> self-reported. [`../PROOF.md`](../PROOF.md) checks them against controlled
+> A/B trials — several did not survive. Read it before building on any
+> percentage here.
 
 ## Adding a Solution
 
@@ -222,10 +232,10 @@ assessment; several include mermaid diagrams of the mechanism.
 | Document | Addresses | Headline impact |
 | --- | --- | --- |
 | [`tool-output-budgets.md`](tool-output-budgets.md) | 3.1 | 2–5× per-session input cut in tool-heavy workloads |
-| [`tool-output-compression.md`](tool-output-compression.md) | 3.1, 2.1 | 60–90% off noisy CLI/log/JSON output, no tool redesign |
+| [`tool-output-compression.md`](tool-output-compression.md) | 3.1, 2.1 | 60–90% compression of the noisy CLI/log/JSON *text*. ⚠️ Only becomes money if your harness doesn't already truncate — measured +7.6% cost on Claude Code |
 | [`tool-composition.md`](tool-composition.md) | 3.2 | K round-trips → ~1 context pass; intermediates never billed |
 | [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Waiting cost O(polls × context) → ~0 |
-| [`tool-search.md`](tool-search.md) | 3.4 | 10–50× reduction in per-request tool-schema overhead; Code Mode ~99.9% on huge APIs |
+| [`tool-search.md`](tool-search.md) | 3.4 | 10–50× reduction in per-request tool-schema overhead; Code Mode 98.7% on **one** published workflow |
 
 ### Category 4 — Expensive content types
 
@@ -234,7 +244,7 @@ assessment; several include mermaid diagrams of the mechanism.
 | [`image-downsampling.md`](image-downsampling.md) | 4.1 | 3–5× vision input cut; 50–80% on screenshot loops |
 | [`document-reuse.md`](document-reuse.md) | 4.2 | doc×questions → doc×1 + cheap cached reads |
 | [`retrieval-tuning.md`](retrieval-tuning.md) | 4.2 | ~5× retrieval-share cut via reranked small-k; quality improves too |
-| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Kills the 67–76% file-finding tax; 25–60K cold-start tokens saved |
+| [`code-maps.md`](code-maps.md) | 4.2, 6.5, 6.1, 2.1 | Kills the 67–76% file-finding tax; CodeGraph measured −69% tokens across 7 repos (the 25–60K cold-start figure is an unsourced estimate) |
 | [`token-counting.md`](token-counting.md) | 4.3 (+ all) | The measurement layer — turns every other fix into an enforced invariant |
 
 ### Category 5 — Generation-side spend
