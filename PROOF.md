@@ -427,6 +427,95 @@ prompt và định tuyến model — nhàm chán, bình duyệt, độc lập v�
 được ở 20× và 85%. Các binary lan truyền hứa 60–90% với zero-config đo ra
 **+7.6%** và **8.5%**.
 
+## Tự A/B test từng công cụ trên setup của bạn
+
+Mọi con số trên trang này đều là giá trị biên trên *một* harness, *một* model,
+*một* bộ tác vụ. Setup của bạn khác — nghĩa là con số của bạn cũng sẽ khác.
+Phần này là quy trình để bạn tự đo, được rút thẳng từ những lỗi phương pháp
+mà trang này đã mổ xẻ: mỗi bước bên dưới tồn tại vì đã có một công cụ hoặc
+một benchmark vấp đúng chỗ đó.
+
+### Bước 0 — kiểm tra trần trước khi tốn tiền
+
+Trước khi chạy cặp A/B nào, hãy làm phép phân tích trần đã hạ gục RTK, nhưng
+cho chính lưu lượng của bạn: công cụ này *có thể* chạm tới bao nhiêu phần
+trăm token bị tính tiền của bạn? Lấy transcript vài phiên gần đây và đếm:
+bao nhiêu phần input là kết quả tool đi qua đường mà công cụ chặn được? Bao
+nhiêu phần output là văn kể chuyện mà một skill nén được? Nếu trần dưới ~5%,
+dừng ở đây — không có kết quả A/B nào đáng để trả tiền đo.
+
+### Quy trình chung (áp dụng cho mọi công cụ)
+
+1. **Đo hóa đơn, không đo bảng điểm của công cụ.** Nguồn số liệu duy nhất
+   được chấp nhận là token/chi phí bị tính tiền từ phía API. Với Claude Code
+   headless, `claude -p "$TASK" --output-format json` trả về `usage` và
+   `total_cost_usd` cho từng lượt chạy. Không bao giờ dùng số công cụ tự báo
+   (`rtk gain`, dashboard "tokens saved") — đó chính là cái bẫy
+   counterfactual ở [mục 8](#8--bị-loại).
+2. **Ghép cặp, đổi đúng một biến.** Cùng một prompt tác vụ chạy ở nhánh CÓ
+   và nhánh KHÔNG có công cụ; mọi thứ khác giữ nguyên. Ghim phiên bản
+   harness, model, mức reasoning effort, và phiên bản công cụ (SHA256 như
+   JetBrains làm với rtk v0.43.0). Bật hai công cụ cùng lúc là vứt kết quả —
+   xem hàng "90.7% trên Codex" bị loại vì trộn RTK với Serena.
+3. **Đủ cỡ mẫu trước khi kết luận.** Caveman đo −29.5% ở 10 tác vụ đầu rồi
+   tan còn −8.5% ở 82 cặp. Dưới ~30 cặp sạch thì chỉ được coi là chạy thử;
+   các kết luận hạng A trên trang này đều dùng 80+ cặp.
+4. **Kiểm toán kích hoạt ở cả hai nhánh.** Ponytail cài thụ động kích hoạt
+   0 lần trên 10 phiên. Mỗi lượt nhánh treatment phải có bằng chứng công cụ
+   thật sự chạy (log hook, tool call trong transcript, truy vấn MCP); mỗi
+   lượt baseline phải sạch bóng nó. JetBrains kiểm toán được 100%/0% — hãy
+   nhắm mức đó.
+5. **Chạy lặp, xen kẽ hai nhánh.** k≥3 lần mỗi bên cho từng tác vụ (CodeGraph
+   dùng 4, lấy trung vị). Chạy xen kẽ A,B,A,B thay vì chạy hết một nhánh
+   trước, để bản cập nhật model/harness giữa chừng không thiên vị một bên.
+6. **Nhìn phân phối, không chỉ trung bình.** Một tác vụ đuôi $8.29-vs-$0.33
+   đảo ngược cả đợt Caveman. Báo cáo trung vị, sign test hoặc paired t-test,
+   và soi riêng những cặp lệch nhất.
+7. **Chấm cả chất lượng.** Tiết kiệm kèm hồi quy chất lượng không phải tiết
+   kiệm. Tối thiểu: chấm tốt hơn/hòa/tệ hơn cho từng cặp, mù nhánh nếu được.
+
+### Vòng lặp thực tế trên Claude Code
+
+```bash
+TASK="mô tả tác vụ, giống hệt ở cả hai nhánh"
+
+# Nhánh baseline — không có công cụ
+claude -p "$TASK" --output-format json > results/baseline-task01-run1.json
+
+# Nhánh treatment — bật công cụ (hook / MCP / skill), mọi thứ khác giữ nguyên
+claude -p "$TASK" --output-format json > results/treatment-task01-run1.json
+
+# Rút số bị tính tiền
+jq '{cost: .total_cost_usd, usage: .usage, turns: .num_turns}' results/*.json
+```
+
+### Thiết kế hai nhánh cho từng công cụ
+
+| Công cụ | Nhánh baseline | Nhánh treatment | Chỉ số chính | Bẫy riêng |
+| --- | --- | --- | --- | --- |
+| **Ponytail** | không hook | ruleset tiêm qua SessionStart hook | chi phí; LOC qua `git diff` | kiểm toán kích hoạt là bắt buộc; kỳ vọng ≈0 trên tác vụ vốn đã tối giản — chọn tác vụ có nguy cơ over-build |
+| **CodeGraph** | Claude Code nguyên bản với `Read`/`Grep`/`Bash` | thêm MCP CodeGraph, `--strict-mcp-config` | token, chi phí, số lần đọc file | index xong *trước* khi bấm giờ; sub-agent đọc file sẽ né index; repo dưới ~150 file có thể đảo chiều như OkHttp |
+| **Headroom** | dùng chính control group 10% tích hợp sẵn | lưu lượng được nén | token mỗi hội thoại | đối chiếu đúng namespace và ghim phiên bản *trước khi cài* — xem cảnh báo chuỗi cung ứng ở [mục 3](#3--headroom) |
+| **Caveman (skill)** | không skill | skill ép kích hoạt | token output | ép kích hoạt cho bạn con số *trần*; soi riêng tác vụ đuôi kiểu audit dependency |
+| **Caveman (thư viện)** | văn bản tĩnh gốc | bản đã nén | token của chính văn bản + checklist dữ kiện | đây là A/B offline, không cần chạy agent; đếm dữ kiện bảo toàn kiểu 13/13 |
+| **RTK** | không hook | Bash hook | chi phí + số lượt + cache read | làm bước 0 trước tiên; nếu harness của bạn đã tự cắt bớt output tool, kỳ vọng ≈0 hoặc âm |
+| **LLMLingua / RouteLLM** | prompt nguyên vẹn / chỉ model lớn | prompt đã nén / có router | chi phí *ở một mức chất lượng* trên bộ tác vụ của bạn | bắt buộc có thước đo chất lượng — chỉ đếm token là vô nghĩa; RouteLLM cần dữ liệu trong phân phối |
+
+### Đọc kết quả cho trung thực
+
+- **≈0 không minh oan cho công cụ** — trên harness đã tối ưu sẵn, ≈0 và vô
+  dụng là không phân biệt được. Nó chỉ có nghĩa là *setup của bạn* không còn
+  dư địa cho nó.
+- **Tăng chi phí là tác hại thật**, không phải nhiễu — nhất là khi kèm tăng
+  số lượt như RTK (+13.8%).
+- **Cân cả chi phí thử nghiệm.** Đợt đo RTK tốn ~$320. Nếu hóa đơn tháng của
+  bạn là $50 thì một công cụ hứa 10% không đáng một benchmark cỡ đó — chạy
+  10 cặp làm khói thử, và chỉ đầu tư mẫu lớn khi khói thử cho tín hiệu to,
+  nhớ rằng tín hiệu nhỏ ở cỡ mẫu nhỏ (như −29.5% của Caveman) thường tan.
+- **Ghi lại đủ để người khác chạy lại được**: model, cờ, phiên bản, prompt,
+  số liệu thô. Đó là ranh giới giữa hạng B và hạng C trên
+  [thang bằng chứng](#thang-bằng-chứng) của chính trang này.
+
 ## Xung đột lợi ích cần công bố
 
 JetBrains ra mắt **JetBrains Context** vào 2026-07 — cùng tháng với cả hai
@@ -915,6 +1004,100 @@ The consequence: proof quality is inversely proportional to how glamorous the
 tool is. Prompt compression and model routing — unglamorous, peer-reviewed,
 agent-agnostic — hold up at 20× and 85%. The viral binaries promising 60–90%
 with zero config measured **+7.6%** and **8.5%**.
+
+## A/B testing each tool on your own setup
+
+Every number on this page is a marginal value on *one* harness, *one* model,
+*one* task set. Your setup is different — which means your number will be
+too. This section is the protocol for measuring it yourself, derived directly
+from the methodology failures this page dissects: every step below exists
+because some tool or benchmark tripped exactly there.
+
+### Step 0 — check the ceiling before spending money
+
+Before running a single A/B pair, do the ceiling analysis that sank RTK, but
+for your own traffic: what share of *your* billed tokens can this tool even
+touch? Take transcripts from a few recent sessions and count: how much of the
+input is tool results routed through a path the tool intercepts? How much of
+the output is narration a skill could compress? If the ceiling is under ~5%,
+stop here — no A/B result is worth paying to measure.
+
+### The general protocol (applies to every tool)
+
+1. **Measure the bill, not the tool's scoreboard.** The only admissible data
+   source is billed tokens/cost from the API side. With Claude Code headless,
+   `claude -p "$TASK" --output-format json` returns `usage` and
+   `total_cost_usd` per run. Never use a tool's self-reported figure
+   (`rtk gain`, "tokens saved" dashboards) — that is the counterfactual trap
+   from [section 8](#8--rejected).
+2. **Pair the runs, change exactly one variable.** The same task prompt runs
+   in a WITH arm and a WITHOUT arm; everything else stays identical. Pin the
+   harness version, model, reasoning effort, and tool version (SHA256, as
+   JetBrains did with rtk v0.43.0). Enabling two tools at once voids the
+   result — see the rejected "90.7% on Codex" row, which confounded RTK with
+   Serena.
+3. **Reach sample size before concluding.** Caveman measured −29.5% on its
+   first 10 tasks, which dissolved to −8.5% at 82 pairs. Under ~30 clean
+   pairs you have a smoke test, not a result; the Tier-A conclusions on this
+   page all used 80+ pairs.
+4. **Audit activation in both arms.** A passive Ponytail install activated
+   zero times in ten sessions. Every treatment run needs evidence the tool
+   actually fired (hook logs, tool calls in the transcript, MCP queries);
+   every baseline run must be clean of it. JetBrains audited to 100%/0% —
+   aim for that.
+5. **Repeat runs, interleave the arms.** k≥3 runs per side per task
+   (CodeGraph used 4, reporting the median). Interleave A,B,A,B rather than
+   finishing one arm first, so a mid-experiment model or harness update
+   cannot bias one side.
+6. **Look at the distribution, not just the mean.** One $8.29-vs-$0.33 tail
+   task inverted the entire Caveman run. Report the median, a sign test or
+   paired t-test, and inspect the most divergent pairs individually.
+7. **Score quality too.** A saving that ships quality regressions is not a
+   saving. At minimum: grade each pair better/tied/worse, blinded to arm if
+   you can manage it.
+
+### The practical loop on Claude Code
+
+```bash
+TASK="task description, identical in both arms"
+
+# Baseline arm — tool absent
+claude -p "$TASK" --output-format json > results/baseline-task01-run1.json
+
+# Treatment arm — tool enabled (hook / MCP / skill), everything else unchanged
+claude -p "$TASK" --output-format json > results/treatment-task01-run1.json
+
+# Extract the billed figures
+jq '{cost: .total_cost_usd, usage: .usage, turns: .num_turns}' results/*.json
+```
+
+### Arm design per tool
+
+| Tool | Baseline arm | Treatment arm | Primary metric | Tool-specific trap |
+| --- | --- | --- | --- | --- |
+| **Ponytail** | no hook | ruleset injected via SessionStart hook | cost; LOC via `git diff` | the activation audit is mandatory; expect ≈0 on already-minimal tasks — pick tasks with over-build risk |
+| **CodeGraph** | stock Claude Code with `Read`/`Grep`/`Bash` | plus the CodeGraph MCP, `--strict-mcp-config` | tokens, cost, file-read count | finish indexing *before* the clock starts; file-reading sub-agents bypass the index; repos under ~150 files can invert like OkHttp |
+| **Headroom** | its built-in 10% control group | shaped traffic | tokens per conversation | verify the namespace and pin the version *before installing* — see the supply-chain warning in [section 3](#3--headroom-1) |
+| **Caveman (skill)** | no skill | skill force-activated | output tokens | force-activation gives you the *ceiling*; inspect dependency-audit-style tail tasks individually |
+| **Caveman (library)** | the original static text | the compressed version | tokens of the text itself + a fact checklist | this is an offline A/B, no agent runs needed; count preserved facts 13/13-style |
+| **RTK** | no hook | Bash hook | cost + turns + cache reads | do step 0 first; if your harness already truncates tool output, expect ≈0 or negative |
+| **LLMLingua / RouteLLM** | uncompressed prompt / large model only | compressed prompt / router in place | cost *at a quality level* on your own task set | a quality metric is mandatory — token counts alone are meaningless; RouteLLM needs in-distribution data |
+
+### Reading the result honestly
+
+- **≈0 does not vindicate the tool** — on an already-optimized harness, ≈0
+  and useless are indistinguishable. It only means *your setup* has no
+  headroom left for it.
+- **A cost increase is real harm**, not noise — especially when it arrives
+  with more turns, as RTK's did (+13.8%).
+- **Weigh the experiment's own cost.** The RTK benchmark cost ~$320. If your
+  monthly bill is $50, a tool promising 10% does not justify a benchmark that
+  size — run a 10-pair smoke test, and only invest in a large sample if the
+  smoke test shows a large signal, remembering that small signals at small n
+  (like Caveman's −29.5%) usually dissolve.
+- **Record enough for someone else to rerun it**: model, flags, versions,
+  prompts, raw figures. That is the line between Tier B and Tier C on this
+  page's own [evidence tiers](#evidence-tiers).
 
 ## Conflict of interest to disclose
 
