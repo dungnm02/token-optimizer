@@ -29,6 +29,7 @@ Kho này làm ba việc:
 | [`solutions/`](solutions/README.md) | Mỗi cách khắc phục là một tài liệu ngắn, đều dẫn ngược về một nguyên nhân. |
 | [`setups/`](setups/) | Các thiết lập dựng sẵn cho từng nhà cung cấp và công cụ cụ thể. |
 | [`tools/`](tools/README.md) | Hồ sơ chi tiết từng công cụ — ý tưởng, cách hoạt động, cách cài, dùng lúc nào và khi nào thì đừng. |
+| [`HARNESS.md`](HARNESS.md) | Harness là gì, nó tiêu token ở đâu, và bảng đối chiếu năng lực của Claude Code, Codex CLI, Gemini CLI và Cline. |
 | [`PROOF.md`](PROOF.md) | **Cái gì đã thực sự được đo.** Đối chiếu tuyên bố quảng cáo với kết quả A/B có đối chứng — và loại những tuyên bố không trụ được. Đọc trước khi tin bất kỳ con số phần trăm nào trong kho này. |
 | [`SUMMARY.md`](SUMMARY.md) | Bảng tra nhanh nguyên nhân → giải pháp → công cụ. |
 
@@ -114,6 +115,7 @@ This repo does three things:
 | [`solutions/`](solutions/README.md) | One short guide per fix, each mapped back to a cause. |
 | [`setups/`](setups/) | Ready-made setups for specific vendors and tools. |
 | [`tools/`](tools/README.md) | Deep profiles of individual tools — the idea, how it works, how to install, when to use it and when not to. |
+| [`HARNESS.md`](HARNESS.md) | What a harness is, where it spends your tokens, and a capability matrix across Claude Code, Codex CLI, Gemini CLI and Cline. |
 | [`PROOF.md`](PROOF.md) | **What has actually been measured.** Advertised claims against controlled A/B results — and the claims that didn't survive. Read it before trusting any percentage in this repo. |
 | [`SUMMARY.md`](SUMMARY.md) | Quick cause → solution → tool lookup. |
 

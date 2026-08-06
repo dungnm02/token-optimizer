@@ -44,10 +44,10 @@ chạy phép thử bên dưới:
 | Harness | Cắt output | Tool file riêng | MCP | Tiêm tất định |
 | --- | --- | --- | --- | --- |
 | Claude Code | ✅ có (đã đo) | ✅ Read/Grep/Glob | ✅ | ✅ hook |
-| Codex CLI | kiểm tra | phần lớn qua shell | ✅ | ✅ plugin |
+| Codex CLI | ✅ `tool_output_token_limit` | phần lớn qua shell | ✅ | ⚠️ hook chỉ bắt tool shell |
 | Cursor / Windsurf | kiểm tra | ✅ | ✅ | ❌ chỉ rules file |
 | Cline / Roo / Kilo | kiểm tra | ✅ read_file/search_files | ✅ | ❌ chỉ rules file |
-| Gemini CLI | kiểm tra | ✅ | ✅ | ✅ extension |
+| Gemini CLI | ✅ `truncateToolOutputThreshold` | ✅ | ✅ | ✅ hook + extension |
 | Copilot | kiểm tra | ✅ | kiểm tra | ❌ chỉ instructions |
 | opencode | kiểm tra | ✅ | ✅ | kiểm tra |
 | Aider | ít liên quan (bạn tự dán) | repo map, không có vòng lặp tool | ❌ | bạn tự viết prompt |
@@ -58,6 +58,9 @@ cắt output thay bạn, không có system prompt nào ép ngắn gọn thay b�
 không có gì tự kích hoạt ruleset. Cả bốn kết luận đo trên Claude Code đều có
 thể đảo dấu, và **RTK là ví dụ rõ nhất** — thứ làm hóa đơn tăng ở đây lại có
 dư địa thật ở đó.
+
+Bảng đầy đủ hơn — caching, vòng đời context, nút sinh — cho bốn agent chính
+nằm ở [`../HARNESS.md`](../HARNESS.md).
 
 ### Tự kiểm tra harness của bạn trong 15 phút
 
@@ -117,10 +120,10 @@ tests below yourself:
 | Harness | Truncates | Own file tools | MCP | Deterministic injection |
 | --- | --- | --- | --- | --- |
 | Claude Code | ✅ yes (measured) | ✅ Read/Grep/Glob | ✅ | ✅ hooks |
-| Codex CLI | check | mostly via shell | ✅ | ✅ plugins |
+| Codex CLI | ✅ `tool_output_token_limit` | mostly via shell | ✅ | ⚠️ hooks intercept the shell tool only |
 | Cursor / Windsurf | check | ✅ | ✅ | ❌ rules files only |
 | Cline / Roo / Kilo | check | ✅ read_file/search_files | ✅ | ❌ rules files only |
-| Gemini CLI | check | ✅ | ✅ | ✅ extensions |
+| Gemini CLI | ✅ `truncateToolOutputThreshold` | ✅ | ✅ | ✅ hooks + extensions |
 | Copilot | check | ✅ | check | ❌ instructions only |
 | opencode | check | ✅ | ✅ | check |
 | Aider | mostly moot (you paste) | repo map, no tool loop | ❌ | you write the prompt |
@@ -131,6 +134,9 @@ harness truncates for you, no system prompt enforces concision for you, and
 nothing auto-activates a ruleset. Every Claude Code conclusion here can flip
 sign, and **RTK is the clearest case** — the tool that raised the bill here
 has genuine headroom there.
+
+A fuller matrix — caching, context lifecycle, generation dials — across the
+four main agents is in [`../HARNESS.md`](../HARNESS.md).
 
 ### Test your own harness in 15 minutes
 
