@@ -74,6 +74,19 @@ trường hợp.
 > thứ tự này: caching → ngân sách tool → nén → chỉnh sửa diff → tool trì
 > hoãn.
 
+**Lựa chọn này cũng quyết định danh sách Tier 2 của bạn.** Một công cụ chỉ
+đáng cài khi harness còn để hở khe đó *và* công cụ gắn vào được một cách tất
+định — thiếu một trong hai điều kiện, nó đo ra bằng hoặc dưới 0. Hàng Tier 2
+nào còn hiệu lực trên Claude Code, Codex CLI, Gemini CLI và Cline được phân
+tích theo từng agent trong [`../HARNESS.md`](../HARNESS.md); tóm tắt:
+
+| Harness của bạn | Những hàng Tier 2 thay đổi |
+| --- | --- |
+| Claude Code | Bỏ hẳn nén output (đã đo +7.6%); ruleset phải nạp qua hook |
+| Codex CLI | Nén output trở thành một dòng cấu hình (`tool_output_token_limit`), verbosity cũng vậy (`model_verbosity`) |
+| Gemini CLI | Cả nén output *lẫn* cắt schema tool đều có sẵn (`truncateToolOutputThreshold`, hook trước khi chọn tool) |
+| Cline | Nén output và code map là khe hở thật — nhưng không có hook, nên mọi thứ dạng ruleset phải được xác minh là thực sự chạy |
+
 ---
 
 ## Tier 1 — Công việc tùy chỉnh cần thiết
@@ -163,7 +176,7 @@ phí-trên-lợi-ích tốt nhất trong toàn bộ danh mục.
 | Xuất hiện các fan-out map-reduce trên context chung | Cổng làm-ấm-một-rồi-fan | `fan-out-warming.md` |
 | Agent bắt đầu tiêu thụ screenshot (browser/computer use) | Ngân sách độ phân giải + cắt tỉa screenshot cũ | `image-downsampling.md` |
 | Một khối lượng công việc tài liệu/hỏi-đáp gia nhập hệ thống | Tái sử dụng tài liệu + tinh chỉnh truy xuất | `document-reuse.md`, `retrieval-tuning.md` |
-| Đo lường cho thấy output tool/CLI nhiễu (build log, chạy test, JSON) chi phối input | Proxy/hook nén output tool lắp trực tiếp (RTK/Headroom) — không cần thiết kế lại tool. ⚠️ Chỉ đáng làm nếu harness của bạn **không** tự cắt bớt output tool; trên Claude Code (có tự cắt) RTK đo ra +7.6% chi phí — xem [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
+| Đo lường cho thấy output tool/CLI nhiễu (build log, chạy test, JSON) chi phối input | Proxy/hook nén output tool lắp trực tiếp (RTK/Headroom) — không cần thiết kế lại tool. ⚠️ Chỉ đáng làm nếu harness của bạn **không** tự cắt bớt output tool **và** công cụ gắn được qua hook chứ không phải file rules; trên Claude Code (có tự cắt) RTK đo ra +7.6% chi phí. Kiểm tra harness của bạn ở [`../HARNESS.md`](../HARNESS.md) trước, rồi tới [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
 | Agent tốn phần lớn token khám phá repo để định hướng (chi phí 67–76% tìm file) | Bản đồ code/gói context đã check-in; đọc theo yêu cầu ưu tiên grep. Trên repo trên ~1.000 file, **CodeGraph** là lựa chọn có bằng chứng mạnh nhất (−69% token, −60% chi phí trên 7 repo) — nhưng xem cảnh báo bypass subagent bên dưới | `code-maps.md`, [`../tools/codegraph.md`](../tools/codegraph.md) |
 | Agent có xu hướng xây thừa (scaffold UI, lớp abstraction đón đầu, tự viết lại thứ stdlib đã có) | **Ponytail** tiêm qua SessionStart hook — **−10.3% chi phí (p=0.004)**, con số agent-specific tốt nhất hiện có. Cài thụ động (chỉ chép file rules) kích hoạt **0/10 phiên**: bắt buộc dùng hook | [`../tools/ponytail.md`](../tools/ponytail.md) |
 | Một endpoint hỏi-đáp/phân tích chỉ-đọc, lặp lại cao gia nhập hệ thống | Cache cấp phản hồi (ngữ nghĩa) tại gateway — tránh xa các route chỉnh sửa code | `semantic-caching.md` |
@@ -378,6 +391,19 @@ is cheaper than retrofitting the capability** in almost every case.
 > choice — but then Tier 0 becomes your backlog, in this order: caching →
 > tool budgets → compaction → diff edits → deferred tools.
 
+**This choice also determines your Tier 2 list.** A tool is only worth
+installing where the harness leaves the gap open *and* the tool can attach
+deterministically — miss either condition and it measures at or below zero.
+Which Tier 2 rows survive on Claude Code, Codex CLI, Gemini CLI and Cline is
+worked out per agent in [`../HARNESS.md`](../HARNESS.md); the short version:
+
+| Your harness | The Tier 2 rows that change |
+| --- | --- |
+| Claude Code | Drop output compression entirely (measured +7.6%); rulesets belong on hooks |
+| Codex CLI | Output compression becomes a config line (`tool_output_token_limit`), as does verbosity (`model_verbosity`) |
+| Gemini CLI | Output compression *and* tool-schema trimming are both native (`truncateToolOutputThreshold`, pre-tool-selection hooks) |
+| Cline | Output compression and code maps are the real gaps — but no hooks, so verify anything ruleset-shaped actually fires |
+
 ---
 
 ## Tier 1 — The necessary custom work
@@ -463,7 +489,7 @@ the best effort-to-payoff ratio in the entire catalog.
 | Map-reduce fan-outs over shared context appear | Warm-one-then-fan gate | `fan-out-warming.md` |
 | Agents start consuming screenshots (browser/computer use) | Resolution budgeting + stale-screenshot pruning | `image-downsampling.md` |
 | A docs/Q&A workload joins the fleet | Document reuse + retrieval tuning | `document-reuse.md`, `retrieval-tuning.md` |
-| Telemetry shows noisy tool/CLI output (build logs, test runs, JSON) dominating input | Drop-in tool-output compression proxy/hook (RTK/Headroom) — no tool redesign. ⚠️ Only worth it if your harness does **not** already truncate tool output; on Claude Code (which does) RTK measured +7.6% cost — see [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
+| Telemetry shows noisy tool/CLI output (build logs, test runs, JSON) dominating input | Drop-in tool-output compression proxy/hook (RTK/Headroom) — no tool redesign. ⚠️ Only worth it if your harness does **not** already truncate tool output **and** the tool attaches via a hook rather than a rules file; on Claude Code (which truncates) RTK measured +7.6% cost. Check your harness first in [`../HARNESS.md`](../HARNESS.md), then [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
 | Agents spend most tokens exploring the repo to orient (the 67–76% file-finding tax) | Checked-in code map / context pack; grep-first just-in-time reads. Above ~1,000 files **CodeGraph** is the best-evidenced option (−69% tokens, −60% cost across 7 repos) — but see the subagent-bypass warning below | `code-maps.md`, [`../tools/codegraph.md`](../tools/codegraph.md) |
 | Agents tend to over-build (UI scaffolding, speculative abstraction layers, re-implementing stdlib) | **Ponytail** injected via a SessionStart hook — **−10.3% cost (p=0.004)**, the strongest agent-specific number that exists. A passive install (rules files only) activated **0 times in 10 sessions**: the hook is mandatory | [`../tools/ponytail.md`](../tools/ponytail.md) |
 | A high-repeat, read-only Q&A/analytics endpoint joins the fleet | Response-level (semantic) cache at the gateway — keep off coding-edit routes | `semantic-caching.md` |

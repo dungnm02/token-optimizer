@@ -169,6 +169,101 @@ Chi tiết triển khai: [`setups/coding-setup-cline.md`](setups/coding-setup-cl
 
 ---
 
+## Kết luận: cài gì, bỏ gì
+
+### Quy tắc hai điều kiện
+
+Một công cụ bên thứ ba chỉ đáng cài khi **cả hai** điều sau cùng đúng:
+
+1. **Harness còn để hở khe đó.** Nếu harness đã cắt output, đã cache, đã cắt
+   tool result cũ, thì công cụ chỉ đang nén thứ đằng nào cũng bị vứt.
+2. **Công cụ gắn vào được một cách tất định.** Hook/plugin thì *chắc chắn*
+   chạy. File rules phụ thuộc vào việc model có tự nguyện tuân hay không.
+
+|  | Gắn tất định được | Chỉ gắn được kiểu thụ động |
+| --- | --- | --- |
+| **Harness còn hở** | ✅ Cài — đây là ô duy nhất có kết quả dương | ⚠️ Khe hở thật nhưng công cụ có thể không chạy → phải đo |
+| **Harness đã bịt** | ❌ Cài cũng làm lại việc đã làm | ❌ Tệ nhất của cả hai |
+
+Bốn kết quả đã đo trong kho này đều rơi đúng vào bảng trên:
+
+- Thiếu điều kiện 1 → **RTK trên Claude Code: +7.6%.** Harness đã cắt sẵn.
+- Thiếu điều kiện 2 → **ruleset ở tầng file rules: kích hoạt 0/10 phiên.**
+- Đủ cả hai → **ponytail qua hook −10.3%**, **CodeGraph qua MCP −60% chi phí.**
+
+### Nguyên tắc thứ hai: nút cấu hình thắng công cụ
+
+Trên Codex và Gemini, nguyên nhân đắt nhất (3.1 — output tool quá khổ) sửa
+được bằng **một dòng cấu hình**. Cài một bộ nén output ở đó là trả thêm độ
+phức tạp, thêm điểm hỏng, thêm token, để đạt thứ mà `tool_output_token_limit`
+hay `truncateToolOutputThreshold` đã cho không.
+
+### Bảng phán quyết theo công cụ
+
+| Công cụ | Claude Code | Codex CLI | Gemini CLI | Cline |
+| --- | --- | --- | --- | --- |
+| **RTK / Headroom** (nén output) | ❌ **đã đo +7.6%** | ❌ dùng `tool_output_token_limit` | ❌ dùng `truncateToolOutputThreshold` | ⚠️ khe hở thật, tầng gắn yếu — **đo trước** |
+| **Ponytail** (ruleset chống xây thừa) | ✅ **−10.3% qua hook** | ⚠️ hook không phủ thao tác sửa file | ⚪ hook/extension hỗ trợ, chưa đo | ❌ tầng file rules (tầng 0/10) |
+| **CodeGraph** (graph qua MCP) | ✅ **−60% chi phí**, repo >1.000 file | ⚪ MCP hỗ trợ, chưa đo | ⚪ MCP hỗ trợ, chưa đo | 🚫 không hỗ trợ |
+| **Caveman** (skill viết cộc lốc) | ⚠️ 8.5%, rủi ro đuôi nặng | ❌ dùng `model_verbosity` | ⚪ chưa đo | ⚪ chưa đo |
+| **Code map** (Repomix, aider, Codesight) | ⚪ subagent đã gánh phần khám phá | ⚪ subagent đã gánh | ⚪ subagent đã gánh | ✅ **cần nhất ở đây** — không có subagent |
+| **Telemetry** (Langfuse, LiteLLM) | ✅ | ✅ | ✅ | ✅ (UI đã tốt, nhưng cần cho cả đội) |
+| **Router động** (RouteLLM) | ❌ map tĩnh đủ | ❌ map tĩnh đủ | ❌ map tĩnh đủ | ❌ Plan/Act *chính là* router |
+| **LLMLingua** (nén prompt) | ❌ rủi ro sai lệch trên code | ❌ | ❌ | ❌ |
+
+Đọc kèm [trạng thái đo lường](#trạng-thái-đo-lường) bên dưới: cột Claude Code
+là kết quả đo; ba cột còn lại là suy luận từ năng lực harness.
+
+### Thiết lập đề xuất theo từng agent
+
+**Claude Code** — harness đã bịt gần hết; đừng nén, hãy *ngăn việc phát sinh*.
+
+1. Ruleset chống xây thừa nạp qua **hook** (đòn bẩy đã đo được duy nhất ở đây).
+2. **CodeGraph** qua MCP nếu repo trên ~1.000 file.
+3. Telemetry + ba cảnh báo; map model/effort tĩnh theo vai trò subagent.
+4. Quy ước bàn giao subagent (briefing vào, artifact ra).
+5. **Không** cài: RTK, Headroom, bộ nén output bất kỳ, tầng nén thứ hai.
+
+**Codex CLI** — sửa bằng `config.toml` trước, công cụ sau.
+
+1. Đặt `tool_output_token_limit` (nguyên nhân 3.1) và
+   `model_auto_compact_token_limit` (2.1).
+2. Đặt `model_reasoning_effort` và `model_verbosity` theo vai trò (5.1, 5.2)
+   — không harness nào khác cho bạn hai nút này.
+3. **CodeGraph** qua MCP cho repo lớn.
+4. Ruleset: nạp được, nhưng **hook chỉ bắt tool shell** — hãy xác minh nó thực
+   sự chạy trên đường sửa file trước khi tin.
+5. **Không** cài: bộ nén output (bước 1 đã làm), Caveman (bước 2 đã làm).
+
+**Gemini CLI** — dùng tầng context có sẵn, đúng thứ tự.
+
+1. `truncateToolOutputThreshold` trước (cắt là miễn phí).
+2. *Rồi mới* bật `summarizeToolOutput`/distillation cho những tool thực sự
+   sinh output lớn — tóm tắt bằng LLM tự nó tốn token.
+3. Hook **trước khi chọn tool** để lọc tập tool mỗi lượt — đây là cách khắc
+   phục nguyên nhân 3.4 mà không cần công cụ nào.
+4. Chỉnh `compressionThreshold` / `historyWindow` thay vì thêm lớp nén.
+5. **Không** cài: bộ nén output bên ngoài, tầng nén context thứ hai.
+
+**Cline** — khe hở lớn nhất, bằng chứng ít nhất. Làm phần miễn phí trước.
+
+1. **Tắt server MCP không dùng hôm nay.** Không có tải tool trì hoãn, đây
+   thường là khoản tiết kiệm lớn nhất và tốn 0 công.
+2. `.clineignore` + `.clinerules` gọn và đóng băng giữa task.
+3. **Plan/Act** hai model — router của bạn, đã có sẵn.
+4. **Code map** (Repomix/Codesight) hoặc memory MCP: không có subagent nên
+   cold-start giữa các task là khe hở cấu trúc thật.
+5. Bộ nén output: khe hở *có thật*, nhưng mọi công cụ đều gắn ở tầng file
+   rules. Bật **từng cái một**, kèm before/after — đừng bật cả bộ ba.
+6. **Không** cài: Ponytail (tầng 0/10), CodeGraph (không hỗ trợ), router động.
+
+Chi tiết đầy đủ cho Cline:
+[`setups/coding-setup-cline.md`](setups/coding-setup-cline.md). Phần việc tùy
+biến còn lại — telemetry, kỷ luật prompt, bàn giao, map model — giống nhau ở
+cả bốn harness: [`setups/recommended-setup.md`](setups/recommended-setup.md).
+
+---
+
 ## Trạng thái đo lường
 
 | | Claude Code | Codex CLI | Gemini CLI | Cline |
@@ -374,6 +469,116 @@ Two structural gaps, both consequential:
   actually firing, not assumed.
 
 Implementation detail: [`setups/coding-setup-cline.md`](setups/coding-setup-cline.md).
+
+---
+
+## Conclusion: what to install, what to skip
+
+### The two-condition rule
+
+A third-party tool earns its place only when **both** of these hold:
+
+1. **The harness leaves that gap open.** If it already truncates output,
+   caches, and prunes stale tool results, the tool is compressing what was
+   going to be discarded anyway.
+2. **The tool can attach deterministically.** A hook or plugin *definitely*
+   runs. A rules file depends on the model choosing to comply.
+
+|  | Attaches deterministically | Passive attachment only |
+| --- | --- | --- |
+| **Harness leaves the gap** | ✅ Install — the only cell with a positive result | ⚠️ Real gap, but the tool may never fire → measure |
+| **Harness closes the gap** | ❌ Duplicates work already done | ❌ Worst of both |
+
+All four measured results in this repo land exactly where that table predicts:
+
+- Fails condition 1 → **RTK on Claude Code: +7.6%.** The harness already
+  truncated.
+- Fails condition 2 → **a ruleset at the rules-file tier: 0 activations in
+  10 sessions.**
+- Both hold → **ponytail via hooks at −10.3%**, **CodeGraph via MCP at −60%
+  cost.**
+
+### The second principle: a config dial beats a tool
+
+On Codex and Gemini, the most expensive cause (3.1 — oversized tool output)
+is fixed by **one line of configuration**. Installing an output compressor
+there buys complexity, a new failure mode, and its own token overhead to
+reach what `tool_output_token_limit` or `truncateToolOutputThreshold` already
+gives you for free.
+
+### Verdict by tool
+
+| Tool | Claude Code | Codex CLI | Gemini CLI | Cline |
+| --- | --- | --- | --- | --- |
+| **RTK / Headroom** (output compression) | ❌ **measured +7.6%** | ❌ use `tool_output_token_limit` | ❌ use `truncateToolOutputThreshold` | ⚠️ real gap, weak attachment — **measure first** |
+| **Ponytail** (anti-over-building ruleset) | ✅ **−10.3% via hooks** | ⚠️ hooks don't cover file edits | ⚪ hook/extension supported, unmeasured | ❌ rules-file tier (the 0/10 tier) |
+| **CodeGraph** (graph over MCP) | ✅ **−60% cost**, repos >1,000 files | ⚪ MCP supported, unmeasured | ⚪ MCP supported, unmeasured | 🚫 unsupported |
+| **Caveman** (terse-output skill) | ⚠️ 8.5%, severe tail risk | ❌ use `model_verbosity` | ⚪ unmeasured | ⚪ unmeasured |
+| **Code maps** (Repomix, aider, Codesight) | ⚪ subagents already absorb discovery | ⚪ subagents absorb it | ⚪ subagents absorb it | ✅ **needed most here** — no subagents |
+| **Telemetry** (Langfuse, LiteLLM) | ✅ | ✅ | ✅ | ✅ (good UI already, but you need fleet-level) |
+| **Dynamic router** (RouteLLM) | ❌ static map suffices | ❌ static map suffices | ❌ static map suffices | ❌ Plan/Act *is* the router |
+| **LLMLingua** (prompt compression) | ❌ fidelity risk on code | ❌ | ❌ | ❌ |
+
+Read alongside [measurement status](#measurement-status) below: the Claude
+Code column is measured, the other three are inferred from harness
+capabilities.
+
+### Recommended setup, per agent
+
+**Claude Code** — the harness closes almost everything; don't compress,
+*prevent the work*.
+
+1. Anti-over-building ruleset loaded via a **hook** (the only lever with a
+   measured result here).
+2. **CodeGraph** over MCP if the repo is above ~1,000 files.
+3. Telemetry + the three alerts; static model/effort map per subagent role.
+4. Subagent handoff conventions (briefing in, artifact out).
+5. **Don't install:** RTK, Headroom, any output compressor, a second
+   compaction layer.
+
+**Codex CLI** — reach for `config.toml` before reaching for a tool.
+
+1. Set `tool_output_token_limit` (cause 3.1) and
+   `model_auto_compact_token_limit` (2.1).
+2. Set `model_reasoning_effort` and `model_verbosity` per role (5.1, 5.2) —
+   no other harness gives you both dials.
+3. **CodeGraph** over MCP for large repos.
+4. Rulesets load fine, but **hooks intercept the shell tool only** — verify
+   yours actually fires on the file-editing path before trusting it.
+5. **Don't install:** an output compressor (step 1 did it), Caveman (step 2
+   did it).
+
+**Gemini CLI** — use the built-in context tiers, in the right order.
+
+1. `truncateToolOutputThreshold` first — truncation is free.
+2. *Then* enable `summarizeToolOutput`/distillation, only for tools that
+   genuinely emit large output. LLM summarization costs tokens itself.
+3. **Pre-tool-selection hooks** to filter the tool set per turn — this is the
+   fix for cause 3.4 with no tool to install.
+4. Tune `compressionThreshold` / `historyWindow` rather than adding a
+   compaction layer.
+5. **Don't install:** external output compressors, a second context-
+   compression layer.
+
+**Cline** — the widest gaps and the thinnest evidence. Take the free wins first.
+
+1. **Disable MCP servers you aren't using today.** With no deferred tool
+   loading, this is usually the single biggest saving and costs nothing.
+2. `.clineignore` plus a lean `.clinerules`, frozen mid-task.
+3. **Plan/Act** two-model split — your router, already built in.
+4. **Code map** (Repomix/Codesight) or a memory MCP: with no subagents,
+   cross-task cold start is a genuine structural gap.
+5. Output compression: the gap is *real*, but every tool attaches at the
+   rules-file tier. Enable them **one at a time** with a before/after — not
+   as a trio.
+6. **Don't install:** Ponytail (the 0/10 tier), CodeGraph (unsupported), a
+   dynamic router.
+
+Full Cline detail:
+[`setups/coding-setup-cline.md`](setups/coding-setup-cline.md). The remaining
+custom work — telemetry, prompt stability, handoffs, the model map — is the
+same on all four harnesses:
+[`setups/recommended-setup.md`](setups/recommended-setup.md).
 
 ---
 
