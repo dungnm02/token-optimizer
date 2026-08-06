@@ -148,6 +148,24 @@ Danh sách này cố ý chỉ nhắm vào chỗ còn trống: Cline đã tự lo
 sửa theo diff, và caching (§Tier 0), nên công cụ bên thứ ba chỉ đáng
 thêm ở những chỗ Cline còn thiếu.
 
+### Trước hết: hai công cụ có bằng chứng tốt nhất đều không tới được Cline
+
+Xếp theo bằng chứng ([`../PROOF.md`](../PROOF.md)), hai công cụ agent-specific
+duy nhất từng đo ra kết quả tốt là Ponytail (−10.3% chi phí) và CodeGraph
+(−60% chi phí). Cả hai đều **không** dùng được nguyên trạng ở đây:
+
+| Công cụ | Trạng thái trên Cline | Làm gì thay thế |
+| --- | --- | --- |
+| Ponytail | ⚠️ Chỉ có adapter *instruction* (chép file vào `.clinerules/`) — đúng chế độ thụ động đã kích hoạt **0/10 phiên** khi đo. Cline không có hook/plugin để tiêm tất định | Lấy **cơ chế**, bỏ **công cụ**: viết vài dòng "xây tối thiểu, không đón đầu abstraction" vào `.clinerules` và **tự kiểm chứng nó có kích hoạt không** (giao một tác vụ mời gọi xây thừa, xem agent có tuân không). Nếu không quan sát được, coi như chưa cài |
+| CodeGraph | 🚫 Không hỗ trợ — danh sách adapter không có Cline | TokenSave MCP hoặc bản đồ Repomix ở mục khởi động nguội bên dưới. Cả hai **chưa được đo** |
+
+Hệ quả cho Cline: **quy luật "ngăn công việc thắng nén công việc" vẫn đúng,
+nhưng phải tự tay hiện thực hóa.** Cline là vùng trắng về đo lường — chưa
+công cụ agent-specific nào từng được benchmark trên nó, nên mọi bảng dưới đây
+là *giả thuyết có cơ sở*, không phải kết quả. Chỉ tầng bình duyệt độc-lập-với-
+agent (LLMLingua, RouteLLM, gateway/telemetry) là đề xuất được một cách trung
+thực ở đây.
+
 ### Output tool quá lớn — nguyên nhân 3.1, 2.1 → [`tool-output-compression.md`](../solutions/tool-output-compression.md)
 
 Chỗ trống lớn nhất của Cline: nội dung file được đọc và output lệnh đi
@@ -243,7 +261,10 @@ của profile này rồi).
 5. ☐ Thói quen: một tác vụ = một mục tiêu, `/smol` ở điểm dừng,
    `/newtask` ở điểm chuyển giai đoạn, bật Focus Chain
 6. ☐ (Cấp đội) Gateway LiteLLM + Langfuse với ba cảnh báo
-7. ☐ Chỉ thêm add-on khi số liệu cho thấy cần, và **thêm từng cái một kèm
+7. ☐ Vài dòng "xây tối thiểu" trong `.clinerules` (cơ chế của Ponytail, tự
+   hiện thực hóa) — và **xác minh nó thật sự kích hoạt** bằng một tác vụ
+   mời gọi xây thừa
+8. ☐ Chỉ thêm add-on khi số liệu cho thấy cần, và **thêm từng cái một kèm
    phép đo trước/sau**: RTK/Headroom cho output tool quá lớn, Repomix hoặc
    OpenMemory MCP cho khởi động nguội, Caveman cho các luồng nội bộ dài
    dòng. Không cái nào trong số này từng được benchmark trên Cline —
@@ -396,6 +417,24 @@ gap-shaped: Cline already covers compaction, diff edits, and caching
 natively (§Tier 0), so third-party tools are only worth adding where Cline
 has a gap.
 
+### First: the two best-evidenced tools don't reach Cline
+
+Ranked by evidence ([`../PROOF.md`](../PROOF.md)), the only two agent-specific
+tools that measured well are Ponytail (−10.3% cost) and CodeGraph (−60% cost).
+Neither is usable here as-is:
+
+| Tool | Status on Cline | What to do instead |
+| --- | --- | --- |
+| Ponytail | ⚠️ *Instruction-only* adapter (copy files into `.clinerules/`) — precisely the passive mode that activated **0 times in 10 sessions** under measurement. Cline has no hook/plugin for deterministic injection | Take the **mechanism**, drop the **tool**: put a few lines of "build the minimum, no speculative abstraction" into `.clinerules` and **verify it actually fires** (give the agent a task that invites over-building and watch). If you can't observe it firing, assume it isn't installed |
+| CodeGraph | 🚫 Unsupported — Cline is not in the adapter list | TokenSave MCP or a Repomix map from the cold-start section below. Both are **unmeasured** |
+
+The consequence for Cline: **"preventing work beats compressing it" still
+holds, but you have to implement it by hand.** Cline is a measurement desert —
+no agent-specific tool has ever been benchmarked on it, so every table below
+is a *reasoned hypothesis*, not a result. Only the agent-independent
+peer-reviewed tier (LLMLingua, RouteLLM, gateway/telemetry) can be
+recommended here honestly.
+
 ### Tool-output bloat — causes 3.1, 2.1 → [`tool-output-compression.md`](../solutions/tool-output-compression.md)
 
 Cline's biggest native gap: file reads and command output enter context
@@ -488,7 +527,10 @@ model router (the Plan/Act split *is* the router for this profile).
 5. ☐ Habits: one task = one goal, `/smol` at pauses, `/newtask` at
    transitions, Focus Chain on
 6. ☐ (Team) LiteLLM gateway + Langfuse with the three alerts
-7. ☐ Gap add-ons where telemetry justifies them, **one at a time with a
+7. ☐ A few "build the minimum" lines in `.clinerules` (Ponytail's mechanism,
+   hand-rolled) — and **verify it actually fires** with a task that invites
+   over-building
+8. ☐ Gap add-ons where telemetry justifies them, **one at a time with a
    before/after**: RTK/Headroom for tool-output bloat, Repomix map or
    OpenMemory MCP for cold starts, Caveman for verbose internal routes. None
    of these has been benchmarked on Cline — see [`../PROOF.md`](../PROOF.md)

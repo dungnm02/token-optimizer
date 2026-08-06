@@ -219,6 +219,42 @@ tier batch giảm 50% cùng Files API (cả hai đều ảnh hưởng trực ti�
 
 ---
 
+## 4. Add-on bên thứ ba, xếp theo bằng chứng
+
+Ba mục trên là *cấu hình*; phần này là *công cụ thêm vào*. Xếp theo
+[`../PROOF.md`](../PROOF.md), không theo mức phổ biến.
+
+| Add-on | Claude (Claude Code) | GPT (Codex CLI) | Gemini (Gemini CLI) |
+| --- | --- | --- | --- |
+| **Ponytail** — ngăn xây thừa | ✅ **−10.3% chi phí (p=0.004)**, tiêm qua SessionStart hook | ⚪ hỗ trợ plugin, **chưa đo** — nhưng có tiêm tất định, nên đường tích hợp lành | ⚪ hỗ trợ extension, **chưa đo** |
+| **CodeGraph** — knowledge graph local qua MCP | ✅ **−69% token, −60% chi phí** trên 7 repo | ⚪ hỗ trợ, **chưa đo** | ⚪ hỗ trợ, **chưa đo** |
+| **Headroom** — proxy nén kết quả tool | ⚪ chưa có A/B độc lập | ⚪ chưa đo | ⚪ chưa đo |
+| **Caveman (skill)** — ép trả lời cộc lốc | ⚠️ **8.5%** và đó là trần; rủi ro đuôi $8.29 vs $0.33 | ⚪ chưa đo | ⚪ chưa đo |
+| **RTK** — nén output shell | ❌ **+7.6% chi phí đo được** — đừng cài | ⚪ tầng rules-file, chưa đo (nguồn mâu thuẫn về tầng hook) | ⚪ tầng hook, chưa đo |
+| **LLMLingua / RouteLLM** — bình duyệt, độc lập với agent | ✅ | ✅ | ✅ |
+| **JetBrains Context** — thương mại | ✅ hỗ trợ | ✅ hỗ trợ | ❌ không hỗ trợ (Claude Code, Codex, Junie) |
+
+Bốn điều cần biết trước khi đưa bất kỳ dòng nào vào quy trình mua sắm:
+
+1. **Thứ tự đúng là cấu hình trước, add-on sau.** Mọi con số trên đều là giá
+   trị biên so với một harness đã bật đầy đủ Tier 0. Chúng không cứu được một
+   tuyến truy cập đã mất Batch API hay caching tự động (xem ma trận tuyến truy
+   cập ở mục 1).
+2. **Ponytail là món dễ duyệt nhất.** MIT, thuần Markdown, không có thành phần
+   chạy lúc runtime, không gọi mạng — chép file là xong. Nhưng bắt buộc phải
+   tiêm qua hook: cài thụ động kích hoạt **0/10 phiên**.
+3. **CodeGraph hợp với chính sách dữ liệu doanh nghiệp** (index 100% local,
+   SQLite). Hai cạm bẫy đúng kiểu doanh nghiệp: SQLite WAL **không đáng tin
+   trên network share** và một số cấu hình WSL2 — tức là ổ đĩa VDI/roaming
+   profile là vùng rủi ro; và index bị bỏ qua hoàn toàn nếu agent giao việc
+   khám phá cho subagent đọc file.
+4. **Headroom có rủi ro chuỗi cung ứng thật.** Ba fork GitHub, gói pip tên
+   `headroom-ai`, image Docker ở namespace thứ tư (`ghcr.io/chopratejas/`).
+   Với một proxy nằm giữa agent và API key doanh nghiệp, hãy chốt đúng nguồn
+   và ghim phiên bản trước khi phê duyệt.
+
+---
+
 ## Vận hành một hệ thống hỗn hợp (hầu hết doanh nghiệp cuối cùng đều ở đây)
 
 1. **Một gateway, một schema đo lường.** Đặt một gateway (LiteLLM, Portkey,
@@ -473,6 +509,44 @@ token-bill-relevant).
    counts) into the same Langfuse/OTel pipeline — keep one dashboard schema
    across all three vendors (the four-quantity model from
    [`../CAUSE.md`](../CAUSE.md) §Measurement Primer maps cleanly).
+
+---
+
+## 4. Third-party add-ons, ranked by evidence
+
+The three sections above are *configuration*; this one is *things you install*.
+Ranked by [`../PROOF.md`](../PROOF.md), not by popularity.
+
+| Add-on | Claude (Claude Code) | GPT (Codex CLI) | Gemini (Gemini CLI) |
+| --- | --- | --- | --- |
+| **Ponytail** — over-build prevention | ✅ **−10.3% cost (p=0.004)**, injected via SessionStart hook | ⚪ plugin-supported, **unmeasured** — but deterministic injection exists, so the integration path is sound | ⚪ extension-supported, **unmeasured** |
+| **CodeGraph** — local knowledge graph over MCP | ✅ **−69% tokens, −60% cost** across 7 repos | ⚪ supported, **unmeasured** | ⚪ supported, **unmeasured** |
+| **Headroom** — tool-result compression proxy | ⚪ no independent A/B | ⚪ unmeasured | ⚪ unmeasured |
+| **Caveman (skill)** — terse output | ⚠️ **8.5%** and that is the ceiling; $8.29-vs-$0.33 tail risk | ⚪ unmeasured | ⚪ unmeasured |
+| **RTK** — shell-output compression | ❌ **+7.6% cost measured** — don't install | ⚪ rules-file tier, unmeasured (sources conflict on a hook tier) | ⚪ hook tier, unmeasured |
+| **LLMLingua / RouteLLM** — peer-reviewed, agent-independent | ✅ | ✅ | ✅ |
+| **JetBrains Context** — commercial | ✅ supported | ✅ supported | ❌ unsupported (Claude Code, Codex, Junie) |
+
+Four things to know before any of this reaches procurement:
+
+1. **Configuration first, add-ons second.** Every figure above is marginal
+   against a harness with Tier 0 fully enabled. None of it rescues an access
+   route that lost the Batch API or automatic caching (see the route matrix in
+   §1).
+2. **Ponytail is the easiest thing here to approve.** MIT, pure Markdown, no
+   runtime component, no network calls — installation is a file copy. But hook
+   injection is mandatory: a passive install activated **0 times in 10
+   sessions**.
+3. **CodeGraph fits enterprise data policy** (index is 100% local, SQLite).
+   Two distinctly enterprise traps: SQLite WAL is **unreliable on network
+   shares** and some WSL2 configurations — so VDI and roaming-profile drives
+   are the risk zone; and the index is bypassed entirely if agents delegate
+   exploration to file-reading subagents.
+4. **Headroom carries a real supply-chain risk.** Three GitHub forks, a pip
+   package named `headroom-ai`, and a Docker image in a fourth namespace
+   (`ghcr.io/chopratejas/`). For a proxy sitting between your agents and your
+   enterprise API keys, confirm the source and pin the version before
+   approval.
 
 ---
 

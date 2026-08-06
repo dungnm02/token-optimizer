@@ -8,7 +8,7 @@ thử nghiệm có đối chứng. Ở đâu không có phép đo, trang này n�
 không có — một ô trống ở đây có giá trị hơn một con số mượn từ trang
 marketing.
 
-> Trạng thái: tài liệu sống. Cập nhật lần cuối 2026-08-05. Chỉ nhận nguồn
+> Trạng thái: tài liệu sống. Cập nhật lần cuối 2026-08-06. Chỉ nhận nguồn
 > có công bố phương pháp; xem [Thang bằng chứng](#thang-bằng-chứng).
 
 ## Cách đọc những con số này: baseline chính là harness
@@ -439,7 +439,7 @@ tranh. Cả hai benchmark cũng dùng một harness (SkillsBench), một model
 ## Những chỗ đã sửa trong kho này
 
 Trang này từng mâu thuẫn với các con số ở nơi khác. **Đã xử lý xong
-2026-08-05**, ghi lại để truy vết:
+2026-08-05 và 2026-08-06**, ghi lại để truy vết:
 
 | Vị trí | Vấn đề | Đã sửa thành |
 | --- | --- | --- |
@@ -452,6 +452,7 @@ Trang này từng mâu thuẫn với các con số ở nơi khác. **Đã xử l
 | `setups/recommended-setup.md` | Caveman "cắt token output trên lưu lượng agent" | Thêm 8.5% đo được và rủi ro đuôi $8.29 vs $0.33 |
 | `solutions/code-maps.md`, `CAUSE.md` | "25–60K token" không có nguồn | Đánh dấu là ước lượng không nguồn; thêm CodeGraph làm lựa chọn có bằng chứng |
 | `README.md`, `SUMMARY.md`, `solutions/README.md` | Không có đường dẫn tới trang này | Đã liên kết, kèm cảnh báo đọc trước khi tin phần trăm |
+| Cả ba tài liệu trong `setups/` | Chỉ nêu các công cụ đo ra ~0 hoặc âm (RTK, Caveman, Headroom); **không hề nhắc** hai công cụ duy nhất đo ra có lợi | Ponytail và CodeGraph đã vào cả ba, xếp theo bằng chứng: `recommended-setup.md` thêm cả hai vào Tier 2 + bộ công cụ tham chiếu kèm cảnh báo bypass subagent; `coding-setup-cline.md` nêu rõ cả hai **không tới được Cline** và chỉ ra cách tự làm lấy cơ chế; `coding-setup-enterprise.md` thêm ma trận add-on theo từng nhà cung cấp |
 
 ## Nguồn
 
@@ -482,7 +483,7 @@ Each entry below pairs an advertised claim with the number a controlled trial
 produced. Where no measurement exists, the page says so — a blank here is
 worth more than a figure borrowed from a marketing page.
 
-> Status: living document. Last updated 2026-08-05. Only sources with a
+> Status: living document. Last updated 2026-08-06. Only sources with a
 > published methodology are admitted; see [Evidence tiers](#evidence-tiers).
 
 ## Reading these numbers: the baseline is the harness
@@ -928,7 +929,7 @@ product. Both benchmarks also used one harness (SkillsBench), one model
 ## Corrections applied to this repo
 
 This page used to contradict figures stated elsewhere. **Resolved
-2026-08-05**; logged here for traceability:
+2026-08-05 and 2026-08-06**; logged here for traceability:
 
 | Location | Problem | Now reads |
 | --- | --- | --- |
@@ -941,6 +942,7 @@ This page used to contradict figures stated elsewhere. **Resolved
 | `setups/recommended-setup.md` | Caveman "output-token cut on agent traffic" | Measured 8.5% plus the $8.29-vs-$0.33 tail risk |
 | `solutions/code-maps.md`, `CAUSE.md` | Unsourced "25–60K tokens" | Marked an unsourced estimate; CodeGraph added as the evidenced alternative |
 | `README.md`, `SUMMARY.md`, `solutions/README.md` | No route to this page | Linked, with a warning to read it before trusting any percentage |
+| All three `setups/` documents | Named only the tools that measured ~0 or negative (RTK, Caveman, Headroom); the two that measured beneficial were **absent entirely** | Ponytail and CodeGraph added to all three, ranked by evidence: `recommended-setup.md` adds both to Tier 2 + the reference stack with the subagent-bypass warning; `coding-setup-cline.md` states plainly that neither **reaches Cline** and gives the hand-rolled mechanism instead; `coding-setup-enterprise.md` gains a per-vendor add-on matrix |
 
 ## Sources
 

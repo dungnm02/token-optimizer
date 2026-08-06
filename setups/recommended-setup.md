@@ -164,7 +164,8 @@ phí-trên-lợi-ích tốt nhất trong toàn bộ danh mục.
 | Agent bắt đầu tiêu thụ screenshot (browser/computer use) | Ngân sách độ phân giải + cắt tỉa screenshot cũ | `image-downsampling.md` |
 | Một khối lượng công việc tài liệu/hỏi-đáp gia nhập hệ thống | Tái sử dụng tài liệu + tinh chỉnh truy xuất | `document-reuse.md`, `retrieval-tuning.md` |
 | Đo lường cho thấy output tool/CLI nhiễu (build log, chạy test, JSON) chi phối input | Proxy/hook nén output tool lắp trực tiếp (RTK/Headroom) — không cần thiết kế lại tool. ⚠️ Chỉ đáng làm nếu harness của bạn **không** tự cắt bớt output tool; trên Claude Code (có tự cắt) RTK đo ra +7.6% chi phí — xem [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
-| Agent tốn phần lớn token khám phá repo để định hướng (chi phí 67–76% tìm file) | Bản đồ code/gói context đã check-in; đọc theo yêu cầu ưu tiên grep | `code-maps.md` |
+| Agent tốn phần lớn token khám phá repo để định hướng (chi phí 67–76% tìm file) | Bản đồ code/gói context đã check-in; đọc theo yêu cầu ưu tiên grep. Trên repo trên ~1.000 file, **CodeGraph** là lựa chọn có bằng chứng mạnh nhất (−69% token, −60% chi phí trên 7 repo) — nhưng xem cảnh báo bypass subagent bên dưới | `code-maps.md`, [`../tools/codegraph.md`](../tools/codegraph.md) |
+| Agent có xu hướng xây thừa (scaffold UI, lớp abstraction đón đầu, tự viết lại thứ stdlib đã có) | **Ponytail** tiêm qua SessionStart hook — **−10.3% chi phí (p=0.004)**, con số agent-specific tốt nhất hiện có. Cài thụ động (chỉ chép file rules) kích hoạt **0/10 phiên**: bắt buộc dùng hook | [`../tools/ponytail.md`](../tools/ponytail.md) |
 | Một endpoint hỏi-đáp/phân tích chỉ-đọc, lặp lại cao gia nhập hệ thống | Cache cấp phản hồi (ngữ nghĩa) tại gateway — tránh xa các route chỉnh sửa code | `semantic-caching.md` |
 
 ## Tier 3 — Bỏ qua một cách rõ ràng (cho profile này, cho đến khi có bằng chứng ngược lại)
@@ -202,7 +203,17 @@ dạng* mới là điều quan trọng.
 | Batch Tier 2 | API batch của nhà cung cấp qua **LiteLLM** | Gọi SDK trực tiếp | Gửi thống nhất nếu bạn dùng nhiều nhà cung cấp |
 | CI hướng sự kiện Tier 2 | **Đăng ký PR của harness + webhook GitHub** | Temporal (MIT) khi workflow vượt quá khả năng của harness | Không hạ tầng mới lúc đầu |
 | Gỡ scaffolding Tier 2 | Lượt loại bỏ bằng **promptfoo (MIT)** | DSPy (MIT) khi hạ tầng đánh giá đã trưởng thành | Các biến thể song song với chi phí token mỗi biến thể |
+| Ngăn xây thừa (Tier 2) | **Ponytail (MIT)** tiêm qua SessionStart hook | Một rule "xây tối thiểu" viết tay trong prompt orchestrator | ✅ **−10.3% chi phí (p=0.004)** — bằng chứng hạng A duy nhất trong nhóm skill. Ngăn công việc, không nén công việc. Bằng 0 khi tác vụ vốn đã tối giản; cài thụ động = không chạy |
+| Định hướng repo (Tier 2, repo lớn) | **CodeGraph** — MCP server local, index dựng sẵn | Bản đồ Repomix đã check-in; vòng lặp grep-first | ✅ **−69% token, −60% chi phí** trên 7 repo, đo với Claude Code còn đầy đủ `Read`/`Grep`. ⚠️ Đọc cảnh báo bypass bên dưới trước khi triển khai cho profile này |
 | Ép output tùy chọn | Skill **Caveman (MIT)** trên các agent nội bộ dài dòng | Chỉ hợp đồng output cấp prompt | ⚠️ Quảng cáo 65%, **đo được 8.5%** và đó là trần; một tác vụ trong thử nghiệm vọt lên $8.29 so với $0.33. Chỉ route nội bộ, và hãy đo trước — xem [`../PROOF.md`](../PROOF.md) |
+
+> ⚠️ **CodeGraph và profile này xung đột trực tiếp.** Index bị **bỏ qua hoàn
+> toàn** khi orchestrator giao việc khám phá cho subagent đọc file — đúng
+> hình dạng của "nhiều agent" ở đây. Trước khi triển khai diện rộng: pilot
+> trên **một** repo, và xác nhận bằng đo lường Tier 1.1 rằng subagent thật sự
+> gọi tool MCP thay vì `Read`/`Grep`. Dưới ~150 file thì bỏ qua hẳn — và
+> OkHttp (645 file) cho thấy chi phí có thể **đảo chiều** ngay cả khi token
+> giảm. Chi tiết: [`../tools/codegraph.md`](../tools/codegraph.md).
 
 ### Tier 1.1 — Lắp dây đo lường
 
@@ -281,6 +292,15 @@ Kết hợp lại, các hệ thống chuyển từ kiểu "vòng lặp ngây th�
 frontier cho mọi việc" sang thiết lập này thường đạt được **chi phí mỗi tác
 vụ hoàn thành thấp hơn 5–20×** — trong khi toàn bộ phần tự xây chỉ gồm bốn
 thành phần nhỏ, gần như không cần bảo trì.
+
+Các add-on Tier 2 đã được đo cộng thêm **một chữ số phần trăm tới vài chục
+phần trăm** lên trên nền đó — Ponytail −10.3%, CodeGraph tới −60% chi phí
+trên repo lớn. Thứ tự áp dụng đúng là **Tier 0 → Tier 1 → add-on**: cả hai
+con số trên đều là giá trị biên so với một Claude Code đã bật đầy đủ Tier 0,
+nên chúng không cứu được một thiết lập thiếu caching hay thiếu ngân sách
+tool. Và quy luật chọn add-on chỉ có một dòng: **ngăn công việc thắng nén
+công việc** — hai công cụ ngăn việc đo ra −10.3% và −60%, hai công cụ nén
+output đo ra 8.5% và **+7.6%**.
 
 ---
 
@@ -444,7 +464,8 @@ the best effort-to-payoff ratio in the entire catalog.
 | Agents start consuming screenshots (browser/computer use) | Resolution budgeting + stale-screenshot pruning | `image-downsampling.md` |
 | A docs/Q&A workload joins the fleet | Document reuse + retrieval tuning | `document-reuse.md`, `retrieval-tuning.md` |
 | Telemetry shows noisy tool/CLI output (build logs, test runs, JSON) dominating input | Drop-in tool-output compression proxy/hook (RTK/Headroom) — no tool redesign. ⚠️ Only worth it if your harness does **not** already truncate tool output; on Claude Code (which does) RTK measured +7.6% cost — see [`../PROOF.md`](../PROOF.md) | `tool-output-compression.md` |
-| Agents spend most tokens exploring the repo to orient (the 67–76% file-finding tax) | Checked-in code map / context pack; grep-first just-in-time reads | `code-maps.md` |
+| Agents spend most tokens exploring the repo to orient (the 67–76% file-finding tax) | Checked-in code map / context pack; grep-first just-in-time reads. Above ~1,000 files **CodeGraph** is the best-evidenced option (−69% tokens, −60% cost across 7 repos) — but see the subagent-bypass warning below | `code-maps.md`, [`../tools/codegraph.md`](../tools/codegraph.md) |
+| Agents tend to over-build (UI scaffolding, speculative abstraction layers, re-implementing stdlib) | **Ponytail** injected via a SessionStart hook — **−10.3% cost (p=0.004)**, the strongest agent-specific number that exists. A passive install (rules files only) activated **0 times in 10 sessions**: the hook is mandatory | [`../tools/ponytail.md`](../tools/ponytail.md) |
 | A high-repeat, read-only Q&A/analytics endpoint joins the fleet | Response-level (semantic) cache at the gateway — keep off coding-edit routes | `semantic-caching.md` |
 
 ## Tier 3 — Explicitly skip (for this profile, until proven otherwise)
@@ -481,7 +502,18 @@ piece for its listed alternative — the *shape* is what matters.
 | Tier 2 batch | Provider batch API via **LiteLLM** | Direct SDK calls | Uniform submission if you're multi-provider |
 | Tier 2 event-driven CI | **Harness PR subscriptions + GitHub webhooks** | Temporal (MIT) when workflows outgrow the harness | Zero new infra at first |
 | Tier 2 de-scaffolding | **promptfoo (MIT)** ablation runs | DSPy (MIT) once eval infra matures | Side-by-side variants with token cost per variant |
+| Over-build prevention (Tier 2) | **Ponytail (MIT)** injected via a SessionStart hook | A hand-written "build the minimum" rule in the orchestrator prompt | ✅ **−10.3% cost (p=0.004)** — the only Tier-A evidence in the skill category. Prevents work rather than compressing it. Zero when the task is already minimal; a passive install does nothing |
+| Repo orientation (Tier 2, large repos) | **CodeGraph** — local MCP server over a pre-built index | Checked-in Repomix map; grep-first loops | ✅ **−69% tokens, −60% cost** across 7 repos, measured against a Claude Code that still had `Read`/`Grep`. ⚠️ Read the bypass warning below before rolling it out on this profile |
 | Optional output squeeze | **Caveman (MIT)** skill on chatty internal agents | Prompt-level output contracts only | ⚠️ Advertised 65%, **measured 8.5%** and that is the ceiling; one trial task spiked to $8.29 against $0.33. Internal routes only, and measure first — see [`../PROOF.md`](../PROOF.md) |
+
+> ⚠️ **CodeGraph and this profile are in direct tension.** The index is
+> **bypassed entirely** when the orchestrator delegates exploration to
+> file-reading subagents — exactly the shape of "many agents" here. Before a
+> fleet-wide rollout: pilot on **one** repo and confirm with Tier 1.1
+> telemetry that subagents actually issue MCP calls instead of `Read`/`Grep`.
+> Below ~150 files, skip it outright — and OkHttp (645 files) shows cost can
+> **invert** even where tokens drop. Details in
+> [`../tools/codegraph.md`](../tools/codegraph.md).
 
 ### Tier 1.1 — telemetry wiring
 
@@ -558,3 +590,11 @@ Order-of-magnitude, for a fleet that currently has none of it:
 Combined, fleets going from "naive loops + frontier-everywhere" to this
 setup commonly land **5–20× lower cost per completed task** — with the
 entire custom-built surface being four small, low-maintenance components.
+
+The measured Tier 2 add-ons stack **single-digit to several-tens of percent**
+on top of that — Ponytail at −10.3%, CodeGraph up to −60% cost on large
+repos. The order matters: **Tier 0 → Tier 1 → add-ons**. Both figures are
+marginal against a Claude Code with Tier 0 fully enabled, so neither rescues
+a setup missing caching or tool budgets. And the selection rule is one line:
+**preventing work beats compressing it** — the two prevention tools measured
+−10.3% and −60%, the two output compressors measured 8.5% and **+7.6%**.
