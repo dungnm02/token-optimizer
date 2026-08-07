@@ -290,6 +290,10 @@ tầng đã đo được là **kích hoạt 0/10 phiên**. Hãy quan sát nó ch
 Quy trình đo lường đầy đủ:
 [`solutions/token-counting.md`](solutions/token-counting.md).
 
+Đặt xong tầng này rồi thì phần dư địa còn lại nằm ở chỗ khác: **cách bạn làm
+việc trong mỗi phiên**. Cấu hình chỉ đặt trần cho thiệt hại —
+[`WORKFLOW.md`](WORKFLOW.md) quyết định bạn có chạm tới trần đó hay không.
+
 ---
 
 ## Nguồn
@@ -603,6 +607,10 @@ Watch it work.
 
 Full measurement procedure:
 [`solutions/token-counting.md`](solutions/token-counting.md).
+
+Once this tier is set, the remaining headroom is somewhere else: **how you work
+within each session**. Configuration only caps the damage —
+[`WORKFLOW.md`](WORKFLOW.md) decides whether you approach the cap at all.
 
 ---
 

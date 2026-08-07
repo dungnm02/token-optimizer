@@ -31,6 +31,7 @@ Kho này làm ba việc:
 | [`tools/`](tools/README.md) | Hồ sơ chi tiết từng công cụ — ý tưởng, cách hoạt động, cách cài, dùng lúc nào và khi nào thì đừng. |
 | [`HARNESS.md`](HARNESS.md) | Harness là gì, nó tiêu token ở đâu, và bảng đối chiếu năng lực của Claude Code, Codex CLI, Gemini CLI và Cline. |
 | [`CONFIG.md`](CONFIG.md) | Đặt nút nào, ở giá trị nào — cấu hình đề xuất cho từng agent, kèm những nút chỉnh quá tay sẽ làm hóa đơn tăng. |
+| [`WORKFLOW.md`](WORKFLOW.md) | Tầng cuối cùng: bạn làm gì ở mỗi phiên. Phạm vi, chỉ đường, nén có chủ đích, và lúc nào nên bắt đầu lại. |
 | [`PROOF.md`](PROOF.md) | **Cái gì đã thực sự được đo.** Đối chiếu tuyên bố quảng cáo với kết quả A/B có đối chứng — và loại những tuyên bố không trụ được. Đọc trước khi tin bất kỳ con số phần trăm nào trong kho này. |
 | [`SUMMARY.md`](SUMMARY.md) | Bảng tra nhanh nguyên nhân → giải pháp → công cụ. |
 
@@ -41,7 +42,8 @@ Kho này làm ba việc:
 3. **Đối chiếu với [`PROOF.md`](PROOF.md)** trước khi cài thêm công cụ. Nhiều
    công cụ nổi tiếng đo ra gần bằng 0 — có cái còn làm hóa đơn *tăng*.
 4. **Đặt các nút trong harness trước** — xem [`CONFIG.md`](CONFIG.md). Tầng
-   này miễn phí, và trên vài agent nó xử lý luôn nguyên nhân đắt nhất.
+   này miễn phí, và trên vài agent nó xử lý luôn nguyên nhân đắt nhất. Rồi
+   [`WORKFLOW.md`](WORKFLOW.md) cho phần còn lại: cách bạn làm việc mỗi phiên.
 5. **Ghé `setups/`** nếu bạn muốn một cấu hình dựng sẵn cho nhà cung cấp hoặc
    công cụ của mình. Nếu nơi làm việc chặn plugin/extension/npm, xem
    [`setups/install-without-package-managers.md`](setups/install-without-package-managers.md).
@@ -120,6 +122,7 @@ This repo does three things:
 | [`tools/`](tools/README.md) | Deep profiles of individual tools — the idea, how it works, how to install, when to use it and when not to. |
 | [`HARNESS.md`](HARNESS.md) | What a harness is, where it spends your tokens, and a capability matrix across Claude Code, Codex CLI, Gemini CLI and Cline. |
 | [`CONFIG.md`](CONFIG.md) | Which dials to set and to what — recommended configuration per agent, plus the ones that raise your bill when over-tuned. |
+| [`WORKFLOW.md`](WORKFLOW.md) | The last layer: what you do every session. Scoping, pointing, deliberate compaction, and when to start over. |
 | [`PROOF.md`](PROOF.md) | **What has actually been measured.** Advertised claims against controlled A/B results — and the claims that didn't survive. Read it before trusting any percentage in this repo. |
 | [`SUMMARY.md`](SUMMARY.md) | Quick cause → solution → tool lookup. |
 
@@ -131,6 +134,7 @@ This repo does three things:
    Several well-known tools measured near zero — one made the bill *go up*.
 4. **Set your harness's own dials first** — see [`CONFIG.md`](CONFIG.md). That
    tier is free, and on some agents it closes the most expensive cause outright.
+   Then [`WORKFLOW.md`](WORKFLOW.md) for what's left: how you work each session.
 5. **Check `setups/`** if you want a ready-made configuration for your vendor
    or tool. If your workplace blocks plugins/extensions/npm, see
    [`setups/install-without-package-managers.md`](setups/install-without-package-managers.md).
