@@ -12,6 +12,10 @@ khi nào thì đừng.
 | [`caveman.md`](caveman.md) | Nén văn bản (thư viện) / ép viết cộc lốc (skill) | **8.5%** cho skill, rủi ro đuôi nặng | ⚠️ Chỉ dùng thư viện, cho văn bản tĩnh |
 | [`rtk.md`](rtk.md) | Nén output shell qua hook | **+7.6% chi phí** trên Claude Code | ❌ Đừng cài trên Claude Code |
 
+Muốn tự nhìn thấy từng công cụ làm gì trước khi quyết định, xem
+[`demo-prompts.md`](demo-prompts.md) — prompt cụ thể cho cả bốn, kèm cách
+xác nhận công cụ có thực sự kích hoạt.
+
 **Quy luật xuyên suốt cả bốn:** *ngăn công việc thắng nén công việc.* Hai
 công cụ đứng đầu bảng ngăn không cho token được sinh ra; hai công cụ cuối
 bảng bóp nhỏ token sau khi đã sinh ra, và cả hai đều hụt so với quảng cáo
@@ -89,6 +93,10 @@ to use it, and when not to.
 | [`codegraph.md`](codegraph.md) | Local knowledge graph, queried over MCP | **−69% tokens, −60% cost** | ✅ If your repo is above ~1,000 files |
 | [`caveman.md`](caveman.md) | Text compression (library) / terse output (skill) | **8.5%** for the skill, severe tail risk | ⚠️ Library only, on static text |
 | [`rtk.md`](rtk.md) | Shell-output compression via hook | **+7.6% cost** on Claude Code | ❌ Don't install it on Claude Code |
+
+To see what each one does before deciding, see
+[`demo-prompts.md`](demo-prompts.md) — concrete prompts for all four, plus how
+to confirm the tool is actually firing.
 
 **The pattern across all four:** *preventing work beats compressing it.* The
 top two stop tokens from being produced; the bottom two squeeze tokens after

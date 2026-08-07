@@ -29,7 +29,7 @@ Kho này làm ba việc:
 | [`BILLING.md`](BILLING.md) | **Tiết kiệm token thực ra mua được gì.** Trả theo token, theo hạn mức gói, hay theo số request — đơn vị đó quyết định nguyên nhân nào thực sự đắt với bạn. |
 | [`solutions/`](solutions/README.md) | Mỗi cách khắc phục là một tài liệu ngắn, đều dẫn ngược về một nguyên nhân. |
 | [`setups/`](setups/) | Các thiết lập dựng sẵn cho từng nhà cung cấp và công cụ cụ thể. |
-| [`tools/`](tools/README.md) | Hồ sơ chi tiết từng công cụ — ý tưởng, cách hoạt động, cách cài, dùng lúc nào và khi nào thì đừng. |
+| [`tools/`](tools/README.md) | Hồ sơ chi tiết từng công cụ — ý tưởng, cách hoạt động, cách cài, dùng lúc nào và khi nào thì đừng. Kèm [prompt demo](tools/demo-prompts.md) để tự nhìn thấy từng công cụ hoạt động. |
 | [`HARNESS.md`](HARNESS.md) | Harness là gì, nó tiêu token ở đâu, và bảng đối chiếu năng lực của Claude Code, Codex CLI, Gemini CLI và Cline. |
 | [`CONFIG.md`](CONFIG.md) | Đặt nút nào, ở giá trị nào — cấu hình đề xuất cho từng agent, kèm những nút chỉnh quá tay sẽ làm hóa đơn tăng. |
 | [`WORKFLOW.md`](WORKFLOW.md) | Tầng cuối cùng: bạn làm gì ở mỗi phiên. Phạm vi, chỉ đường, nén có chủ đích, và lúc nào nên bắt đầu lại. |
@@ -126,7 +126,7 @@ This repo does three things:
 | [`BILLING.md`](BILLING.md) | **What saving tokens actually buys you.** Metered, plan-limited, or request-quotaed — the unit you spend decides which causes are genuinely expensive for you. |
 | [`solutions/`](solutions/README.md) | One short guide per fix, each mapped back to a cause. |
 | [`setups/`](setups/) | Ready-made setups for specific vendors and tools. |
-| [`tools/`](tools/README.md) | Deep profiles of individual tools — the idea, how it works, how to install, when to use it and when not to. |
+| [`tools/`](tools/README.md) | Deep profiles of individual tools — the idea, how it works, how to install, when to use it and when not to. Includes [demo prompts](tools/demo-prompts.md) for seeing each one work. |
 | [`HARNESS.md`](HARNESS.md) | What a harness is, where it spends your tokens, and a capability matrix across Claude Code, Codex CLI, Gemini CLI and Cline. |
 | [`CONFIG.md`](CONFIG.md) | Which dials to set and to what — recommended configuration per agent, plus the ones that raise your bill when over-tuned. |
 | [`WORKFLOW.md`](WORKFLOW.md) | The last layer: what you do every session. Scoping, pointing, deliberate compaction, and when to start over. |
