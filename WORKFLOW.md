@@ -20,6 +20,10 @@ trong tài liệu này **chưa được A/B trong kho này**. Chúng suy ra từ
 tiền trong [`CAUSE.md`](CAUSE.md), không phải từ phép đo. Phần số học được ghi
 rõ là số học.
 
+Một cảnh báo về đơn vị: nếu bạn ở gói cố định và chưa chạm trần, những thói
+quen này vẫn đáng làm — nhưng vì lý do **chất lượng**, không phải tiền bạc.
+Xem [`BILLING.md`](BILLING.md).
+
 ---
 
 ## Sự thật kinh tế chi phối tất cả
@@ -251,6 +255,10 @@ the only layer billed repeatedly, and the only one where this repo has a
 document are **not A/B tested in this repo**. They're derived from the billing
 mechanics in [`CAUSE.md`](CAUSE.md), not measured. Where there's arithmetic,
 it's labelled as arithmetic.
+
+One caveat about units: if you're on a flat plan and never hit your limits,
+these habits are still worth adopting — but for **quality** reasons, not
+financial ones. See [`BILLING.md`](BILLING.md).
 
 ---
 

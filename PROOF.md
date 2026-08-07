@@ -11,6 +11,10 @@ marketing.
 > Trạng thái: tài liệu sống. Cập nhật lần cuối 2026-08-06. Chỉ nhận nguồn
 > có công bố phương pháp; xem [Thang bằng chứng](#thang-bằng-chứng).
 
+Trang này cho biết **cái gì đã được đo**. Muốn tự đo trên thiết lập của
+mình — thiết kế ghép cặp, cần bao nhiêu lần chạy, những thứ sẽ đánh lừa bạn
+— xem [`MEASURE.md`](MEASURE.md).
+
 ## Cách đọc những con số này: baseline chính là harness
 
 **Đây là phần quan trọng nhất của trang.** Mọi phép đo có đối chứng hiện có
@@ -485,6 +489,10 @@ worth more than a figure borrowed from a marketing page.
 
 > Status: living document. Last updated 2026-08-06. Only sources with a
 > published methodology are admitted; see [Evidence tiers](#evidence-tiers).
+
+This page tells you **what has been measured**. To measure something on your
+own setup — the paired design, how many runs it takes, what will fool you —
+see [`MEASURE.md`](MEASURE.md).
 
 ## Reading these numbers: the baseline is the harness
 

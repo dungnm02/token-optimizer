@@ -15,6 +15,10 @@ thứ ba đã đo ra **+7.6%** khi cố làm thay.
 > đầu suy ra từ [`CAUSE.md`](CAUSE.md), không phải kết quả đo. Hãy đọc
 > [`PROOF.md`](PROOF.md) để hiểu vì sao sự phân biệt này quan trọng ở đây.
 
+Một lưu ý trước khi vặn bất cứ nút nào: **nút nào đáng vặn tùy thuộc bạn đang
+tiêu đơn vị gì.** Trên hạn ngạch tính theo request, siết trần output không
+giúp bạn tiết kiệm gì cả. Xem [`BILLING.md`](BILLING.md).
+
 ---
 
 ## Ba nút quan trọng, theo đúng thứ tự
@@ -324,6 +328,10 @@ same job a third-party tool measured at **+7.6%** trying to do.
 > 2026, sourced at the bottom). **Suggested values** are starting points
 > derived from [`CAUSE.md`](CAUSE.md), not measured results. Read
 > [`PROOF.md`](PROOF.md) for why that distinction matters here.
+
+One note before turning any dial: **which dials are worth turning depends on
+the unit you spend.** On a request-based quota, tightening output caps saves
+you nothing at all. See [`BILLING.md`](BILLING.md).
 
 ---
 

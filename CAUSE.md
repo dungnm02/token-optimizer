@@ -172,7 +172,8 @@ giữa phiên, trùng thời điểm với một thay đổi cấu hình: chuy�
 dựng lại bộ tool, đổi model, hay một lần "sửa nhỏ" system prompt.
 
 **Giải pháp liên quan:** `solutions/prompt-caching.md`,
-`solutions/stable-prompt-architecture.md`
+`solutions/stable-prompt-architecture.md`,
+`solutions/instruction-file-hygiene.md` (đóng băng file chỉ dẫn giữa task)
 
 ### 1.4 Cache hết hạn giữa các request
 
@@ -191,6 +192,8 @@ cache) trọn vẹn.
 
 **Giải pháp liên quan:** Không có tài liệu riêng — TTL và phụ phí ghi là
 cấu hình/bảng giá của nhà cung cấp: chọn TTL dài hơn ở nơi họ cho phép.
+Lưu ý TTL có thể thay đổi theo cách bạn trả tiền — xem `BILLING.md`. Với
+lưu lượng chạy tự động, xem `solutions/unattended-runs.md`.
 
 ---
 
@@ -255,7 +258,8 @@ pipeline truy xuất gắn lại đúng top-k tài liệu cũ vào mỗi tin nh�
 dùng; nội dung vốn thuộc cấp hệ thống bị dán vào lượt người dùng "cho
 chắc là model nhìn thấy".
 
-**Giải pháp liên quan:** `solutions/context-hygiene.md`
+**Giải pháp liên quan:** `solutions/context-hygiene.md`,
+`solutions/instruction-file-hygiene.md`, `solutions/mcp-server-audit.md`
 
 ---
 
@@ -315,7 +319,8 @@ kết quả tool lỗi lặp lại với input y nguyên; các mẫu sleep-and-c
 ná liên tiếp trong một phiên (hãy giới hạn số lần thử trong harness và
 buộc lập kế hoạch lại hoặc leo thang).
 
-**Giải pháp liên quan:** `solutions/event-driven-waiting.md`
+**Giải pháp liên quan:** `solutions/event-driven-waiting.md`,
+`solutions/unattended-runs.md` (trần cứng khi không có ai trông)
 
 ### 3.4 Tải sẵn quá nhiều schema tool
 
@@ -334,7 +339,7 @@ tool và cùng request đó không kèm tool; danh sách tool dài hơn hẳn t�
 tool thực sự được gọi.
 
 **Giải pháp liên quan:** `solutions/tool-search.md` (khám phá tool động /
-tải trì hoãn)
+tải trì hoãn), `solutions/mcp-server-audit.md` (kiểm toán những gì đang bật)
 
 ---
 
@@ -474,7 +479,7 @@ context nguội; request fork không có cache hit nào dù agent cha đang ấm
 
 **Giải pháp liên quan:** `solutions/subagent-context-handoff.md`,
 `solutions/prompt-caching.md` (fork phải dùng lại đúng y nguyên prefix
-của agent cha)
+của agent cha), `solutions/unattended-runs.md`
 
 ### 6.2 Model quá cỡ so với tác vụ
 
@@ -527,7 +532,8 @@ model hiện tại ("cứ 3 lệnh gọi tool thì tóm tắt tiến độ"); ou
 các phần nghi thức chẳng ai đọc; ví dụ few-shot cho những hành vi model
 giờ làm được không cần ví dụ.
 
-**Giải pháp liên quan:** `solutions/prompt-de-scaffolding.md`
+**Giải pháp liên quan:** `solutions/prompt-de-scaffolding.md`,
+`solutions/instruction-file-hygiene.md`
 
 ### 6.5 Khởi động nguội giữa các phiên (kiến thức không được giữ lại)
 
@@ -549,7 +555,8 @@ trong phiên này không phiên sau nào dùng lại được.
 
 **Giải pháp liên quan:** `solutions/code-maps.md` (bản đồ/gói context
 commit sẵn), `solutions/subagent-context-handoff.md` (kho artifact),
-`solutions/compaction.md` (mang bản tóm tắt vượt qua ranh giới phiên)
+`solutions/compaction.md` (mang bản tóm tắt vượt qua ranh giới phiên),
+`solutions/unattended-runs.md` (mọi lần chạy CI đều là một cold start)
 
 ### 6.6 Request trùng lặp trên toàn hệ thống (fleet)
 
@@ -766,7 +773,8 @@ cached input) mid-session, correlated with a config change: mode switch,
 tool set rebuild, model swap, or a "small edit" to the system prompt.
 
 **Related solution(s):** `solutions/prompt-caching.md`,
-`solutions/stable-prompt-architecture.md`
+`solutions/stable-prompt-architecture.md`,
+`solutions/instruction-file-hygiene.md` (freeze instruction files mid-task)
 
 ### 1.4 Cache lifetime expiry between requests
 
@@ -783,7 +791,9 @@ requests.
 request after each idle gap shows a full uncached (or cache-write) pass.
 
 **Related solution(s):** None — cache TTLs and write surcharges are
-provider configuration/pricing: pick a longer TTL where offered.
+provider configuration/pricing: pick a longer TTL where offered. Note the
+TTL can depend on how you pay — see `BILLING.md`. For automated traffic,
+see `solutions/unattended-runs.md`.
 
 ---
 
@@ -846,7 +856,8 @@ retrieval pipelines that re-attach the same top-k documents on every user
 message; system-level content pasted into user turns "to make sure the model
 sees it".
 
-**Related solution(s):** `solutions/context-hygiene.md`
+**Related solution(s):** `solutions/context-hygiene.md`,
+`solutions/instruction-file-hygiene.md`, `solutions/mcp-server-audit.md`
 
 ---
 
@@ -905,7 +916,8 @@ patterns implemented *through* the model instead of *around* it; many
 consecutive similar diffs/test failures in one session (cap attempts in the
 harness and force a replan or escalation instead).
 
-**Related solution(s):** `solutions/event-driven-waiting.md`
+**Related solution(s):** `solutions/event-driven-waiting.md`,
+`solutions/unattended-runs.md` (hard ceilings when nobody is watching)
 
 ### 3.4 Too many tool schemas loaded upfront
 
@@ -923,7 +935,8 @@ tools-included request vs. the same request without tools; a tool list much
 larger than the set actually invoked.
 
 **Related solution(s):** `solutions/tool-search.md` (dynamic
-tool discovery / deferred loading)
+tool discovery / deferred loading), `solutions/mcp-server-audit.md`
+(audit what is actually enabled)
 
 ---
 
@@ -1059,7 +1072,8 @@ exploration the parent did; fan-out patterns where N workers each pay a
 full cold context; zero cache hits on fork requests despite a warm parent.
 
 **Related solution(s):** `solutions/subagent-context-handoff.md`,
-`solutions/prompt-caching.md` (forks must reuse the parent's exact prefix)
+`solutions/prompt-caching.md` (forks must reuse the parent's exact prefix),
+`solutions/unattended-runs.md`
 
 ### 6.2 Oversized model for the task
 
@@ -1111,7 +1125,8 @@ defaults ("after every 3 tool calls, summarize progress"); output containing
 ritualized sections nobody reads; few-shot examples for behaviors the model
 now does zero-shot.
 
-**Related solution(s):** `solutions/prompt-de-scaffolding.md`
+**Related solution(s):** `solutions/prompt-de-scaffolding.md`,
+`solutions/instruction-file-hygiene.md`
 
 ### 6.5 Cross-session cold starts (no persistent knowledge)
 
@@ -1133,7 +1148,8 @@ one session is available to the next.
 
 **Related solution(s):** `solutions/code-maps.md` (checked-in maps/context
 packs), `solutions/subagent-context-handoff.md` (artifact stores),
-`solutions/compaction.md` (carry summaries forward at session boundaries)
+`solutions/compaction.md` (carry summaries forward at session boundaries),
+`solutions/unattended-runs.md` (every CI run is a cold start)
 
 ### 6.6 Fleet-duplicate requests
 

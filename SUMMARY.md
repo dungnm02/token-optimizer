@@ -16,6 +16,46 @@ luật prompt/kiến trúc, không có công cụ rời để cài.
 > [`PROOF.md`](PROOF.md) để biết cái nào thực sự có kết quả đo được — RTK,
 > Caveman và Headroom đều xuất hiện ở đây nhưng đều không đạt như quảng cáo.
 
+## Tra ngược: từ triệu chứng tới nguyên nhân
+
+Phần còn lại của trang này sắp xếp theo **cơ chế**. Nhưng bạn thường đến đây
+với một **triệu chứng**. Bảng này đi ngược lại.
+
+| Bạn đang thấy gì | Nguyên nhân |
+| --- | --- |
+| Phiên phình dần rồi chạm trần context window | 2.1 |
+| Hóa đơn tăng nhưng khối lượng việc không đổi | 2.1, 6.2 |
+| Metadata usage báo 0 token cache ở mọi response | 1.1 |
+| Các request trông giống hệt nhau nhưng không bao giờ cache hit | 1.2 |
+| Cache đang tốt thì hỏng đột ngột giữa phiên | 1.3 |
+| Cache hit trong một loạt, nhưng request đầu sau mỗi lần nghỉ thì trượt | 1.4 |
+| Cùng một file bị đọc lại nhiều lần trong một phiên | 2.3 |
+| Transcript đầy các khối tool result đã hết giá trị | 2.2 |
+| Một kết quả tool duy nhất chiếm hàng chục nghìn token | 3.1 |
+| Agent gọi tool hàng chục lần cho một yêu cầu duy nhất | 3.2 |
+| Log đầy các request gần như giống hệt nhau, liên tiếp | 3.3 |
+| Input tăng vọt khi bật tool, dù chỉ vài tool được gọi | 3.4 |
+| Request có ảnh tốn token gấp nhiều lần phần chữ | 4.1 |
+| Mỗi câu hỏi lại gửi lại nguyên tài liệu | 4.2 |
+| Ngân sách token đang đúng thì sai sau khi đổi model | 4.3 |
+| Số output token lớn hơn hẳn độ dài câu trả lời nhìn thấy được | 5.1 |
+| Model kể lại đề bài và in lại code không đổi | 5.2 |
+| Log có stop reason `length` rồi tới request thử lại gần giống hệt | 5.3 |
+| Subagent mở đầu bằng đúng phần khám phá mà agent cha đã làm | 6.1 |
+| Tác vụ phân loại/trích xuất đơn giản chạy qua model đắt nhất | 6.2 |
+| Fan-out song song báo 0 cache hit; chạy tuần tự thì có | 6.3 |
+| Prompt chứa các mục nghi thức mà không ai đọc | 6.4 |
+| Mỗi phiên mới mở đầu bằng đúng chuỗi khám phá đó | 6.5 |
+| Log gom thành cụm prompt gần trùng với câu trả lời gần trùng | 6.6 |
+
+Ba triệu chứng phổ biến **không** phải nguyên nhân tốn token:
+
+| Bạn đang thấy gì | Vấn đề thật | Đọc |
+| --- | --- | --- |
+| Đã cắt token nhưng hóa đơn không đổi | Bạn ở gói cố định — token tiết kiệm đổi thành dư địa, không phải tiền | [`BILLING.md`](BILLING.md) |
+| "Công cụ này cải thiện 12%" đo trên 5 tác vụ | Đó là nhiễu, không phải kết quả | [`MEASURE.md`](MEASURE.md) |
+| Không biết bắt đầu từ đâu | Bắt đầu ở tầng miễn phí: nút cấu hình của chính harness | [`CONFIG.md`](CONFIG.md) |
+
 ### 1 — Lỗi caching
 
 | Nguyên nhân | Giải pháp | Công cụ | NCC |
@@ -39,8 +79,8 @@ luật prompt/kiến trúc, không có công cụ rời để cài.
 | --- | --- | --- | --- |
 | 3.1 Output tool quá lớn | [`tool-output-budgets`](solutions/tool-output-budgets.md), [`tool-output-compression`](solutions/tool-output-compression.md) | jq, Trafilatura; RTK, Headroom (Apache-2.0), Caveman | |
 | 3.2 Nhiều round-trip thay vì kết hợp | [`tool-composition`](solutions/tool-composition.md) | Code Mode (native); kết hợp phía server | |
-| 3.3 Vòng lặp thử lại và polling | [`event-driven-waiting`](solutions/event-driven-waiting.md) | Temporal, webhook | |
-| 3.4 Quá nhiều schema tool tải sẵn | [`tool-search`](solutions/tool-search.md) | Tải tool trì hoãn / tìm kiếm tool (native); Code Mode | |
+| 3.3 Vòng lặp thử lại và polling | [`event-driven-waiting`](solutions/event-driven-waiting.md), [`unattended-runs`](solutions/unattended-runs.md) | Temporal, webhook; trần cứng ở runner CI | |
+| 3.4 Quá nhiều schema tool tải sẵn | [`tool-search`](solutions/tool-search.md), [`mcp-server-audit`](solutions/mcp-server-audit.md) | Tải tool trì hoãn / tìm kiếm tool (native); Code Mode; CLI thay cho MCP server | |
 
 ### 4 — Loại nội dung đắt đỏ
 
@@ -62,11 +102,11 @@ luật prompt/kiến trúc, không có công cụ rời để cài.
 
 | Nguyên nhân | Giải pháp | Công cụ | NCC |
 | --- | --- | --- | --- |
-| 6.1 Subagent cold-start | [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`prompt-caching`](solutions/prompt-caching.md) | Kho lưu artifact (phía bạn) | |
+| 6.1 Subagent cold-start | [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`prompt-caching`](solutions/prompt-caching.md), [`unattended-runs`](solutions/unattended-runs.md) | Kho lưu artifact (phía bạn) | |
 | 6.2 Model quá lớn so với tác vụ | [`model-routing`](solutions/model-routing.md), [`batch-processing`](solutions/batch-processing.md), [`semantic-caching`](solutions/semantic-caching.md) | RouteLLM, LiteLLM, Portkey; tier batch của nhà cung cấp | ▲ |
 | 6.3 Fan-out cache lạnh đồng thời | [`fan-out-warming`](solutions/fan-out-warming.md) | Điều phối warm-then-fan (phía bạn) | |
-| 6.4 Prompt và scaffolding quá quy định | [`prompt-de-scaffolding`](solutions/prompt-de-scaffolding.md) | Rà soát prompt (phía bạn) | |
-| 6.5 Cold-start giữa các phiên | [`code-maps`](solutions/code-maps.md), [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`compaction`](solutions/compaction.md) | aider, Repomix, Codesight | |
+| 6.4 Prompt và scaffolding quá quy định | [`prompt-de-scaffolding`](solutions/prompt-de-scaffolding.md), [`instruction-file-hygiene`](solutions/instruction-file-hygiene.md) | Rà soát prompt (phía bạn); promptfoo | |
+| 6.5 Cold-start giữa các phiên | [`code-maps`](solutions/code-maps.md), [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`compaction`](solutions/compaction.md), [`unattended-runs`](solutions/unattended-runs.md) | aider, Repomix, Codesight | |
 | 6.6 Request trùng lặp trên toàn hệ thống | [`semantic-caching`](solutions/semantic-caching.md), [`batch-processing`](solutions/batch-processing.md) | GPTCache; semantic cache của LiteLLM/Portkey | |
 
 Đo lường trước tiên: [`token-counting`](solutions/token-counting.md) là lớp
@@ -93,6 +133,46 @@ prompt/architecture discipline with no separate tool to install.
 > which ones have measured results — RTK, Caveman and Headroom all appear
 > here and all underdelivered against their advertised claims.
 
+## Reverse lookup: symptom to cause
+
+The rest of this page is organized by **mechanism**. But you usually arrive
+with a **symptom**. This table runs the other way.
+
+| What you're seeing | Cause |
+| --- | --- |
+| Sessions grow until they hit the context-window limit | 2.1 |
+| The bill is climbing but the amount of work isn't | 2.1, 6.2 |
+| Usage metadata reports zero cached tokens on every response | 1.1 |
+| Requests look identical but never hit the cache | 1.2 |
+| Caching was working, then broke abruptly mid-session | 1.3 |
+| Cache hits within a burst, but the first request after each idle gap misses | 1.4 |
+| The same file is read again and again in one session | 2.3 |
+| The transcript is full of tool-result blocks that stopped mattering | 2.2 |
+| A single tool result runs to tens of thousands of tokens | 3.1 |
+| The agent makes dozens of tool calls for one request | 3.2 |
+| Logs show bursts of near-identical consecutive requests | 3.3 |
+| Input jumps when tools are enabled, though only a few get called | 3.4 |
+| Image requests cost many times the token count of their text | 4.1 |
+| Every question re-sends the same whole document | 4.2 |
+| Token budgets were right, then went wrong after a model swap | 4.3 |
+| Output token counts far exceed the visible response length | 5.1 |
+| The model restates the question and re-prints unchanged code | 5.2 |
+| Logs show a `length` stop reason followed by a near-identical retry | 5.3 |
+| Subagents open with the same exploration the parent already did | 6.1 |
+| Simple classification/extraction traffic runs through the top model | 6.2 |
+| Parallel fan-out reports zero cache hits; running them in sequence doesn't | 6.3 |
+| Prompts contain ritualized sections nobody reads | 6.4 |
+| Every new session opens with the same exploration sequence | 6.5 |
+| Logs cluster into near-duplicate prompts with near-duplicate answers | 6.6 |
+
+Three common symptoms that are **not** causes of token spend:
+
+| What you're seeing | The real issue | Read |
+| --- | --- | --- |
+| You cut tokens and the bill didn't move | You're on a flat plan — saved tokens become headroom, not money | [`BILLING.md`](BILLING.md) |
+| "This tool improved things 12%," measured on 5 tasks | That's noise, not a result | [`MEASURE.md`](MEASURE.md) |
+| You don't know where to start | Start at the free tier: your harness's own config dials | [`CONFIG.md`](CONFIG.md) |
+
 ### 1 — Caching failures
 
 | Cause | Fix | Tool(s) | Provider |
@@ -116,8 +196,8 @@ prompt/architecture discipline with no separate tool to install.
 | --- | --- | --- | --- |
 | 3.1 Oversized tool outputs | [`tool-output-budgets`](solutions/tool-output-budgets.md), [`tool-output-compression`](solutions/tool-output-compression.md) | jq, Trafilatura; RTK, Headroom (Apache-2.0), Caveman | |
 | 3.2 Chatty round-trips vs. composition | [`tool-composition`](solutions/tool-composition.md) | Code Mode (native); server-side composition | |
-| 3.3 Retry and polling loops | [`event-driven-waiting`](solutions/event-driven-waiting.md) | Temporal, webhooks | |
-| 3.4 Too many tool schemas upfront | [`tool-search`](solutions/tool-search.md) | Deferred tool loading / tool search (native); Code Mode | |
+| 3.3 Retry and polling loops | [`event-driven-waiting`](solutions/event-driven-waiting.md), [`unattended-runs`](solutions/unattended-runs.md) | Temporal, webhooks; hard ceilings at the CI runner | |
+| 3.4 Too many tool schemas upfront | [`tool-search`](solutions/tool-search.md), [`mcp-server-audit`](solutions/mcp-server-audit.md) | Deferred tool loading / tool search (native); Code Mode; CLIs instead of MCP servers | |
 
 ### 4 — Expensive content types
 
@@ -139,11 +219,11 @@ prompt/architecture discipline with no separate tool to install.
 
 | Cause | Fix | Tool(s) | Provider |
 | --- | --- | --- | --- |
-| 6.1 Cold-start subagents | [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`prompt-caching`](solutions/prompt-caching.md) | Artifact store (your side) | |
+| 6.1 Cold-start subagents | [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`prompt-caching`](solutions/prompt-caching.md), [`unattended-runs`](solutions/unattended-runs.md) | Artifact store (your side) | |
 | 6.2 Oversized model for the task | [`model-routing`](solutions/model-routing.md), [`batch-processing`](solutions/batch-processing.md), [`semantic-caching`](solutions/semantic-caching.md) | RouteLLM, LiteLLM, Portkey; provider batch tier | ▲ |
 | 6.3 Concurrent cold-cache fan-out | [`fan-out-warming`](solutions/fan-out-warming.md) | Warm-then-fan orchestration (your side) | |
-| 6.4 Over-prescriptive prompts/scaffolding | [`prompt-de-scaffolding`](solutions/prompt-de-scaffolding.md) | Prompt audit (your side) | |
-| 6.5 Cross-session cold starts | [`code-maps`](solutions/code-maps.md), [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`compaction`](solutions/compaction.md) | aider, Repomix, Codesight | |
+| 6.4 Over-prescriptive prompts/scaffolding | [`prompt-de-scaffolding`](solutions/prompt-de-scaffolding.md), [`instruction-file-hygiene`](solutions/instruction-file-hygiene.md) | Prompt audit (your side); promptfoo | |
+| 6.5 Cross-session cold starts | [`code-maps`](solutions/code-maps.md), [`subagent-context-handoff`](solutions/subagent-context-handoff.md), [`compaction`](solutions/compaction.md), [`unattended-runs`](solutions/unattended-runs.md) | aider, Repomix, Codesight | |
 | 6.6 Fleet-duplicate requests | [`semantic-caching`](solutions/semantic-caching.md), [`batch-processing`](solutions/batch-processing.md) | GPTCache; LiteLLM/Portkey semantic cache | |
 
 Measure first: [`token-counting`](solutions/token-counting.md) is the layer

@@ -100,6 +100,7 @@ cơ chế hoạt động.
 | [`tool-composition.md`](tool-composition.md) | 3.2 | K round-trip → ~1 lượt xử lý context; dữ liệu trung gian không bao giờ bị tính phí |
 | [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Chi phí chờ đợi O(số lần poll × context) → ~0 |
 | [`tool-search.md`](tool-search.md) | 3.4 | Giảm 10–50× chi phí schema tool mỗi request; Code Mode 98,7% trên **một** workflow đã công bố |
+| [`mcp-server-audit.md`](mcp-server-audit.md) | 3.4, 2.3 | ⚪ Chưa đo. Chi phí tỷ lệ với **tổng** số tool đang bật, không phải số tool bạn dùng — lớn nhất trên Cline, phần lớn đã được harness thu hồi trên Claude Code |
 
 ### Danh mục 4 — Loại nội dung đắt đỏ
 
@@ -130,6 +131,8 @@ cơ chế hoạt động.
 | [`semantic-caching.md`](semantic-caching.md) | 6.6, 6.2 | Bỏ qua 100% chi phí model khi cache hit; 20–60% lưu lượng đọc lặp lại |
 | [`fan-out-warming.md`](fan-out-warming.md) | 6.3 | N lượt xử lý lạnh → 1 lần ghi + (N−1) lần đọc cache (giảm ~85–90% input fan-out) |
 | [`prompt-de-scaffolding.md`](prompt-de-scaffolding.md) | 6.4 | Giảm 30–70% system prompt, cộng thêm phần tiết kiệm nhờ output phát sinh giảm theo, thường kèm cải thiện chất lượng |
+| [`instruction-file-hygiene.md`](instruction-file-hygiene.md) | 6.4, 2.3, 1.3 | ⚪ Chưa đo. Tài liệu Claude Code khuyên giữ `CLAUDE.md` dưới 200 dòng; luật thụ động đo được kích hoạt **0/10 phiên** |
+| [`unattended-runs.md`](unattended-runs.md) | 6.1, 6.5, 3.3, 1.4 | ⚪ Chưa đo. Mỗi lần chạy CI đều bắt đầu với cache nguội; phần tiết kiệm lớn nhất đến từ việc **không chạy**, không phải chạy rẻ hơn |
 
 ### Thứ tự áp dụng đề xuất
 
@@ -236,6 +239,7 @@ assessment; several include mermaid diagrams of the mechanism.
 | [`tool-composition.md`](tool-composition.md) | 3.2 | K round-trips → ~1 context pass; intermediates never billed |
 | [`event-driven-waiting.md`](event-driven-waiting.md) | 3.3 | Waiting cost O(polls × context) → ~0 |
 | [`tool-search.md`](tool-search.md) | 3.4 | 10–50× reduction in per-request tool-schema overhead; Code Mode 98.7% on **one** published workflow |
+| [`mcp-server-audit.md`](mcp-server-audit.md) | 3.4, 2.3 | ⚪ Unmeasured. Cost scales with the **total** number of enabled tools, not the ones you use — largest on Cline, mostly captured by the harness on Claude Code |
 
 ### Category 4 — Expensive content types
 
@@ -266,6 +270,8 @@ assessment; several include mermaid diagrams of the mechanism.
 | [`semantic-caching.md`](semantic-caching.md) | 6.6, 6.2 | 100% model-cost skip on cache hits; 20–60% of repetitive read-only traffic |
 | [`fan-out-warming.md`](fan-out-warming.md) | 6.3 | N cold passes → 1 write + (N−1) cache reads (~85–90% off fan-out input) |
 | [`prompt-de-scaffolding.md`](prompt-de-scaffolding.md) | 6.4 | 30–70% system-prompt cut + induced-output savings, often with quality gains |
+| [`instruction-file-hygiene.md`](instruction-file-hygiene.md) | 6.4, 2.3, 1.3 | ⚪ Unmeasured. Claude Code docs recommend keeping `CLAUDE.md` under 200 lines; passive rules measured **0 activations in 10 sessions** |
+| [`unattended-runs.md`](unattended-runs.md) | 6.1, 6.5, 3.3, 1.4 | ⚪ Unmeasured. Every CI run starts on a cold cache; the largest saving comes from **not running**, not from running cheaper |
 
 ### Suggested adoption order
 
