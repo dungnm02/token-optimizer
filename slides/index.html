@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiết kiệm token cho coding agent — Slide</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2430; --line:#2a3440;
+    --fg:#e6edf3; --mut:#8b949e; --dim:#6e7781;
+    --acc:#58a6ff; --good:#3fb950; --warn:#d29922; --bad:#f85149; --vio:#bc8cff;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--fg);font-family:var(--sans);overflow:hidden}
+
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:0 0 auto}
+
+  .slide{
+    position:absolute;inset:0;padding:52px 64px 62px;display:none;
+    flex-direction:column;background:var(--bg);overflow:hidden;
+  }
+  .slide.on{display:flex}
+
+  /* ---------- typography ---------- */
+  .kicker{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:14px}
+  .kicker.g{color:var(--good)} .kicker.w{color:var(--warn)} .kicker.b{color:var(--bad)} .kicker.v{color:var(--vio)}
+  h1{font-size:60px;line-height:1.08;letter-spacing:-.02em;font-weight:800}
+  h2{font-size:36px;line-height:1.15;letter-spacing:-.015em;font-weight:750;margin-bottom:6px}
+  h3{font-size:19px;font-weight:700;margin-bottom:8px}
+  .sub{font-size:19px;color:var(--mut);line-height:1.5;margin-top:12px;max-width:1000px}
+  p{font-size:17px;line-height:1.55;color:#cdd7e1}
+  .lead{font-size:22px;line-height:1.45}
+  strong{color:#fff;font-weight:700}
+  code,.mono{font-family:var(--mono);font-size:.9em;background:#0b1220;border:1px solid var(--line);
+    padding:1px 6px;border-radius:5px;color:#9fd0ff}
+  .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;min-height:0}
+  .body.top{justify-content:flex-start;padding-top:6px}
+  ul{list-style:none;display:flex;flex-direction:column;gap:11px}
+  li{font-size:17.5px;line-height:1.45;padding-left:26px;position:relative;color:#cdd7e1}
+  li::before{content:"";position:absolute;left:6px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--acc)}
+  ol.num{list-style:none;counter-reset:n;display:flex;flex-direction:column;gap:10px}
+  ol.num li{counter-increment:n;padding-left:40px}
+  ol.num li::before{content:counter(n);position:absolute;left:0;top:-1px;width:26px;height:26px;border-radius:7px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--acc);font-size:14px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+
+  /* ---------- blocks ---------- */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .card.acc{border-left:4px solid var(--acc)} .card.good{border-left:4px solid var(--good)}
+  .card.warn{border-left:4px solid var(--warn)} .card.bad{border-left:4px solid var(--bad)}
+  .card .t{font-size:16px;font-weight:750;margin-bottom:7px;color:#fff}
+  .card .d{font-size:15px;line-height:1.45;color:var(--mut)}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .g21{display:grid;grid-template-columns:1.35fr 1fr;gap:20px}
+
+  .quote{border-left:4px solid var(--acc);background:linear-gradient(90deg,rgba(88,166,255,.09),transparent);
+    padding:16px 22px;border-radius:0 10px 10px 0;font-size:19px;line-height:1.5}
+  .quote.b{border-color:var(--bad);background:linear-gradient(90deg,rgba(248,81,73,.09),transparent)}
+  .quote.g{border-color:var(--good);background:linear-gradient(90deg,rgba(63,185,80,.09),transparent)}
+  .quote.w{border-color:var(--warn);background:linear-gradient(90deg,rgba(210,153,34,.09),transparent)}
+
+  /* ---------- table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  table.sm{font-size:13.5px}
+  table.xs{font-size:12.5px}
+  th{text-align:left;font-weight:700;color:var(--mut);font-size:.86em;letter-spacing:.05em;text-transform:uppercase;
+    padding:8px 10px;border-bottom:1.5px solid var(--line);white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid #1f2731;line-height:1.35;color:#cdd7e1;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.k{color:#fff;font-weight:650}
+  .ok{color:var(--good);font-weight:700} .no{color:var(--bad);font-weight:700}
+  .mid{color:var(--warn);font-weight:700} .unk{color:var(--dim);font-weight:700}
+
+  /* ---------- stats ---------- */
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-align:center}
+  .stat .n{font-size:38px;font-weight:820;letter-spacing:-.02em;line-height:1}
+  .stat .l{font-size:13.5px;color:var(--mut);margin-top:8px;line-height:1.35}
+  .stat.good .n{color:var(--good)} .stat.bad .n{color:var(--bad)}
+  .stat.warn .n{color:var(--warn)} .stat.acc .n{color:var(--acc)}
+
+  /* ---------- flow ---------- */
+  .flow{display:flex;align-items:stretch;gap:10px}
+  .flow .n{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 12px;text-align:center}
+  .flow .n .h{font-size:14.5px;font-weight:750;color:#fff}
+  .flow .n .s{font-size:12.5px;color:var(--mut);margin-top:5px;line-height:1.3}
+  .flow .a{display:flex;align-items:center;color:var(--dim);font-size:20px}
+
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;
+    border:1px solid var(--line);background:var(--panel2);color:var(--mut);letter-spacing:.03em}
+  .pill.g{color:var(--good);border-color:rgba(63,185,80,.4)}
+  .pill.b{color:var(--bad);border-color:rgba(248,81,73,.4)}
+  .pill.w{color:var(--warn);border-color:rgba(210,153,34,.4)}
+  .pill.a{color:var(--acc);border-color:rgba(88,166,255,.4)}
+
+  /* ---------- chrome ---------- */
+  .foot{position:absolute;left:64px;right:64px;bottom:22px;display:flex;justify-content:space-between;
+    align-items:center;font-size:12.5px;color:var(--dim);border-top:1px solid #1c242e;padding-top:12px}
+  .foot .sec{letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+  .slide.title .foot{border-top:none}
+  #bar{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,var(--acc),var(--vio));z-index:20;
+    transition:width .18s ease}
+  #hint{position:fixed;right:14px;bottom:10px;font-size:11px;color:#3d444d;z-index:20;font-family:var(--mono)}
+
+  @media print{
+    html,body{overflow:visible;height:auto}
+    #viewport{position:static;display:block}
+    #stage{transform:none!important;width:1280px;height:720px}
+    .slide{display:flex!important;page-break-after:always;position:relative}
+    #bar,#hint{display:none}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="viewport"><div id="stage">
+
+<!-- ============ 1 ============ -->
+<section class="slide title on" data-sec="Mở đầu">
+  <div class="body">
+    <div class="kicker">Field guide · token-optimizer</div>
+    <h1>Tiết kiệm token<br>cho coding agent</h1>
+    <div class="sub">Bốn phần: harness đã làm sẵn gì cho bạn · bốn công cụ đã được đo ·
+      nên dùng gì trên Claude Code, Codex, Gemini, Cline · và cách chỉnh setup + workflow.</div>
+    <div class="g4" style="margin-top:26px">
+      <div class="stat good"><div class="n">−10.3%</div><div class="l">ponytail, p=0.004<br>80 tác vụ ghép cặp</div></div>
+      <div class="stat good"><div class="n">−60%</div><div class="l">CodeGraph<br>chi phí, 7 repo</div></div>
+      <div class="stat warn"><div class="n">8.5%</div><div class="l">Caveman skill<br>quảng cáo 65%</div></div>
+      <div class="stat bad"><div class="n">+7.6%</div><div class="l">RTK trên Claude Code<br>chi phí <em>tăng</em></div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">token-optimizer</span><span>1</span></div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="slide" data-sec="Mở đầu">
+  <div class="kicker">Nội dung</div>
+  <h2>Bốn phần</h2>
+  <div class="body top">
+    <div class="g2">
+      <div class="card acc"><div class="t">1 · Harness đã giải quyết gì cho bạn</div>
+        <div class="d">Harness là lớp quyết định hóa đơn. Nó tự cắt output, tự cache, tự nén —
+          và chính vì thế nó lấy mất phần lớn dư địa mà công cụ bên thứ ba định khai thác.</div></div>
+      <div class="card good"><div class="t">2 · Bốn công cụ</div>
+        <div class="d">Ponytail, CodeGraph, Caveman, RTK — cơ chế, con số đã đo,
+          và vì sao hai cái thắng còn hai cái hụt so với quảng cáo 5–10 lần.</div></div>
+      <div class="card warn"><div class="t">3 · Nên dùng gì trên agent của bạn</div>
+        <div class="d">Bảng phán quyết cho Claude Code, Codex CLI, Gemini CLI và Cline —
+          dựa trên bằng chứng, kèm cảnh báo về chỗ chưa có bằng chứng.</div></div>
+      <div class="card v" style="border-left:4px solid var(--vio)"><div class="t">4 · Setup + Workflow</div>
+        <div class="d">Tầng cấu hình (làm một lần, miễn phí) và tầng quy trình mỗi phiên —
+          nơi có kết quả đo dương rõ nhất trong cả kho tài liệu.</div></div>
+    </div>
+    <div class="quote" style="margin-top:6px">
+      Một nguyên tắc chạy xuyên suốt cả bốn phần:
+      <strong>ngăn công việc phát sinh thắng nén công việc đã phát sinh.</strong>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">Mở đầu</span><span>2</span></div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="slide" data-sec="1 · Harness">
+  <div class="kicker">Phần 1</div>
+  <h2>Harness — lớp quyết định hóa đơn của bạn</h2>
+  <div class="body">
+    <p class="lead">Bạn không gọi model. <strong>Harness gọi hộ bạn</strong> — nó lắp prompt,
+      chạy vòng lặp tool, quyết định cái gì được giữ trong context. Và nó quyết định phần lớn
+      số token bị tính tiền.</p>
+    <div class="flow" style="margin-top:8px">
+      <div class="n"><div class="h">1 · Lắp prompt</div><div class="s">system + rules<br>+ tool schema</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">2 · Vòng lặp tool</div><div class="s">gọi tool<br>nhận kết quả</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">3 · Vòng đời context</div><div class="s">giữ / cắt<br>/ tóm tắt</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">4 · Nút sinh</div><div class="s">reasoning<br>verbosity</div></div>
+    </div>
+    <div class="g4" style="margin-top:4px">
+      <div class="card" style="padding:12px 14px"><div class="d"><span class="pill a">Nguyên nhân 1.x</span> cache<br>
+        <span class="pill a" style="margin-top:6px">3.4</span> tool schema</div></div>
+      <div class="card" style="padding:12px 14px"><div class="d"><span class="pill a">3.x</span> output tool quá khổ,
+        round-trip vụn vặt, retry</div></div>
+      <div class="card" style="padding:12px 14px"><div class="d"><span class="pill a">2.x</span> tích lũy lịch sử,
+        tool result cũ, tiêm trùng lặp</div></div>
+      <div class="card" style="padding:12px 14px"><div class="d"><span class="pill a">5.x</span> reasoning,
+        verbosity, cắt-giữa-chừng rồi thử lại</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">1 · Harness</span><span>3</span></div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="slide" data-sec="1 · Harness">
+  <div class="kicker">Harness làm tốt hay làm dở</div>
+  <h2>Cùng bốn việc, hai kết cục</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:22%">Việc harness làm</th><th style="width:39%">Nếu làm tốt</th><th>Nếu làm dở</th></tr>
+      <tr><td class="k">Lắp prompt</td><td class="ok">Tiền tố ổn định theo byte, cache đặt đúng chỗ</td>
+        <td class="no">Sửa rules giữa phiên → xây lại cache toàn phiên (1.3)</td></tr>
+      <tr><td class="k">Vòng lặp tool</td><td class="ok">Cắt output quá khổ trước khi vào history</td>
+        <td class="no">Nhét nguyên 50.000 dòng log vào context (3.1)</td></tr>
+      <tr><td class="k">Vòng đời context</td><td class="ok">Cắt tool result cũ, nén khi gần đầy</td>
+        <td class="no">Gửi lại toàn bộ transcript mỗi lượt (2.1, 2.2)</td></tr>
+      <tr><td class="k">Nút sinh</td><td class="ok">Effort thấp cho việc dễ</td>
+        <td class="no">Reasoning tối đa để đổi tên một biến (5.1)</td></tr>
+    </table>
+    <div class="quote g" style="margin-top:14px">
+      <strong>Chọn harness là đòn bẩy lớn hơn cài thêm công cụ.</strong>
+      Một harness đã cắt output, đã cache, đã nén sẽ lấy mất phần lớn dư địa
+      mà một công cụ bên thứ ba định khai thác.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">1 · Harness</span><span>4</span></div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="slide" data-sec="1 · Harness">
+  <div class="kicker">Đối chiếu năng lực · 8/2026</div>
+  <h2>Caching &amp; vòng đời context</h2>
+  <div class="body top">
+    <p style="color:var(--dim);font-size:13.5px;margin-top:2px">
+      Ký hiệu: <span class="ok">✅</span> có sẵn · <span class="mid">⚠️</span> có nhưng thiếu/một phần ·
+      <span class="no">❌</span> không có · <span class="unk">⚪</span> chưa xác minh.
+      Cả bốn công cụ đều phát hành rất nhanh — hãy kiểm lại trước khi triển khai.</p>
+    <h3 style="color:var(--acc);margin-top:6px">1 — Caching (nguyên nhân 1.x)</h3>
+    <table class="sm">
+      <tr><th style="width:28%">Năng lực</th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
+      <tr><td class="k">Caching mặc định</td><td class="ok">✅ tự động</td><td class="ok">✅ cache tiền tố chính xác</td>
+        <td class="ok">✅ implicit (API key)</td><td class="ok">✅ trên provider hỗ trợ</td></tr>
+      <tr><td class="k">Thấy được cache read</td><td>✅ <code>/cost</code> <code>/context</code></td><td>✅ <code>/status</code></td>
+        <td>✅ <code>/stats</code></td><td class="ok">✅ theo từng task, ngay trên UI</td></tr>
+    </table>
+    <h3 style="color:var(--acc);margin-top:14px">2 — Vòng đời context (nguyên nhân 2.x)</h3>
+    <table class="sm">
+      <tr><th style="width:28%">Năng lực</th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
+      <tr><td class="k">Tự động nén</td><td>✅ gần ngưỡng</td><td>✅ <code>model_auto_compact…</code></td>
+        <td>✅ <code>compressionThreshold</code></td><td>✅ Auto Compact</td></tr>
+      <tr><td class="k">Ngưỡng chỉnh được</td><td>✅ <code>autoCompactWindow</code></td><td>✅ số token (≤90%)</td>
+        <td>✅ tỷ lệ + <code>maxTokens</code></td><td class="unk">⚪ chưa xác minh</td></tr>
+      <tr><td class="k">Cắt tool result cũ</td><td>✅ tự động</td><td>✅ theo ngân sách</td>
+        <td>✅ <code>retainedTokens</code></td><td class="mid">⚠️ chỉ qua nén</td></tr>
+      <tr><td class="k">Bàn giao phiên mới</td><td>✅ subagent</td><td>✅ subagent</td>
+        <td>✅ subagent</td><td>✅ <code>/newtask</code></td></tr>
+    </table>
+    <p style="color:var(--dim);font-size:14px;margin-top:12px">Nén <em>luôn</em> phá cache ở mọi harness —
+      tiền tố mới nghĩa là lượt đầu sau nén trả giá đầy đủ. Vì thế nên nén chủ động ở điểm dừng tự nhiên.</p>
+  </div>
+  <div class="foot"><span class="sec">1 · Harness</span><span>5</span></div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="slide" data-sec="1 · Harness">
+  <div class="kicker b">Ba hàng quyết định tất cả</div>
+  <h2>Vòng lặp tool — nơi bốn harness khác nhau nhất</h2>
+  <div class="body top">
+    <table class="sm">
+      <tr><th style="width:26%">Năng lực</th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
+      <tr><td class="k">Tool đọc/tìm file riêng</td><td class="ok">✅ Read/Grep/Glob</td><td class="mid">⚠️ phần lớn qua shell</td>
+        <td class="ok">✅</td><td class="ok">✅ read_file</td></tr>
+      <tr><td class="k">Cắt output quá khổ</td><td class="ok">✅ đã đo</td><td class="ok">✅</td>
+        <td class="ok">✅ 40.000 ký tự</td><td class="unk">⚪</td></tr>
+      <tr style="background:rgba(88,166,255,.06)"><td class="k">Ngân sách output chỉnh được</td>
+        <td class="ok">✅ <code>BASH_MAX_OUTPUT_LENGTH</code></td><td class="ok">✅ <code>tool_output_token_limit</code></td>
+        <td class="ok">✅ <code>summarizeToolOutput</code></td><td class="no">❌ không có</td></tr>
+      <tr style="background:rgba(88,166,255,.06)"><td class="k">Tải tool trì hoãn / tìm tool</td>
+        <td class="ok">✅</td><td class="unk">⚪</td><td class="ok">✅ hook lọc tool</td>
+        <td class="no">❌ schema MCP vào <em>mọi</em> request</td></tr>
+      <tr style="background:rgba(88,166,255,.06)"><td class="k">Chèn quy tắc tất định (hook)</td>
+        <td class="ok">✅ hook</td><td class="mid">⚠️ hook chỉ bắt tool shell</td>
+        <td class="ok">✅ hook + extension</td><td class="no">❌ chỉ có file rules</td></tr>
+    </table>
+    <div class="g3" style="margin-top:16px">
+      <div class="card acc"><div class="t">Ngân sách output</div><div class="d">Codex và Gemini cho bạn <em>một con số</em>.
+        Ở đó, cài bộ nén output là làm lại việc harness đã làm.</div></div>
+      <div class="card bad"><div class="t">Chèn tất định</div><div class="d">Ruleset nạp qua hook thì <em>chắc chắn</em> chạy.
+        Cùng ruleset đó trong file rules đã kích hoạt <strong>0 lần trong 10 phiên</strong>.</div></div>
+      <div class="card warn"><div class="t">Hook của Codex</div><div class="d">Chỉ chặn tool shell.
+        <code>apply_patch</code>, đọc/ghi file, lời gọi MCP đều không kích hoạt hook.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">1 · Harness</span><span>6</span></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="slide" data-sec="1 · Harness">
+  <div class="kicker">Nút sinh &amp; định tuyến</div>
+  <h2>Nguyên nhân 5.x và 6.x</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:26%">Năng lực</th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
+      <tr><td class="k">Nút reasoning effort</td><td>✅ <code>effortLevel</code></td>
+        <td class="ok">✅ <code>minimal</code>…<code>xhigh</code></td><td class="unk">⚪</td><td>✅ ngân sách thinking</td></tr>
+      <tr><td class="k">Nút verbosity</td><td class="mid">⚠️ <code>outputStyle</code></td>
+        <td class="ok">✅ <code>model_verbosity</code></td><td class="unk">⚪</td><td class="unk">⚪ qua prompt</td></tr>
+      <tr><td class="k">Sửa file bằng diff</td><td>✅</td><td>✅ <code>apply_patch</code></td><td>✅</td><td>✅ <code>replace_in_file</code></td></tr>
+      <tr><td class="k">Định tuyến model</td><td>✅ theo phiên/subagent</td><td>✅ profile</td><td>✅ theo phiên</td>
+        <td class="ok">✅ Plan/Act — hai model, một cấu hình</td></tr>
+      <tr><td class="k">Subagent</td><td>✅</td><td>✅</td><td>✅ cô lập tool</td><td class="no">❌ (<code>/newtask</code> thủ công)</td></tr>
+    </table>
+    <div class="quote w" style="margin-top:16px">
+      <strong>Nút cấu hình thắng công cụ.</strong> Trên Codex và Gemini, nguyên nhân đắt nhất
+      (3.1 — output tool quá khổ) sửa được bằng <em>một dòng cấu hình</em>.
+      Cài bộ nén ở đó là trả thêm độ phức tạp để đạt thứ đã cho không.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">1 · Harness</span><span>7</span></div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="slide" data-sec="1 · Harness">
+  <div class="kicker g">Kết luận phần 1</div>
+  <h2>Quy tắc hai điều kiện</h2>
+  <div class="body">
+    <p class="lead">Một công cụ bên thứ ba chỉ đáng cài khi <strong>cả hai</strong> điều sau cùng đúng:
+      harness còn để hở khe đó, <em>và</em> công cụ gắn vào được một cách tất định.</p>
+    <table style="margin-top:6px">
+      <tr><th style="width:24%"></th><th style="width:38%">Gắn tất định được (hook/plugin)</th><th>Chỉ gắn được kiểu thụ động (file rules)</th></tr>
+      <tr><td class="k">Harness còn hở</td>
+        <td style="background:rgba(63,185,80,.1)"><span class="ok">✅ Cài</span> — đây là ô duy nhất có kết quả dương</td>
+        <td style="background:rgba(210,153,34,.08)"><span class="mid">⚠️ Khe hở thật</span> nhưng công cụ có thể không chạy → phải đo</td></tr>
+      <tr><td class="k">Harness đã bịt</td>
+        <td style="background:rgba(248,81,73,.08)"><span class="no">❌</span> Cài cũng làm lại việc đã làm</td>
+        <td style="background:rgba(248,81,73,.12)"><span class="no">❌</span> Tệ nhất của cả hai</td></tr>
+    </table>
+    <div class="g3" style="margin-top:18px">
+      <div class="card bad"><div class="t">Thiếu điều kiện 1</div>
+        <div class="d">RTK trên Claude Code: <strong style="color:var(--bad)">+7.6%</strong>. Harness đã cắt sẵn.</div></div>
+      <div class="card bad"><div class="t">Thiếu điều kiện 2</div>
+        <div class="d">Ruleset ở tầng file rules: kích hoạt <strong style="color:var(--bad)">0/10 phiên</strong>.</div></div>
+      <div class="card good"><div class="t">Đủ cả hai</div>
+        <div class="d">Ponytail qua hook <strong style="color:var(--good)">−10.3%</strong> ·
+          CodeGraph qua MCP <strong style="color:var(--good)">−60%</strong>.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">1 · Harness</span><span>8</span></div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker g">Phần 2</div>
+  <h2>Bốn công cụ, bốn kết quả đã đo</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:15%">Công cụ</th><th style="width:31%">Cơ chế</th><th style="width:27%">Đã đo</th><th>Nên dùng?</th></tr>
+      <tr><td class="k">Ponytail</td><td>Ruleset ngăn agent xây thừa</td>
+        <td class="ok">−10.3% chi phí (p=0.004)</td><td class="ok">✅ Thử đầu tiên</td></tr>
+      <tr><td class="k">CodeGraph</td><td>Knowledge graph local, truy vấn qua MCP</td>
+        <td class="ok">−69% token, −60% chi phí</td><td class="ok">✅ Nếu repo &gt;~1.000 file</td></tr>
+      <tr><td class="k">Caveman</td><td>Nén văn bản (thư viện) / ép viết cộc lốc (skill)</td>
+        <td class="mid">8.5% cho skill, rủi ro đuôi nặng</td><td class="mid">⚠️ Chỉ dùng thư viện</td></tr>
+      <tr><td class="k">RTK</td><td>Nén output shell qua hook</td>
+        <td class="no">+7.6% chi phí trên Claude Code</td><td class="no">❌ Đừng cài trên Claude Code</td></tr>
+    </table>
+    <div class="quote g" style="margin-top:18px">
+      <strong>Quy luật xuyên suốt cả bốn: ngăn công việc thắng nén công việc.</strong><br>
+      <span style="font-size:16px;color:var(--mut)">Hai công cụ đứng đầu bảng ngăn không cho token được sinh ra.
+      Hai công cụ cuối bảng bóp nhỏ token sau khi đã sinh ra — và cả hai đều hụt so với quảng cáo 5–10 lần.</span>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:8px">
+      Mọi con số ở đây là <em>giá trị biên so với Claude Code</em>, không phải thuộc tính của công cụ.</p>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>9</span></div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker g">Công cụ 1 · Ponytail</div>
+  <h2>“Code tốt nhất là code bạn không bao giờ viết”</h2>
+  <div class="body top">
+    <div class="g21">
+      <div>
+        <p style="margin-bottom:12px">Mọi công cụ khác <strong>nén công việc sau khi nó đã xảy ra</strong>.
+          Ponytail ngăn công việc xảy ra ngay từ đầu — nó can thiệp vào
+          <strong>quyết định xây cái gì</strong>, trước khi có dòng code nào tồn tại.</p>
+        <table class="sm">
+          <tr><th style="width:52%">Agent dừng ở nấc đầu tiên áp dụng được</th><th>Kết quả</th></tr>
+          <tr><td>Thứ này có cần tồn tại không?</td><td>Không → bỏ qua (YAGNI)</td></tr>
+          <tr><td>Đã có sẵn trong codebase?</td><td>Có → tái sử dụng</td></tr>
+          <tr><td>Stdlib làm được?</td><td>Được → dùng stdlib</td></tr>
+          <tr><td>Tính năng có sẵn của nền tảng / dependency đã cài?</td><td>Có → dùng nó</td></tr>
+          <tr><td>Một dòng là đủ?</td><td>Đủ → viết một dòng</td></tr>
+          <tr><td colspan="2" style="color:var(--mut)">…nếu không: bản hiện thực tối thiểu khả dụng</td></tr>
+        </table>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="stat good"><div class="n">−10.3%</div><div class="l">chi phí · p=0.004<br>80 tác vụ ghép cặp</div></div>
+        <div class="card good"><div class="t">Khoản tiết kiệm là gì</div>
+          <div class="d"><strong>Output thật không được sinh ra</strong> — không phải một phản chứng
+            được đặt tên lại. Không có baseline ảo nào để thổi phồng.</div></div>
+        <div class="card"><div class="t">Bốn mức</div>
+          <div class="d"><code>lite</code> · <code>full</code> (mặc định) · <code>ultra</code> · <code>off</code></div></div>
+      </div>
+    </div>
+    <div class="quote w" style="margin-top:14px;font-size:16.5px">
+      Chi tiết dễ bỏ sót: ruleset yêu cầu agent <strong>đọc luồng code trước khi quyết định</strong> —
+      “lười ở giải pháp, không bao giờ lười ở việc đọc”. Thiếu vế sau, “lười” thoái hóa thành đoán bừa.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>10</span></div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker b">Ponytail · biến số sống còn</div>
+  <h2>Kích hoạt — nơi con số −10.3% sống hoặc chết</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:26%">Cách nạp</th><th style="width:36%">Harness</th><th>Đảm bảo kích hoạt?</th></tr>
+      <tr><td class="k">Hook / plugin vòng đời</td><td>Claude Code, Codex, Gemini CLI, Antigravity</td>
+        <td class="ok">✅ Tiêm tất định — đây là cấu hình đã được đo</td></tr>
+      <tr><td class="k">Rules file thụ động</td><td>Cursor, Windsurf, <strong>Cline</strong>, Roo, Copilot, Kiro</td>
+        <td class="no">⚠️ Model tự quyết định có đọc hay không — chế độ này kích hoạt <strong>0/10 phiên</strong></td></tr>
+      <tr><td class="k">Tự ghép vào system prompt</td><td>App tự dựng trên API</td>
+        <td class="mid">✅ Luôn có mặt — nhưng trả token ở <em>mọi</em> request (nguyên nhân 6.4)</td></tr>
+    </table>
+    <div class="g3" style="margin-top:16px">
+      <div class="card bad"><div class="t">1 · Cài thụ động = không làm gì</div>
+        <div class="d">Đây là ranh giới giữa <strong>−10.3%</strong> và <strong>0%</strong>.
+          Ở đâu có hook thì dùng hook. Ở đâu không có, phải tự xác nhận nó chạy.</div></div>
+      <div class="card warn"><div class="t">2 · Vì thế Cline là vấn đề</div>
+        <div class="d">Ponytail liệt kê Cline ở nhóm <em>adapter chỉ-instruction</em> —
+          đúng chế độ thụ động vừa kích hoạt 0%.</div></div>
+      <div class="card"><div class="t">3 · Chất lượng là kết quả rỗng</div>
+        <div class="d">9 tác vụ tệ hơn, 6 tốt hơn, 65 y hệt. Tiết kiệm tập trung ở tình huống xây thừa:
+          <strong>−31%</strong> ở build lớn, <strong>bằng 0</strong> khi code vốn đã tối giản.</div></div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:12px">
+      Cài trên Claude Code: <code>/plugin marketplace add DietrichGebert/ponytail</code> rồi
+      <code>/plugin install ponytail@ponytail</code> — gửi thành hai prompt riêng biệt, cần <code>node</code> trong PATH.</p>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>11</span></div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker g">Công cụ 2 · CodeGraph</div>
+  <h2>Hỏi graph, đừng đọc 30 file</h2>
+  <div class="body top">
+    <p>Coding agent tiêu phần lớn token chỉ để <strong>tìm</strong> đúng đoạn code: grep, glob,
+      đọc 30 file rồi phát hiện 28 file không liên quan. Các phép đo đặt
+      <strong>67–76% ngân sách token</strong> vào việc đọc file — và mỗi file đã đọc còn nằm lại
+      trong lịch sử đến hết phiên.</p>
+    <div class="flow" style="margin-top:14px">
+      <div class="n"><div class="h">Mã nguồn</div><div class="s">repo của bạn</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">Kernel Rust + tree-sitter</div><div class="s">30+ ngôn ngữ<br>phân tích tĩnh, offline</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">SQLite local</div><div class="s">.codegraph/codegraph.db<br>node: hàm/class · edge: gọi/import</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">Agent hỏi qua MCP</div><div class="s"><code>codegraph_explore</code><br>source + call path + blast radius</div></div>
+    </div>
+    <div class="g4" style="margin-top:18px">
+      <div class="stat good"><div class="n">−89%</div><div class="l">lượt gọi tool</div></div>
+      <div class="stat good"><div class="n">−69%</div><div class="l">token</div></div>
+      <div class="stat good"><div class="n">−60%</div><div class="l">chi phí · 7 repo</div></div>
+      <div class="stat acc"><div class="n">🟡 B</div><div class="l">nhà cung cấp tự chạy<br>nhưng tái lập được</div></div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:14px">
+      Index một lần, offline: trình biên dịch Swift (27k file) ~100 giây; nhân Linux (70k file, 6.4M quan hệ)
+      dưới 12 phút trên VPS 2 nhân. Đồng bộ tăng dần 0.3–0.4 giây. Không cần Node, không có mạng lúc chạy.</p>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>12</span></div>
+</section>
+
+<!-- ============ 13 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker">CodeGraph · biên áp dụng</div>
+  <h2>Dùng khi nào — và khi nào phản tác dụng</h2>
+  <div class="body">
+    <div class="g2">
+      <div class="card good">
+        <div class="t" style="color:var(--good)">✅ Dùng tốt nhất khi</div>
+        <ul style="margin-top:10px;gap:9px">
+          <li><strong>Repo lớn</strong> — trên ~1.000 file là vùng an toàn</li>
+          <li><strong>Câu hỏi kiến trúc</strong>: “luồng này đi qua đâu”, “sửa hàm này thì vỡ chỗ nào”</li>
+          <li><strong>Ngôn ngữ kiểu tĩnh</strong>: TS, Go, Rust, Java, C#, Swift</li>
+          <li><strong>Nhiều phiên trên cùng repo</strong> — index trả một lần, lợi ích cộng dồn</li>
+          <li><strong>Môi trường bị siết</strong>: local, không mạng, dễ giải trình với security</li>
+        </ul>
+      </div>
+      <div class="card bad">
+        <div class="t" style="color:var(--bad)">❌ Đừng dùng khi</div>
+        <ul style="margin-top:10px;gap:9px">
+          <li><strong>Repo nhỏ</strong> — dưới ~150 file, vòng lặp grep xong sớm hơn</li>
+          <li><strong>Agent giao khám phá cho sub-agent đọc file</strong> — sub-agent không đi qua MCP thì index bị bỏ qua</li>
+          <li><strong>Code nặng reflection / DI / routing theo quy ước</strong> — độ phủ framework 74–100%
+            (Django 74.1%, Spring 83.3%)</li>
+          <li><strong>Cline</strong> — không hỗ trợ qua MCP</li>
+          <li><strong>WSL2 hoặc ổ mạng</strong> — SQLite WAL không đáng tin</li>
+        </ul>
+      </div>
+    </div>
+    <div class="quote w" style="margin-top:14px;font-size:16.5px">
+      Cảnh báo từ chính benchmark của họ: <strong>OkHttp (645 file) lại <em>đắt hơn</em></strong> —
+      $0.23 so với $0.20 — dù dùng ít token hơn. Điểm hòa vốn không chỉ phụ thuộc số file.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>13</span></div>
+</section>
+
+<!-- ============ 14 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker w">Công cụ 3 · Caveman</div>
+  <h2>Trước hết: đây là <em>hai</em> thứ khác nhau</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:20%"></th><th style="width:40%">Thư viện <code>wilpel/caveman-compression</code></th><th>Skill “caveman mode”</th></tr>
+      <tr><td class="k">Là gì</td><td>Thư viện Python, MIT, 3 backend</td><td>Một prompt/ruleset ép agent viết cộc lốc</td></tr>
+      <tr><td class="k">Nén cái gì</td><td><strong>Văn bản bạn đưa vào</strong></td><td><strong>Output model viết ra</strong></td></tr>
+      <tr><td class="k">Quảng cáo</td><td>15–58% tùy backend</td><td>65%</td></tr>
+      <tr><td class="k">Đã A/B độc lập?</td><td class="no">❌ Chưa</td><td class="ok">✅ Rồi — kết quả <strong>8.5%</strong></td></tr>
+      <tr><td class="k">Nguyên nhân</td><td>6.4 (system prompt), 4.2 (tài liệu)</td><td>5.2 (verbosity)</td></tr>
+      <tr><td class="k">Phụ thuộc harness?</td><td class="ok">Không — chạy trước khi có request nào</td><td class="mid">Có — đây là thứ duy nhất phụ thuộc harness</td></tr>
+    </table>
+    <div class="g3" style="margin-top:16px">
+      <div class="card good"><div class="t">Backend NLP</div><div class="d">15–30% · miễn phí · &lt;100ms · theo luật,
+        15+ ngôn ngữ. <strong>Bắt đầu ở đây.</strong></div></div>
+      <div class="card"><div class="t">Backend MLM</div><div class="d">20–30% · miễn phí, offline · ~1–5s/tài liệu</div></div>
+      <div class="card warn"><div class="t">Backend LLM</div><div class="d">40–58% · cần OpenAI API key ·
+        văn bản của bạn rời khỏi máy</div></div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:12px">
+      Cách dùng đúng của thư viện: <strong>nén một lần, lưu kết quả, dùng lại mãi</strong> —
+      nén system prompt lúc build, kiểm tra bằng mắt, rồi commit bản đã nén. Không gọi nó trên đường đi mỗi request.</p>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>14</span></div>
+</section>
+
+<!-- ============ 15 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker b">Caveman skill</div>
+  <h2>Vì sao 65% thành 8.5% — và vì sao 8.5% vẫn không đáng</h2>
+  <div class="body top">
+    <div class="g21">
+      <div>
+        <ol class="num">
+          <li><strong>Baseline đã làm sẵn phần lớn việc.</strong> System prompt của Claude Code vốn đã dập
+            phần dẫn nhập và kể lể — chỉ còn phần văn xuôi giữa các lần gọi tool được nén, mà phần đó không nhiều.</li>
+          <li><strong>Lần chạy đầu 10 tác vụ cho −29.5%</strong>, rồi con số tan biến khi mẫu lớn lên
+            (86 tác vụ, 82 cặp sạch). Benchmark n nhỏ ở lĩnh vực này là vô giá trị.</li>
+          <li><strong>JetBrains ép kích hoạt</strong> skill trong thử nghiệm. Nên 8.5% là <em>trần</em>;
+            khi để nó tự kích hoạt theo ngữ cảnh, mức tiết kiệm “ít hơn hoặc bằng không”.</li>
+        </ol>
+        <div class="quote b" style="margin-top:16px;font-size:16.5px">
+          <strong>Rủi ro đuôi mới là phần nguy hiểm.</strong> Một tác vụ kiểm toán dependency vọt lên
+          <strong style="color:var(--bad)">$8.29</strong> so với baseline <strong>$0.33</strong> —
+          lật ngược toàn bộ lợi thế chi phí của cả lần chạy.
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="stat bad"><div class="n">65% → 8.5%</div><div class="l">quảng cáo so với đo được</div></div>
+        <div class="stat bad"><div class="n">$8.29</div><div class="l">một tác vụ, so với<br>baseline $0.33</div></div>
+        <div class="card"><div class="t">Chất lượng</div><div class="d">8 tốt hơn · 10 tệ hơn · 64 hòa
+          (sign test p=0.82) — kết quả rỗng.</div></div>
+      </div>
+    </div>
+    <p style="color:var(--mut);font-size:15px;margin-top:12px">
+      <strong>Kết luận thực dụng:</strong> nếu bạn kiểm soát system prompt, “skill” chỉ là vài câu bạn tự viết —
+      không có gì để cài, và cũng không có gì che giấu phương sai bên dưới.
+      Chỗ caveman <em>thực sự</em> có giá trị là thư viện, áp lên system prompt và chunk RAG.</p>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>15</span></div>
+</section>
+
+<!-- ============ 16 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker b">Công cụ 4 · RTK</div>
+  <h2>Cơ chế đúng, kết quả âm</h2>
+  <div class="body top">
+    <p>Một binary Rust đứng trước lệnh shell và <strong>nén output</strong> trước khi nó vào context.
+      Bốn chiến lược tất định: lọc nhiễu · gom nhóm · cắt có giữ ngữ cảnh · khử trùng lặp.
+      Phủ hơn 100 lệnh dev. Không có model nào chạy ở tầng này.</p>
+    <div class="flow" style="margin-top:12px">
+      <div class="n"><div class="h">Agent gọi Bash</div><div class="s"><code>cargo test</code></div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">Hook PreToolUse</div><div class="s">viết lại lệnh</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">rtk lọc</div><div class="s">giữ: lỗi, diff, thất bại<br>bỏ: dòng OK, tiến trình</div></div>
+      <div class="a">→</div>
+      <div class="n"><div class="h">Context model</div><div class="s"><em>văn bản</em> nhỏ hơn 60–90%</div></div>
+    </div>
+    <div class="g4" style="margin-top:18px">
+      <div class="stat bad"><div class="n">+7.6%</div><div class="l">chi phí · p=0.004<br>ở nỗ lực suy luận thấp</div></div>
+      <div class="stat bad"><div class="n">+13.8%</div><div class="l">số lượt</div></div>
+      <div class="stat bad"><div class="n">+14.3%</div><div class="l">cache read</div></div>
+      <div class="stat"><div class="n" style="color:var(--mut)">+0.1%</div><div class="l">ở nỗ lực cao (p=0.99)<br>tổn hại tập trung ở chỗ hay chạy nhất</div></div>
+    </div>
+    <div class="quote b" style="margin-top:16px;font-size:16.5px">
+      Output bị nén khiến model <strong>kém chắc chắn và phải làm nhiều việc hơn</strong>.
+      Đây không phải “không tiết kiệm” — đây là làm hóa đơn tăng.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>16</span></div>
+</section>
+
+<!-- ============ 17 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker b">RTK · bài học chung</div>
+  <h2>Ba lỗ hổng — và tại sao đó là <em>thuộc tính harness</em></h2>
+  <div class="body top">
+    <ol class="num" style="gap:12px">
+      <li><strong>Bẫy phản chứng.</strong> <code>rtk gain</code> tự báo đã tiết kiệm 96.2 triệu token — 99.8%
+        mọi thứ nó chạm vào — trong khi hóa đơn đo được lại <em>tăng</em>. Nó tính output thô đầy đủ là mốc so sánh,
+        nhưng Claude Code <strong>vốn đã cắt bớt</strong> trước ngưỡng đó.</li>
+      <li><strong>Ước lượng token bằng <code>bytes/4</code></strong>, bỏ qua việc phần đọc lại từ cache
+        chỉ bị tính khoảng 1/10 giá.</li>
+      <li><strong>Hook không nhìn thấy phần lớn context.</strong> <code>Read</code>/<code>Grep</code>/<code>Glob</code>
+        là tool có sẵn, không đi qua shell. Bash chỉ mang <strong>chưa tới 20%</strong> ký tự kết quả tool →
+        <strong>trần lý thuyết chỉ ~3% token đầu vào</strong>.</li>
+    </ol>
+    <table class="sm" style="margin-top:16px">
+      <tr><th style="width:26%">Điều kiện</th><th style="width:34%">Nếu harness của bạn…</th><th>Thì…</th></tr>
+      <tr><td class="k" rowspan="2">Cắt output sẵn</td><td><strong>có</strong> cắt</td>
+        <td class="no">RTK nén thứ sắp bị vứt → gần như không có lợi</td></tr>
+      <tr><td><strong>không</strong> cắt</td><td class="ok">mức nén 80–90% chạm thẳng vào context → có dư địa thật</td></tr>
+      <tr><td class="k" rowspan="2">Tool đọc/tìm file riêng</td><td><strong>có</strong> (Claude Code, Cline, Cursor, Roo)</td>
+        <td class="no">phần lớn lưu lượng đi vòng qua hook → trần sụp</td></tr>
+      <tr><td><strong>không</strong> (pipeline shell-first, agent tự viết)</td><td class="ok">hook thấy gần như toàn bộ → trần cao</td></tr>
+      <tr><td class="k" rowspan="2">Prompt caching</td><td><strong>bật</strong></td>
+        <td class="no">byte gửi lại chỉ tính ~1/10 giá → đếm byte nói dối</td></tr>
+      <tr><td><strong>tắt</strong> / bạn tự quản</td><td class="ok">byte tiết kiệm ≈ tiền tiết kiệm</td></tr>
+    </table>
+    <p style="color:var(--mut);font-size:15px;margin-top:12px">
+      Claude Code trả lời <em>có / có / bật</em> — trường hợp xấu nhất. Script CI đổ log build vào một request API
+      là <em>không / không / tắt</em> — tốt nhất. <strong>Cùng một binary, hai kết quả trái dấu.</strong></p>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>17</span></div>
+</section>
+
+<!-- ============ 18 ============ -->
+<section class="slide" data-sec="2 · Bốn công cụ">
+  <div class="kicker">Tổng kết phần 2</div>
+  <h2>Tỉ lệ nén ≠ mức giảm hóa đơn</h2>
+  <div class="body">
+    <div class="g2">
+      <div class="card good">
+        <div class="t" style="color:var(--good)">Cái đo được là thật</div>
+        <div class="d" style="font-size:15.5px;line-height:1.55">
+          RTK nén văn bản thật: <code>pytest</code>/<code>cargo test</code>/<code>go test</code> −90%,
+          <code>cargo build</code>/<code>clippy</code> −80%, <code>ruff</code> −80%.<br><br>
+          Caveman thật sự nén system prompt 171→72 token (58%).<br><br>
+          <strong>Cả hai con số đều đúng.</strong>
+        </div>
+      </div>
+      <div class="card bad">
+        <div class="t" style="color:var(--bad)">Nhưng bạn không trả tiền cho cái đó</div>
+        <div class="d" style="font-size:15.5px;line-height:1.55">
+          Bạn trả tiền cho <strong>token bị tính tiền</strong>, sau khi harness đã cắt,
+          sau khi cache đã giảm giá 90%, cộng thêm mọi lượt phát sinh vì model kém chắc chắn.<br><br>
+          <strong>60–90% là tỉ lệ nén văn bản, không phải mức giảm hóa đơn.</strong>
+        </div>
+      </div>
+    </div>
+    <div class="quote" style="margin-top:18px">
+      Công bằng với dự án: README của RTK <strong>trung thực</strong> — nó nói rõ bash chỉ là một phần token đầu vào,
+      rằng token ước lượng bằng <code>bytes/4</code>, và rằng Read/Grep/Glob không đi qua hook.
+      <strong>Chính marketing và các blog phát tán lại đã đánh đồng hai đại lượng đó.</strong>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">2 · Bốn công cụ</span><span>18</span></div>
+</section>
+
+<!-- ============ 19 ============ -->
+<section class="slide" data-sec="3 · Theo từng agent">
+  <div class="kicker w">Phần 3 · đọc trước khi tin bảng sau</div>
+  <h2>Trạng thái đo lường</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:40%"></th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
+      <tr><td class="k">Có A/B đối chứng trong kho này</td><td class="ok">✅ toàn bộ</td>
+        <td class="no">❌</td><td class="no">❌</td><td class="no">❌</td></tr>
+      <tr><td class="k">Công cụ chuyên biệt từng được đo</td><td class="ok">4</td>
+        <td class="no">0</td><td class="no">0</td><td class="no">0</td></tr>
+    </table>
+    <div class="quote b" style="margin-top:20px">
+      <strong>Không một con số nào trong kho này được đo trên Codex, Gemini hay Cline.</strong><br>
+      <span style="font-size:16px;color:var(--mut)">Bảng năng lực nói <em>harness có gì</em>;
+      nó không nói <em>cài thêm gì thì tiết kiệm bao nhiêu</em>.
+      Cột Claude Code là kết quả đo — ba cột còn lại là <strong>suy luận từ năng lực harness</strong>.</span>
+    </div>
+    <div class="g4" style="margin-top:18px">
+      <div class="card" style="padding:13px 15px"><div class="t" style="font-size:14px">🟢 Tier A</div>
+        <div class="d" style="font-size:13px">A/B ghép cặp độc lập, có phương pháp công bố</div></div>
+      <div class="card" style="padding:13px 15px"><div class="t" style="font-size:14px">🟡 Tier B</div>
+        <div class="d" style="font-size:13px">Nhà cung cấp tự chạy nhưng tái lập được</div></div>
+      <div class="card" style="padding:13px 15px"><div class="t" style="font-size:14px">🟠 Tier C</div>
+        <div class="d" style="font-size:13px">Có số nhưng phương pháp mỏng</div></div>
+      <div class="card" style="padding:13px 15px"><div class="t" style="font-size:14px">🔴 Tier D</div>
+        <div class="d" style="font-size:13px">Tự báo so với phản chứng chưa từng tồn tại — <strong>loại</strong></div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">3 · Theo từng agent</span><span>19</span></div>
+</section>
+
+<!-- ============ 20 ============ -->
+<section class="slide" data-sec="3 · Theo từng agent">
+  <div class="kicker">Bảng phán quyết</div>
+  <h2>Công cụ nào, trên agent nào</h2>
+  <div class="body">
+    <table class="xs">
+      <tr><th style="width:20%">Công cụ</th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
+      <tr><td class="k">RTK / Headroom<br><span style="color:var(--dim);font-weight:400">nén output</span></td>
+        <td class="no">❌ đã đo +7.6%</td><td class="no">❌ dùng <code>tool_output_token_limit</code></td>
+        <td class="no">❌ dùng <code>truncateToolOutput…</code></td><td class="mid">⚠️ khe hở thật, tầng gắn yếu — đo trước</td></tr>
+      <tr><td class="k">Ponytail<br><span style="color:var(--dim);font-weight:400">ruleset chống xây thừa</span></td>
+        <td class="ok">✅ −10.3% qua hook</td><td class="mid">⚠️ hook không phủ sửa file</td>
+        <td class="unk">⚪ hook hỗ trợ, chưa đo</td><td class="no">❌ tầng file rules (0/10)</td></tr>
+      <tr><td class="k">CodeGraph<br><span style="color:var(--dim);font-weight:400">graph qua MCP</span></td>
+        <td class="ok">✅ −60%, repo &gt;1.000 file</td><td class="unk">⚪ MCP hỗ trợ, chưa đo</td>
+        <td class="unk">⚪ MCP hỗ trợ, chưa đo</td><td class="no">🚫 không hỗ trợ</td></tr>
+      <tr><td class="k">Caveman<br><span style="color:var(--dim);font-weight:400">skill viết cộc lốc</span></td>
+        <td class="mid">⚠️ 8.5%, rủi ro đuôi nặng</td><td class="no">❌ dùng <code>model_verbosity</code></td>
+        <td class="unk">⚪ chưa đo</td><td class="unk">⚪ chưa đo</td></tr>
+      <tr><td class="k">Code map<br><span style="color:var(--dim);font-weight:400">Repomix, Codesight</span></td>
+        <td class="unk">⚪ subagent đã gánh</td><td class="unk">⚪ subagent đã gánh</td>
+        <td class="unk">⚪ subagent đã gánh</td><td class="ok">✅ cần nhất ở đây — không có subagent</td></tr>
+      <tr><td class="k">Telemetry<br><span style="color:var(--dim);font-weight:400">Langfuse, LiteLLM</span></td>
+        <td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅ (UI đã tốt, cần cho cả đội)</td></tr>
+      <tr><td class="k">Router động<br><span style="color:var(--dim);font-weight:400">RouteLLM</span></td>
+        <td class="no">❌ map tĩnh đủ</td><td class="no">❌ map tĩnh đủ</td>
+        <td class="no">❌ map tĩnh đủ</td><td class="no">❌ Plan/Act <em>chính là</em> router</td></tr>
+      <tr><td class="k">LLMLingua<br><span style="color:var(--dim);font-weight:400">nén prompt</span></td>
+        <td class="no">❌ rủi ro sai lệch trên code</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span class="sec">3 · Theo từng agent</span><span>20</span></div>
+</section>
+
+<!-- ============ 21 ============ -->
+<section class="slide" data-sec="3 · Theo từng agent">
+  <div class="kicker">Khuyến nghị 1/4</div>
+  <h2>Claude Code — đừng nén, hãy <em>ngăn việc phát sinh</em></h2>
+  <div class="body top">
+    <p>Harness được đo kỹ nhất trong kho này — và vì thế là <strong>baseline</strong> của mọi con số.
+      Nó tự cắt output, tự cache, tự cắt tool result cũ, và system prompt đã ép súc tích sẵn.
+      Hệ quả: <strong>dư địa cho công cụ nén bên ngoài rất mỏng.</strong></p>
+    <div class="g21" style="margin-top:14px">
+      <div>
+        <div class="card good" style="height:100%">
+          <div class="t" style="color:var(--good)">✅ Nên làm, theo thứ tự</div>
+          <ol class="num" style="margin-top:12px;gap:9px">
+            <li>Ruleset chống xây thừa nạp qua <strong>hook</strong> — đòn bẩy đã đo được duy nhất ở đây</li>
+            <li><strong>CodeGraph</strong> qua MCP nếu repo trên ~1.000 file</li>
+            <li>Telemetry + ba cảnh báo; map model/effort tĩnh theo vai trò subagent</li>
+            <li>Quy ước bàn giao subagent — briefing vào, artifact ra</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card bad" style="height:100%">
+        <div class="t" style="color:var(--bad)">❌ Không cài</div>
+        <ul style="margin-top:10px;gap:9px">
+          <li>RTK</li><li>Headroom</li><li>Bộ nén output bất kỳ</li><li>Tầng nén thứ hai</li>
+        </ul>
+        <div class="d" style="margin-top:14px;font-size:14px">RTK đo ra +7.6% không phải vì RTK tệ —
+          phần nó định nén thì harness đã vứt đi rồi, còn phần nó thực sự chạm tới (Bash) chỉ chiếm dưới 20%.</div>
+      </div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:14px">
+      Nút cấu hình: <code>BASH_MAX_OUTPUT_LENGTH=15000</code> · <code>MAX_MCP_OUTPUT_TOKENS=10000</code> ·
+      <code>effortLevel: medium</code>. Kiểm chứng bằng <code>/context</code> và <code>/cost</code>.</p>
+  </div>
+  <div class="foot"><span class="sec">3 · Theo từng agent</span><span>21</span></div>
+</section>
+
+<!-- ============ 22 ============ -->
+<section class="slide" data-sec="3 · Theo từng agent">
+  <div class="kicker">Khuyến nghị 2/4</div>
+  <h2>Codex CLI — sửa bằng <code>config.toml</code> trước, công cụ sau</h2>
+  <div class="body top">
+    <p>Harness có <strong>nhiều nút số nhất</strong>. Ba nguyên nhân tốn kém nhất (3.1, 2.1, 5.1)
+      chỉnh được bằng cấu hình, <strong>không cần công cụ nào</strong>.</p>
+    <div class="g21" style="margin-top:14px">
+      <div class="card good">
+        <div class="t" style="color:var(--good)">✅ Nên làm, theo thứ tự</div>
+        <ol class="num" style="margin-top:12px;gap:9px">
+          <li>Đặt <code>tool_output_token_limit</code> (3.1) và <code>model_auto_compact_token_limit</code> (2.1)</li>
+          <li>Đặt <code>model_reasoning_effort</code> + <code>model_verbosity</code> theo vai trò (5.1, 5.2) —
+            <strong>không harness nào khác cho bạn hai nút này</strong></li>
+          <li><strong>CodeGraph</strong> qua MCP cho repo lớn</li>
+          <li>Ruleset: nạp được, nhưng <strong>hook chỉ bắt tool shell</strong> — xác minh nó thật sự chạy
+            trên đường sửa file trước khi tin</li>
+        </ol>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card bad"><div class="t" style="color:var(--bad)">❌ Không cài</div>
+          <div class="d">Bộ nén output (bước 1 đã làm) · Caveman (bước 2 đã làm)</div></div>
+        <div class="card warn"><div class="t">⚠️ Cạm bẫy</div>
+          <div class="d"><code>hide_agent_reasoning</code> <strong>không</strong> tiết kiệm token —
+            nó chỉ ẩn khỏi màn hình. Model vẫn sinh ra và bạn vẫn trả tiền.</div></div>
+      </div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:14px">
+      Đề xuất: <code>tool_output_token_limit = 8000</code> · <code>model_verbosity = "low"</code> ·
+      <code>model_reasoning_effort = "medium"</code> · <code>model_reasoning_summary = "concise"</code>.
+      Profile (<code>--profile</code>) chính là bản đồ model/effort theo vai trò. Kiểm chứng: <code>/status</code>.</p>
+  </div>
+  <div class="foot"><span class="sec">3 · Theo từng agent</span><span>22</span></div>
+</section>
+
+<!-- ============ 23 ============ -->
+<section class="slide" data-sec="3 · Theo từng agent">
+  <div class="kicker">Khuyến nghị 3/4</div>
+  <h2>Gemini CLI — dùng tầng context có sẵn, đúng thứ tự</h2>
+  <div class="body top">
+    <p>Hệ thống quản lý context <strong>nhiều tầng nhất</strong>: ngưỡng nén theo tỷ lệ, history window có
+      <code>retainedTokens</code>, cắt output theo ký tự, <em>và</em> một tầng “distillation” tóm tắt bằng LLM.
+      Có cả hook chạy <strong>trước khi chọn tool</strong>.</p>
+    <div class="g21" style="margin-top:14px">
+      <div class="card good">
+        <div class="t" style="color:var(--good)">✅ Nên làm, theo thứ tự</div>
+        <ol class="num" style="margin-top:12px;gap:9px">
+          <li><code>truncateToolOutputThreshold</code> trước — <strong>cắt là miễn phí</strong></li>
+          <li><em>Rồi mới</em> bật <code>summarizeToolOutput</code>/distillation cho tool thực sự sinh output lớn</li>
+          <li>Hook <strong>trước khi chọn tool</strong> để lọc tập tool mỗi lượt — cách khắc phục 3.4 không cần công cụ</li>
+          <li>Chỉnh <code>compressionThreshold</code> / <code>historyWindow</code> thay vì thêm lớp nén</li>
+        </ol>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card warn"><div class="t">⚠️ Mặc định đắt nhất</div>
+          <div class="d"><code>compressionThreshold</code> mặc định <code>0.5</code> — nén khi context đầy một nửa.
+            Mỗi lần nén <strong>phá cache</strong> <em>và</em> tốn một lượt gọi LLM.
+            Nâng lên <strong>0.75</strong> (đừng quá 0.8).</div></div>
+        <div class="card bad"><div class="t" style="color:var(--bad)">❌ Không cài</div>
+          <div class="d">Bộ nén output bên ngoài · tầng nén context thứ hai</div></div>
+      </div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:14px">
+      Tóm tắt bằng LLM <em>tự nó tốn token</em> — nó đổi token đắt lấy token rẻ hơn.
+      Đúng khi output thực sự lớn, lãng phí khi bạn chỉ cần cắt bớt. Kiểm chứng: <code>/stats</code>.</p>
+  </div>
+  <div class="foot"><span class="sec">3 · Theo từng agent</span><span>23</span></div>
+</section>
+
+<!-- ============ 24 ============ -->
+<section class="slide" data-sec="3 · Theo từng agent">
+  <div class="kicker">Khuyến nghị 4/4</div>
+  <h2>Cline — khe hở lớn nhất, bằng chứng ít nhất</h2>
+  <div class="body top">
+    <p>BYO-provider: mọi nguyên nhân đổ thẳng vào hóa đơn của bạn.
+      Điểm mạnh riêng: <strong>hiển thị cache read/write và chi phí theo từng task</strong> —
+      khả năng quan sát tốt nhất trong bốn agent — và <strong>Plan/Act</strong>, router hai model có sẵn.
+      Nhưng <strong>gần như không có nút số nào</strong>.</p>
+    <div class="g21" style="margin-top:14px">
+      <div class="card good">
+        <div class="t" style="color:var(--good)">✅ Làm phần miễn phí trước</div>
+        <ol class="num" style="margin-top:12px;gap:8px">
+          <li><strong>Chọn provider có caching</strong> — quyết định đắt nhất, lớn hơn mọi nút chỉnh</li>
+          <li><strong>Tắt server MCP không dùng hôm nay</strong> — không có tải tool trì hoãn,
+            đây thường là khoản tiết kiệm lớn nhất và tốn 0 công</li>
+          <li><strong>Plan/Act</strong> hai model — router của bạn, đã có sẵn</li>
+          <li><code>.clineignore</code> + <code>.clinerules</code> gọn, đóng băng giữa task</li>
+          <li><strong>Code map</strong> (Repomix/Codesight): không có subagent nên cold-start giữa các task
+            là khe hở cấu trúc thật</li>
+        </ol>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card bad"><div class="t" style="color:var(--bad)">Hai lỗ hổng cấu trúc</div>
+          <div class="d"><strong>Schema MCP nhét vào mọi request</strong> — vài server bật sẵn mà không dùng
+            có thể âm thầm cộng hàng nghìn token mỗi lượt.<br><br>
+            <strong>Chỉ có file rules, không có hook</strong> — đây là tầng đã đo được kích hoạt 0/10 phiên.</div></div>
+        <div class="card bad"><div class="t" style="color:var(--bad)">❌ Không cài</div>
+          <div class="d">Ponytail (tầng 0/10) · CodeGraph (không hỗ trợ) · router động</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">3 · Theo từng agent</span><span>24</span></div>
+</section>
+
+<!-- ============ 25 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker v">Phần 4</div>
+  <h2>Hai tầng còn lại</h2>
+  <div class="body">
+    <div class="g2">
+      <div class="card acc">
+        <div class="t" style="font-size:19px">Tầng cấu hình — làm <em>một lần</em></div>
+        <div class="d" style="font-size:15.5px;line-height:1.6;margin-top:8px">
+          Đây là tầng <strong>rẻ nhất</strong>: không có gì để cài, không có phụ thuộc mới,
+          không có điểm hỏng mới.<br><br>
+          Trên Codex và Gemini, <strong>một dòng cấu hình</strong> xử lý đúng nguyên nhân đắt nhất
+          mà cả một công cụ bên thứ ba đã đo ra +7.6% khi cố làm thay.<br><br>
+          <span class="pill a">Đặt trần cho thiệt hại</span>
+        </div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--vio)">
+        <div class="t" style="font-size:19px">Tầng workflow — <em>mỗi phiên</em></div>
+        <div class="d" style="font-size:15.5px;line-height:1.6;margin-top:8px">
+          Tầng duy nhất bị tính tiền <strong>lặp đi lặp lại</strong>, và là tầng có
+          <strong>kết quả đo dương rõ nhất</strong> trong cả kho.<br><br>
+          Can thiệp được đo tốt nhất — ponytail, −10.3%, p=0.004 — không phải bộ nén, không phải cache,
+          không phải nút cấu hình. Nó là <strong>một ruleset mã hóa kỷ luật của lập trình viên</strong>.<br><br>
+          <span class="pill" style="color:var(--vio);border-color:rgba(188,140,255,.4)">Quyết định bạn có chạm trần không</span>
+        </div>
+      </div>
+    </div>
+    <div class="quote w" style="margin-top:18px">
+      ⚪ <strong>Trạng thái bằng chứng:</strong> ngoài con số ponytail, những thói quen trong phần này
+      <strong>chưa được A/B</strong>. Chúng suy ra từ cơ chế tính tiền, không phải từ phép đo.
+      Phần số học được ghi rõ là số học.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>25</span></div>
+</section>
+
+<!-- ============ 26 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker b">Setup · điều kiện tiên quyết</div>
+  <h2>Trước khi vặn nút: bạn đang tiêu <em>đơn vị</em> gì?</h2>
+  <div class="body top">
+    <p style="margin-bottom:12px">Mọi con số phần trăm trong bộ slide này ngầm giả định bạn
+      <strong>trả tiền theo token</strong>. Với phần lớn người đọc, giả định đó <strong>sai</strong>.</p>
+    <div class="g21">
+      <table class="sm">
+        <tr><th style="width:48%">Thiết lập</th><th style="width:26%">Đơn vị khan hiếm</th><th>Tiết kiệm token đổi được gì</th></tr>
+        <tr><td class="k">Claude Code + API key / Bedrock / Vertex</td><td class="ok">Đô la, theo token</td><td>Tiền thật, tỷ lệ 1:1</td></tr>
+        <tr><td class="k">Claude Code + gói Pro / Max / Team</td><td class="mid">Hạn mức phiên &amp; tuần</td><td>Dư địa: làm lâu hơn trước khi bị chặn</td></tr>
+        <tr><td class="k">Codex + API key</td><td class="ok">Đô la, theo token</td><td>Tiền thật, tỷ lệ 1:1</td></tr>
+        <tr><td class="k">Codex + gói ChatGPT</td><td class="mid">Credit trong cửa sổ 5 giờ</td><td>Dư địa, rồi mới tới tiền</td></tr>
+        <tr><td class="k">Gemini CLI + Code Assist</td><td class="no">Số request mỗi ngày</td><td class="no">Gần như <em>không gì cả</em></td></tr>
+        <tr><td class="k">Gemini CLI + API key trả phí</td><td class="ok">Đô la, theo token</td><td>Tiền thật, tỷ lệ 1:1</td></tr>
+        <tr><td class="k">Cline (BYOK)</td><td class="ok">Đô la, theo token</td><td>Tiền thật, tỷ lệ 1:1</td></tr>
+      </table>
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div class="card bad" style="padding:13px 15px"><div class="t" style="font-size:15px">Nghịch lý Gemini</div>
+          <div class="d" style="font-size:13.5px">Code Assist tính bằng <strong>request</strong>: 1.500/ngày (Standard),
+            2.000 (Enterprise), trần 2 req/giây. Siết trần output <strong>không</strong> tiết kiệm gì;
+            câu dài dòng tốn đúng bằng câu cô đọng. Nhưng agent gọi tool 40 lần thay vì 8 tốn <strong>gấp năm</strong>.</div></div>
+        <div class="card warn" style="padding:13px 15px"><div class="t" style="font-size:15px">TTL cache theo cách trả tiền</div>
+          <div class="d" style="font-size:13.5px">Claude Code: gói thuê bao <strong>1 giờ</strong> ·
+            đang tiêu usage credit <strong>5 phút</strong> · API key <strong>5 phút</strong>.
+            Vượt hạn mức là TTL rơi 12 lần — đúng lúc bạn bắt đầu tiêu tiền thật.</div></div>
+      </div>
+    </div>
+    <div class="quote b" style="margin-top:14px;font-size:16px">
+      Trên gói thuê bao, <strong>con số đô la trên màn hình không phải hóa đơn của bạn</strong> —
+      nó được tính cục bộ theo giá niêm yết. Tài liệu chính thức nói khối Session “dành cho người dùng API”.
+      Dùng nó như chỉ số <em>tương đối</em>, đừng cộng vào ngân sách.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>26</span></div>
+</section>
+
+<!-- ============ 27 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker">Setup · thứ tự quan trọng</div>
+  <h2>Ba nút, đúng thứ tự này</h2>
+  <div class="body top">
+    <table>
+      <tr><th style="width:6%">#</th><th style="width:26%">Nút</th><th style="width:14%">Nguyên nhân</th><th>Vì sao đứng ở vị trí này</th></tr>
+      <tr><td class="k">1</td><td class="k">Trần output tool</td><td>3.1</td>
+        <td>Một lần <code>npm test</code> ồn ào có thể đắt hơn cả ngày prompt</td></tr>
+      <tr><td class="k">2</td><td class="k">Điểm kích hoạt nén</td><td>2.1 + 1.3</td>
+        <td>Nén quá sớm phá cache liên tục; quá muộn thì trả tiền cho lịch sử chết</td></tr>
+      <tr><td class="k">3</td><td class="k">Reasoning + verbosity</td><td>5.1, 5.2</td>
+        <td>Token sinh ra đắt gấp ~5 lần token đọc vào</td></tr>
+      <tr style="background:rgba(210,153,34,.07)"><td class="k">4</td><td class="k">Tắt server MCP không dùng</td><td>3.4</td>
+        <td>Không nằm trong file cấu hình nào. Trên Cline thường là khoản tiết kiệm lớn nhất</td></tr>
+    </table>
+    <h3 style="color:var(--bad);margin-top:20px">⚠️ Bẫy đơn vị: cùng một con số, bốn ý nghĩa</h3>
+    <table class="sm">
+      <tr><th style="width:44%">Agent</th><th style="width:26%">Trần output đếm bằng</th><th><code>20000</code> nghĩa là</th></tr>
+      <tr><td class="k">Claude Code · <code>BASH_MAX_OUTPUT_LENGTH</code></td><td class="mid">ký tự</td><td>~5.000 token</td></tr>
+      <tr><td class="k">Claude Code · <code>MAX_MCP_OUTPUT_TOKENS</code></td><td class="ok">token</td><td>20.000 token</td></tr>
+      <tr><td class="k">Codex CLI · <code>tool_output_token_limit</code></td><td class="ok">token</td><td>20.000 token</td></tr>
+      <tr><td class="k">Gemini CLI · <code>truncateToolOutputThreshold</code></td><td class="mid">ký tự</td><td>~5.000 token</td></tr>
+    </table>
+    <p style="color:var(--dim);font-size:14px;margin-top:10px">
+      Chênh lệch <strong>bốn lần</strong>. Đây là cách phổ biến nhất để vô tình đặt trần chặt hơn dự định gấp bốn lần.</p>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>27</span></div>
+</section>
+
+<!-- ============ 28 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker">Setup · giá trị cụ thể</div>
+  <h2>Cùng một nút, bốn cái tên</h2>
+  <div class="body">
+    <table class="xs">
+      <tr><th style="width:18%">Nguyên nhân</th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
+      <tr><td class="k">3.1 trần output tool</td>
+        <td><code>BASH_MAX_OUTPUT_LENGTH</code> = 15000<br><code>MAX_MCP_OUTPUT_TOKENS</code> = 10000</td>
+        <td><code>tool_output_token_limit</code> = 8000</td>
+        <td><code>truncateToolOutputThreshold</code> = 20000</td><td class="no">❌ không có</td></tr>
+      <tr><td class="k">2.1 điểm nén</td>
+        <td><code>autoCompactWindow</code><br><code>…AUTOCOMPACT_PCT_OVERRIDE</code></td>
+        <td><code>model_auto_compact_token_limit</code> ≤ 90% cửa sổ</td>
+        <td><code>compressionThreshold</code> = <strong>0.75</strong> (mặc định 0.5)</td><td class="no">❌ tự động</td></tr>
+      <tr><td class="k">2.2 giữ lại sau nén</td><td class="unk">⚪ tự động</td><td class="unk">⚪ theo ngân sách</td>
+        <td><code>historyWindow.retainedTokens</code> = 40000</td><td class="no">❌</td></tr>
+      <tr><td class="k">5.1 reasoning</td><td><code>effortLevel</code> = medium<br><code>MAX_THINKING_TOKENS</code></td>
+        <td><code>model_reasoning_effort</code> = medium<br><code>model_reasoning_summary</code> = concise</td>
+        <td class="unk">⚪</td><td>ngân sách thinking (model Anthropic)</td></tr>
+      <tr><td class="k">5.2 verbosity</td><td class="mid"><code>outputStyle</code></td>
+        <td class="ok"><code>model_verbosity</code> = low</td><td class="unk">⚪</td><td class="no">❌ chỉ qua prompt</td></tr>
+      <tr><td class="k">3.4 chi phí schema</td><td>tắt MCP · <code>claudeMdExcludes</code></td><td>tắt MCP</td>
+        <td>hook trước khi chọn tool</td><td class="ok">tắt MCP — <strong>quan trọng nhất ở đây</strong></td></tr>
+      <tr><td class="k">6.2 định tuyến</td><td><code>ANTHROPIC_DEFAULT_HAIKU_MODEL</code></td>
+        <td>profile (<code>--profile</code>)</td><td class="unk">⚪ theo phiên</td><td class="ok">Plan/Act</td></tr>
+    </table>
+    <p style="color:var(--mut);font-size:14.5px;margin-top:14px">
+      <strong>Cột Cline gần như trống, và đó chính là điều bảng này cần nói ra.</strong>
+      Trên ba agent kia, phần lớn công việc tối ưu là <em>đặt giá trị</em>.
+      Trên Cline, đó là <em>kỷ luật vận hành</em> — cùng những nguyên nhân đó, nhưng không có nút nào để vặn.</p>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>28</span></div>
+</section>
+
+<!-- ============ 29 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker b">Setup · rủi ro hai chiều</div>
+  <h2>Chỉnh quá tay: tốn tiền theo chiều ngược lại</h2>
+  <div class="body top">
+    <table class="sm">
+      <tr><th style="width:30%">Chỉnh quá tay</th><th style="width:36%">Chuyện gì xảy ra</th><th>Bạn trả giá thế nào</th></tr>
+      <tr><td class="k">Trần output quá thấp</td><td>Agent chạy lại lệnh với <code>head</code>/<code>grep</code>/<code>tail</code></td>
+        <td class="no">Hai vòng tool thay vì một</td></tr>
+      <tr><td class="k">Ngưỡng nén quá thấp</td><td>Nén chạy liên tục</td>
+        <td class="no">Mỗi lần phá cache <em>và</em> tốn một lượt gọi LLM</td></tr>
+      <tr><td class="k">Tắt hẳn auto-compact</td><td>Phiên đâm vào trần cứng</td>
+        <td class="no">Phải bắt đầu lại — cold start còn đắt hơn</td></tr>
+      <tr><td class="k">Reasoning về <code>minimal</code> cho việc khó</td><td>Đáp án sai, phải sửa lại</td>
+        <td class="no">Ba lượt rẻ đắt hơn một lượt đắt</td></tr>
+    </table>
+    <h3 style="color:var(--warn);margin-top:14px">Và nhóm thiết lập <em>trông như</em> tiết kiệm nhưng không</h3>
+    <table class="sm">
+      <tr><th style="width:40%">Thiết lập</th><th>Nó thực sự làm gì</th></tr>
+      <tr><td class="k"><code>hide_agent_reasoning</code> (Codex)</td><td>Ẩn reasoning khỏi màn hình. <strong>Token vẫn được sinh ra và tính tiền</strong></td></tr>
+      <tr><td class="k"><code>history.max_bytes</code> (Codex)</td><td>Giới hạn file lịch sử <strong>trên đĩa</strong>. Không ảnh hưởng context</td></tr>
+      <tr><td class="k"><code>CLAUDE_CODE_SKIP_PROMPT_HISTORY</code></td><td>Không ghi transcript. Tiết kiệm ổ đĩa, không tiết kiệm token</td></tr>
+      <tr><td class="k"><code>DISABLE_TELEMETRY</code></td><td>Bạn đang tắt đúng thứ giúp mình <em>đo</em> chi phí</td></tr>
+    </table>
+    <div class="quote w" style="margin-top:16px;font-size:16.5px">
+      <strong>Quy tắc:</strong> nới rộng khi thấy dấu hiệu chạy lại, siết chặt khi thấy dấu hiệu lãng phí.
+      Đừng đặt cả hai cùng lúc rồi đoán cái nào có tác dụng.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>29</span></div>
+</section>
+
+<!-- ============ 30 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker v">Workflow · sự thật chi phối tất cả</div>
+  <h2>Chi phí của một sai lầm tỷ lệ với việc bạn phạm nó <em>sớm</em> đến đâu</h2>
+  <div class="body">
+    <p class="lead">Model không có trí nhớ. Mỗi lượt, harness gửi lại <strong>toàn bộ</strong> cuộc hội thoại.
+      Một token bạn thêm vào ở lượt 5 không bị tính một lần — nó bị tính lại ở lượt 6, 7, 8, cho tới hết phiên.</p>
+    <div class="g21" style="margin-top:10px">
+      <table>
+        <tr><th>Dán 20.000 token log ở…</th><th>Số lượt phải mang nó</th><th>Token · lượt</th></tr>
+        <tr><td class="k">Lượt 5</td><td>45</td><td class="no">900.000</td></tr>
+        <tr><td class="k">Lượt 25</td><td>25</td><td class="mid">500.000</td></tr>
+        <tr><td class="k">Lượt 45</td><td>5</td><td class="ok">100.000</td></tr>
+      </table>
+      <div class="stat bad" style="display:flex;flex-direction:column;justify-content:center">
+        <div class="n">9×</div><div class="l">Cùng một hành động,<br>chỉ khác thời điểm<br>
+          <span style="color:var(--dim)">(phiên 50 lượt)</span></div></div>
+    </div>
+    <div class="g2" style="margin-top:16px">
+      <div class="card good"><div class="t">1 · Dọn sớm quan trọng hơn dọn nhiều</div>
+        <div class="d">Giữ 200 lượt đầu gọn gàng đáng giá hơn nén quyết liệt về sau.</div></div>
+      <div class="card good"><div class="t">2 · Việc phạm vi hẹp rẻ theo cấp số nhân</div>
+        <div class="d">Không phải vì prompt ngắn hơn — mà vì <strong>phiên ngắn hơn</strong>.</div></div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:12px">
+      <strong>Caching làm dịu điều này, không xóa bỏ nó.</strong> Chia các con số trên cho ~10 khi cache đang trúng.
+      Nhưng cache <em>trượt</em> mỗi khi nén chạy — và ngay lúc đó bạn trả giá đầy đủ cho mọi thứ vẫn còn trong context,
+      kể cả đống log dán ở lượt 5.</p>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>30</span></div>
+</section>
+
+<!-- ============ 31 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker v">Workflow · vòng đời một phiên</div>
+  <h2>Bốn thời điểm quyết định</h2>
+  <div class="body top">
+    <div class="flow" style="margin-bottom:8px">
+      <div class="n" style="padding:10px 12px"><div class="h">1 · Mở phiên</div><div class="s">phạm vi + điều kiện xong</div></div>
+      <div class="a">→</div>
+      <div class="n" style="padding:10px 12px"><div class="h">2 · Trong phiên</div><div class="s">chỉ đường, đừng dán</div></div>
+      <div class="a">→</div>
+      <div class="n" style="padding:10px 12px"><div class="h">3 · Điểm dừng</div><div class="s">nén có chủ đích</div></div>
+      <div class="a">→</div>
+      <div class="n" style="padding:10px 12px"><div class="h">4 · Đóng phiên</div><div class="s">artifact ra, bắt đầu lại</div></div>
+    </div>
+    <div class="g2" style="gap:11px">
+      <div class="card acc" style="padding:13px 15px">
+        <div class="t" style="font-size:15px">1 · Mở phiên — phạm vi quyết định hóa đơn</div>
+        <ul style="margin-top:7px;gap:5px;font-size:13.5px">
+          <li><strong>Một đơn vị công việc cho một phiên</strong></li>
+          <li><strong>Nói rõ điều kiện hoàn thành</strong> — “xong khi <code>pytest tests/auth</code> xanh”</li>
+          <li><strong>Nêu ràng buộc lên trước</strong> — ~10 token ở lượt 1, làm lại toàn bộ ở lượt 20</li>
+          <li><strong>Chỉ đường tới file</strong> — nhưng đừng chỉ khi bạn <em>đoán</em></li>
+        </ul>
+      </div>
+      <div class="card acc" style="padding:13px 15px">
+        <div class="t" style="font-size:15px">2 · Trong phiên — chỉ đường, đừng dán</div>
+        <ul style="margin-top:7px;gap:5px;font-size:13.5px">
+          <li><strong>Đừng dán thứ agent tự đọc được</strong></li>
+          <li><strong>Đọc lỗi trước khi chuyển tiếp</strong> — stack trace 2.000 dòng có ~5 dòng quan trọng</li>
+          <li><strong>Gộp yêu cầu liên quan vào một lượt</strong></li>
+          <li><strong>Đừng hỏi thứ bạn chạy được</strong> — compiler trả lời chính xác hơn và miễn phí</li>
+          <li><strong>Đừng sửa rules giữa phiên</strong> — xây lại cache toàn phiên</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--vio);padding:13px 15px">
+        <div class="t" style="font-size:15px">3 · Điểm dừng — nén có chủ đích</div>
+        <ul style="margin-top:7px;gap:5px;font-size:13.5px">
+          <li><strong>Nén ở ranh giới tự nhiên</strong> — test đã xanh, tính năng đã chạy</li>
+          <li><strong>Đừng để nó tự kích hoạt giữa lúc gỡ lỗi</strong></li>
+          <li><strong>Trước khi nén, yêu cầu một artifact</strong> — ghi kết luận ra ngoài context</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--vio);padding:13px 15px">
+        <div class="t" style="font-size:15px">4 · Đóng phiên — biết lúc nào nên bắt đầu lại</div>
+        <div class="d" style="margin-top:8px;font-size:14px">
+          Đây là quyết định bị bỏ lỡ nhiều nhất. Có một điểm mà phiên hiện tại
+          <strong>đắt hơn một phiên mới</strong>, kể cả khi tính cả chi phí khởi động nguội.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>31</span></div>
+</section>
+
+<!-- ============ 32 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker b">Workflow · vòng xoáy tử thần</div>
+  <h2>Khi nào nên bỏ phiên và bắt đầu lại</h2>
+  <div class="body">
+    <table>
+      <tr><th style="width:58%">Tín hiệu</th><th>Nên làm</th></tr>
+      <tr><td class="k">Agent thất bại <strong>hai lần liên tiếp</strong> cùng một việc</td>
+        <td class="no">Bắt đầu lại — context giờ chứa hai cách sai và nó đang neo vào chúng</td></tr>
+      <tr><td class="k">Việc tiếp theo dùng chung <strong>dưới một nửa</strong> số file với việc vừa xong</td>
+        <td class="no">Bắt đầu lại — bạn đang mang theo context không liên quan</td></tr>
+      <tr><td class="k">Bạn vừa <strong>đọc lại lịch sử</strong> để nhớ ra đang làm gì</td>
+        <td class="no">Bắt đầu lại, kèm một artifact tóm tắt</td></tr>
+      <tr><td class="k">Việc tiếp theo là phần tiếp nối trực tiếp, cùng file</td>
+        <td class="ok">Tiếp tục — cold start sẽ tốn hơn</td></tr>
+    </table>
+    <div class="quote b" style="margin-top:20px">
+      <strong>Vòng xoáy tử thần:</strong> agent hiểu sai → bạn sửa → nó hiểu sai theo cách khác → bạn sửa tiếp.
+      Mỗi vòng thêm cả câu trả lời sai <em>lẫn</em> phần sửa vào một context mà từ đó lượt nào cũng phải mang.
+      Đến vòng thứ ba, <strong>bạn đang trả tiền để model đọc lại chính những hiểu nhầm của nó.</strong><br>
+      <span style="font-size:16px;color:var(--mut)">Bắt đầu lại với một câu mô tả tốt hơn gần như luôn rẻ hơn.</span>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>32</span></div>
+</section>
+
+<!-- ============ 33 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker v">Workflow · xếp hạng</div>
+  <h2>Mười thói quen, xếp theo mức tốn kém</h2>
+  <div class="body top">
+    <table class="sm">
+      <tr><th style="width:5%">#</th><th style="width:34%">Thói quen</th><th style="width:12%">Nguyên nhân</th><th>Vì sao tốn</th></tr>
+      <tr style="background:rgba(248,81,73,.07)"><td class="k">1</td><td class="k">Nhồi nhiều việc vào một phiên</td><td>2.1</td>
+        <td>Nhân toàn bộ context với số lượt</td></tr>
+      <tr style="background:rgba(248,81,73,.07)"><td class="k">2</td><td class="k">Dán log / file / stack trace nguyên khối</td><td>3.1 + 2.1</td>
+        <td>Trả tiền lại ở mọi lượt còn lại</td></tr>
+      <tr style="background:rgba(248,81,73,.07)"><td class="k">3</td><td class="k">Để agent tự tìm thứ bạn đã biết</td><td>4.2, 6.5</td>
+        <td>Cả một vòng khám phá cho câu trả lời bạn có sẵn</td></tr>
+      <tr style="background:rgba(248,81,73,.07)"><td class="k">4</td><td class="k">Chạy tiếp qua vòng xoáy tử thần</td><td>2.1 + 5.3</td>
+        <td>Trả tiền để model đọc lại lỗi của chính nó</td></tr>
+      <tr><td class="k">5</td><td class="k">Để agent xây thừa</td><td>5.1, 5.2</td>
+        <td class="ok">Đây là khoảng −10.3% đã đo được</td></tr>
+      <tr><td class="k">6</td><td class="k">Round-trip vụn vặt</td><td>3.2</td><td>Gửi lại toàn bộ context cho mỗi câu hỏi nhỏ</td></tr>
+      <tr><td class="k">7</td><td class="k">Sửa rules giữa phiên</td><td>1.3</td><td>Xây lại cache toàn phiên</td></tr>
+      <tr><td class="k">8</td><td class="k">Reasoning tối đa cho việc lặt vặt</td><td>5.1</td><td>Token sinh ra là loại đắt nhất</td></tr>
+      <tr><td class="k">9</td><td class="k">Hỏi thứ bạn chạy được</td><td>6.6</td><td>Một lượt LLM cho việc compiler làm miễn phí</td></tr>
+      <tr><td class="k">10</td><td class="k">Fan-out song song khi cache còn nguội</td><td>6.3</td><td>N bản sao cùng trả giá đầy đủ</td></tr>
+    </table>
+    <div class="quote" style="margin-top:16px;font-size:16.5px">
+      <strong>Bốn dòng đầu là hành vi của con người, không phải của agent.</strong>
+      Đó là điểm chính: phần lớn dư địa còn lại sau khi bạn đã chỉnh harness nằm ở phía bàn phím.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>33</span></div>
+</section>
+
+<!-- ============ 34 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker w">Workflow · biết trước kỳ vọng</div>
+  <h2>Dư địa phụ thuộc loại tác vụ</h2>
+  <div class="body">
+    <div class="g21">
+      <table>
+        <tr><th style="width:66%">Loại tác vụ</th><th>Dư địa từ kỷ luật workflow</th></tr>
+        <tr><td class="k">Xây tính năng end-to-end, agent tự quyết kiến trúc</td><td class="ok">Cao — đây là chỗ có con số</td></tr>
+        <tr><td class="k">Khám phá / tìm hiểu codebase lạ</td><td class="ok">Cao — phạm vi và chỉ đường quyết định tất cả</td></tr>
+        <tr><td class="k">Sửa lỗi có phạm vi hẹp</td><td class="unk">Thấp — không có gì để ngăn xây thừa</td></tr>
+        <tr><td class="k">Refactor cơ học</td><td class="unk">Thấp</td></tr>
+        <tr><td class="k">Tác vụ chỉ đọc, hỏi đáp</td><td class="unk">Thấp — phiên vốn đã ngắn</td></tr>
+      </table>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="stat good"><div class="n">−31%</div><div class="l">ở các bản build lớn</div></div>
+        <div class="stat"><div class="n" style="color:var(--dim)">0%</div><div class="l">khi code vốn đã tối giản</div></div>
+      </div>
+    </div>
+    <div class="quote w" style="margin-top:20px">
+      Nếu ngày làm việc của bạn phần lớn là sửa lỗi nhỏ, <strong>đừng kỳ vọng nhiều ở tầng này</strong> —
+      và <strong>đừng đưa những tác vụ đó vào baseline khi đo</strong>, vì làm vậy là tự pha loãng phép đo của chính mình.
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>34</span></div>
+</section>
+
+<!-- ============ 35 ============ -->
+<section class="slide" data-sec="4 · Setup &amp; Workflow">
+  <div class="kicker g">Workflow · mở rộng ra cả đội</div>
+  <h2>Bốn quy ước đáng viết xuống</h2>
+  <div class="body top">
+    <ol class="num" style="gap:14px">
+      <li><strong>Một ràng buộc mặc định trong rules file:</strong>
+        <em>“bản tối thiểu; đừng thêm thứ không được yêu cầu; đọc code liên quan trước khi quyết định.”</em><br>
+        <span style="color:var(--mut);font-size:16px">Đây là phiên bản viết tay của can thiệp duy nhất trong kho này có p-value.
+        Nếu harness của bạn có hook — <strong>hãy nạp qua hook</strong>.</span></li>
+      <li><strong>Định nghĩa “một phiên” cho đội bạn.</strong> Một ticket? Một PR?<br>
+        <span style="color:var(--mut);font-size:16px">Đây là nút chỉnh phạm vi và nó không nằm trong file cấu hình nào.</span></li>
+      <li><strong>Một <code>.clineignore</code> / <code>.gitignore</code>-cho-agent dùng chung</strong><br>
+        <span style="color:var(--mut);font-size:16px">để <code>build/</code>, <code>dist/</code>, <code>node_modules/</code>,
+        snapshot và lock file không bao giờ vào context ở máy bất kỳ ai.</span></li>
+      <li><strong>Quy ước artifact bàn giao</strong> — mỗi phiên kết thúc bằng một bản tóm tắt ngắn đủ để bắt đầu phiên sau.</li>
+    </ol>
+    <h3 style="margin-top:20px;color:var(--acc)">Ba con số cần theo dõi, ở mức phiên</h3>
+    <div class="g3">
+      <div class="card acc"><div class="t">Token mỗi phiên hoàn thành</div>
+        <div class="d">Không phải mỗi request. Đây là con số duy nhất phản ánh chi phí phạm vi.</div></div>
+      <div class="card acc"><div class="t">Tỷ lệ cache read</div>
+        <div class="d">Tụt đột ngột nghĩa là có gì đó phá tiền tố — thường là sửa rules giữa phiên, hoặc nén chạy quá thường.</div></div>
+      <div class="card acc"><div class="t">Số lượt tới lúc xong</div>
+        <div class="d">Tăng dần theo thời gian nghĩa là phạm vi đang phình ra, chứ không phải tác vụ khó lên.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="sec">4 · Setup &amp; Workflow</span><span>35</span></div>
+</section>
+
+<!-- ============ 36 ============ -->
+<section class="slide" data-sec="Kết luận">
+  <div class="kicker g">Kết luận</div>
+  <h2>Làm theo thứ tự này</h2>
+  <div class="body top">
+    <div class="g2">
+      <div>
+        <ol class="num" style="gap:11px">
+          <li><strong>Đặt các nút cấu hình.</strong> Miễn phí, không có điểm hỏng mới.
+            Trên Codex/Gemini việc này thay thế cả một công cụ.</li>
+          <li><strong>Tắt server MCP không dùng hôm nay.</strong> Tốn 0 công. Trên Cline thường là khoản lớn nhất.</li>
+          <li><strong>Nạp ruleset chống xây thừa qua hook</strong> — nếu harness có hook.
+            Không có hook thì phải tự xác minh nó kích hoạt.</li>
+          <li><strong>CodeGraph</strong> nếu repo trên ~1.000 file và agent nói MCP.</li>
+          <li><strong>Sửa workflow</strong> — bốn dòng đầu bảng thói quen là hành vi của bạn, không phải của agent.</li>
+          <li><strong>Đo trước khi cài thêm bất cứ thứ gì.</strong></li>
+        </ol>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card bad"><div class="t" style="color:var(--bad)">Ba câu hỏi trước khi cài công cụ</div>
+          <div class="d" style="font-size:15px;line-height:1.55">
+            1. Harness của tôi <strong>còn để hở</strong> khe đó không?<br>
+            2. Công cụ này <strong>gắn vào được một cách tất định</strong> không?<br>
+            3. Tôi đang đo <strong>hóa đơn</strong> hay đang đo <strong>tỉ lệ nén</strong>?</div></div>
+        <div class="quote g" style="font-size:17px">
+          Nếu chỉ nhớ một câu:<br>
+          <strong>Ngăn công việc phát sinh thắng nén công việc đã phát sinh.</strong>
+        </div>
+      </div>
+    </div>
+    <p style="color:var(--dim);font-size:14px;margin-top:20px;text-align:center">
+      Tài liệu đầy đủ · <code>CAUSE.md</code> · <code>PROOF.md</code> · <code>HARNESS.md</code> ·
+      <code>CONFIG.md</code> · <code>tools/</code> · <code>WORKFLOW.md</code> · <code>BILLING.md</code> · <code>MEASURE.md</code><br>
+      Mọi con số đo trên Claude Code, tháng 8/2026 — là <em>giá trị biên so với một harness</em>, không phải thuộc tính của công cụ.</p>
+  </div>
+  <div class="foot"><span class="sec">Kết luận</span><span>36</span></div>
+</section>
+
+</div></div>
+<div id="hint">← → điều hướng · F toàn màn hình · P in</div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var bar = document.getElementById('bar');
+  var i = 0;
+
+  function fit(){
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(el, k){ el.classList.toggle('on', k === i); });
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { show(i + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(i - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();
+    }
+  });
+
+  document.addEventListener('click', function(e){
+    if (e.clientX < window.innerWidth * 0.25) show(i - 1); else show(i + 1);
+  });
+
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', function(){
+    var n = parseInt(location.hash.slice(1), 10);
+    if (!isNaN(n)) show(n - 1);
+  });
+
+  fit();
+  var start = parseInt(location.hash.slice(1), 10);
+  show(isNaN(start) ? 0 : start - 1);
+})();
+</script>
+</body>
+</html>
