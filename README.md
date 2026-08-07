@@ -36,6 +36,7 @@ Kho này làm ba việc:
 | [`PROOF.md`](PROOF.md) | **Cái gì đã thực sự được đo.** Đối chiếu tuyên bố quảng cáo với kết quả A/B có đối chứng — và loại những tuyên bố không trụ được. Đọc trước khi tin bất kỳ con số phần trăm nào trong kho này. |
 | [`MEASURE.md`](MEASURE.md) | Cách tự tạo ra bằng chứng đó: thiết kế ghép cặp, cần bao nhiêu lần chạy, và những thứ sẽ đánh lừa bạn. |
 | [`SUMMARY.md`](SUMMARY.md) | Bảng tra nhanh nguyên nhân → giải pháp → công cụ. |
+| [`slides/`](slides/index.html) | Bộ slide tiếng Việt (36 slide, một file HTML tự chứa) để trình bày nội dung kho này cho cả đội: harness, bốn công cụ, khuyến nghị theo từng agent, rồi setup + workflow. |
 
 ## Dùng nó thế nào
 
@@ -58,8 +59,9 @@ Kho này làm ba việc:
 
 ## Đóng góp
 
-Đây là kho chỉ gồm tài liệu — thuần Markdown, không build, không test, không
-có gì để chạy.
+Đây là kho chỉ gồm tài liệu — thuần Markdown (ngoại lệ duy nhất là bộ slide
+HTML trong [`slides/`](slides/index.html)), không build, không test, không có
+gì để chạy.
 
 - Làm việc thẳng trên `main`. Không nhánh, không pull request.
 - Giữ mỗi thay đổi gọn và tập trung, và giữ cho nó chính xác.
@@ -133,6 +135,7 @@ This repo does three things:
 | [`PROOF.md`](PROOF.md) | **What has actually been measured.** Advertised claims against controlled A/B results — and the claims that didn't survive. Read it before trusting any percentage in this repo. |
 | [`MEASURE.md`](MEASURE.md) | How to produce that evidence yourself: the paired design, how many runs it takes, and what will fool you. |
 | [`SUMMARY.md`](SUMMARY.md) | Quick cause → solution → tool lookup. |
+| [`slides/`](slides/index.html) | A Vietnamese slide deck (36 slides, one self-contained HTML file) for presenting this repo to a team: the harness, the four tools, per-agent verdicts, then setup + workflow. |
 
 ## How to use it
 
@@ -155,7 +158,9 @@ This repo does three things:
 
 ## Contributing
 
-This is a docs-only repo — just Markdown, no build, no tests, nothing to run.
+This is a docs-only repo — just Markdown, with the HTML deck in
+[`slides/`](slides/index.html) as the sole exception. No build, no tests,
+nothing to run.
 
 - Work straight on `main`. No branches, no pull requests.
 - Keep each change small and focused, and keep it accurate.
