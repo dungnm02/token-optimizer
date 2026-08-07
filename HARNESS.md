@@ -69,7 +69,7 @@ tự kích hoạt giữa dòng công việc — xem
 | Năng lực | Claude Code | Codex CLI | Gemini CLI | Cline |
 | --- | --- | --- | --- | --- |
 | Tự động nén | ✅ gần ngưỡng | ✅ `model_auto_compact_token_limit` | ✅ `model.compressionThreshold` (mặc định `0.5`) | ✅ Auto Compact |
-| Ngưỡng chỉnh được | ⚪ không phải nút số công khai | ✅ số token (≤ 90% cửa sổ) | ✅ tỷ lệ + `historyWindow.maxTokens` (`150000`) | ⚪ |
+| Ngưỡng chỉnh được | ✅ `autoCompactWindow` (100k–1M) + override theo % | ✅ số token (≤ 90% cửa sổ) | ✅ tỷ lệ + `historyWindow.maxTokens` (`150000`) | ⚪ |
 | Nén thủ công | ✅ `/compact` | ✅ `/compact` | ✅ `/compress` | ✅ `/smol` |
 | Cắt tool result cũ | ✅ tự động trước khi nén hẳn | ✅ theo ngân sách lưu trữ | ✅ `retainedTokens` (`40000`) | ⚠️ qua nén |
 | Bàn giao sang phiên mới | ✅ subagent + tóm tắt | ✅ subagent | ✅ subagent | ✅ `/newtask` + Focus Chain |
@@ -80,7 +80,7 @@ tự kích hoạt giữa dòng công việc — xem
 | --- | --- | --- | --- | --- |
 | Tool đọc/tìm file riêng | ✅ Read/Grep/Glob | ⚠️ phần lớn qua shell | ✅ | ✅ `read_file`/`search_files` |
 | Cắt output quá khổ | ✅ **đã đo** | ✅ | ✅ `truncateToolOutputThreshold` (`40000` ký tự) | ⚪ |
-| **Ngân sách output chỉnh được** | ⚠️ chủ yếu cho MCP | ✅ **`tool_output_token_limit`** | ✅ **`summarizeToolOutput` theo từng tool** | ❌ |
+| **Ngân sách output chỉnh được** | ✅ `BASH_MAX_OUTPUT_LENGTH` + `MAX_MCP_OUTPUT_TOKENS` | ✅ **`tool_output_token_limit`** | ✅ **`summarizeToolOutput` theo từng tool** | ❌ |
 | Tóm tắt output bằng LLM | ⚪ | ✅ tóm tắt khi vượt ngưỡng | ✅ `distillation.summarizationThresholdTokens` (`20000`) | ❌ |
 | Tải tool trì hoãn / tìm tool | ✅ | ⚪ | ✅ hook lọc tool trước khi chọn | ❌ **schema MCP nhét vào mọi request** |
 | MCP | ✅ | ✅ | ✅ | ✅ |
@@ -103,8 +103,8 @@ Ba hàng in đậm là nơi bốn harness khác nhau nhiều nhất, và cũng l
 
 | Năng lực | Claude Code | Codex CLI | Gemini CLI | Cline |
 | --- | --- | --- | --- | --- |
-| Nút reasoning effort | ✅ mức thinking | ✅ **`model_reasoning_effort`: `minimal`…`xhigh`** | ⚪ | ✅ ngân sách thinking (model Anthropic) |
-| Nút verbosity | ⚪ qua prompt | ✅ **`model_verbosity`: `low`/`medium`/`high`** | ⚪ | ⚪ qua prompt |
+| Nút reasoning effort | ✅ `effortLevel` + `MAX_THINKING_TOKENS` | ✅ **`model_reasoning_effort`: `minimal`…`xhigh`** | ⚪ | ✅ ngân sách thinking (model Anthropic) |
+| Nút verbosity | ⚠️ `outputStyle`, còn lại qua prompt | ✅ **`model_verbosity`: `low`/`medium`/`high`** | ⚪ | ⚪ qua prompt |
 | Sửa file bằng diff | ✅ | ✅ `apply_patch` | ✅ | ✅ `replace_in_file` |
 | Định tuyến model | ✅ theo phiên/subagent | ✅ theo phiên | ✅ theo phiên | ✅ **Plan/Act: hai model, một cấu hình** |
 | Subagent | ✅ | ✅ | ✅ cô lập tool | ❌ (`/newtask` là bản thủ công) |
@@ -196,7 +196,13 @@ Bốn kết quả đã đo trong kho này đều rơi đúng vào bảng trên:
 Trên Codex và Gemini, nguyên nhân đắt nhất (3.1 — output tool quá khổ) sửa
 được bằng **một dòng cấu hình**. Cài một bộ nén output ở đó là trả thêm độ
 phức tạp, thêm điểm hỏng, thêm token, để đạt thứ mà `tool_output_token_limit`
-hay `truncateToolOutputThreshold` đã cho không.
+hay `truncateToolOutputThreshold` đã cho không. Claude Code cũng có nút tương
+đương (`BASH_MAX_OUTPUT_LENGTH`, `MAX_MCP_OUTPUT_TOKENS`) — Cline là agent duy
+nhất trong bốn agent không có.
+
+Giá trị đề xuất cho từng nút, trên cả bốn agent, nằm ở
+[`CONFIG.md`](CONFIG.md). Hãy đặt xong tầng đó trước khi cài bất cứ thứ gì
+trong bảng phán quyết bên dưới.
 
 ### Bảng phán quyết theo công cụ
 
@@ -367,7 +373,7 @@ a natural pause rather than let it fire mid-flow — see
 | Capability | Claude Code | Codex CLI | Gemini CLI | Cline |
 | --- | --- | --- | --- | --- |
 | Auto-compaction | ✅ near the limit | ✅ `model_auto_compact_token_limit` | ✅ `model.compressionThreshold` (default `0.5`) | ✅ Auto Compact |
-| Threshold configurable | ⚪ not an exposed numeric dial | ✅ token count (≤ 90% of window) | ✅ ratio + `historyWindow.maxTokens` (`150000`) | ⚪ |
+| Threshold configurable | ✅ `autoCompactWindow` (100k–1M) + a percentage override | ✅ token count (≤ 90% of window) | ✅ ratio + `historyWindow.maxTokens` (`150000`) | ⚪ |
 | Manual compaction | ✅ `/compact` | ✅ `/compact` | ✅ `/compress` | ✅ `/smol` |
 | Stale tool-result pruning | ✅ automatic, before full compaction | ✅ via storage budget | ✅ `retainedTokens` (`40000`) | ⚠️ via compaction |
 | Hand-off to a fresh session | ✅ subagents + summaries | ✅ subagents | ✅ subagents | ✅ `/newtask` + Focus Chain |
@@ -378,7 +384,7 @@ a natural pause rather than let it fire mid-flow — see
 | --- | --- | --- | --- | --- |
 | Own file read/search tools | ✅ Read/Grep/Glob | ⚠️ mostly via shell | ✅ | ✅ `read_file`/`search_files` |
 | Truncates oversized output | ✅ **measured** | ✅ | ✅ `truncateToolOutputThreshold` (`40000` chars) | ⚪ |
-| **Configurable output budget** | ⚠️ mainly for MCP | ✅ **`tool_output_token_limit`** | ✅ **`summarizeToolOutput` per tool** | ❌ |
+| **Configurable output budget** | ✅ `BASH_MAX_OUTPUT_LENGTH` + `MAX_MCP_OUTPUT_TOKENS` | ✅ **`tool_output_token_limit`** | ✅ **`summarizeToolOutput` per tool** | ❌ |
 | LLM summarization of output | ⚪ | ✅ summarizes above the limit | ✅ `distillation.summarizationThresholdTokens` (`20000`) | ❌ |
 | Deferred tool loading / search | ✅ | ⚪ | ✅ pre-tool-selection hooks filter tools | ❌ **MCP schemas injected every request** |
 | MCP | ✅ | ✅ | ✅ | ✅ |
@@ -401,8 +407,8 @@ third-party tool lives or dies:
 
 | Capability | Claude Code | Codex CLI | Gemini CLI | Cline |
 | --- | --- | --- | --- | --- |
-| Reasoning-effort dial | ✅ thinking levels | ✅ **`model_reasoning_effort`: `minimal`…`xhigh`** | ⚪ | ✅ thinking budget (Anthropic models) |
-| Verbosity dial | ⚪ via prompt | ✅ **`model_verbosity`: `low`/`medium`/`high`** | ⚪ | ⚪ via prompt |
+| Reasoning-effort dial | ✅ `effortLevel` + `MAX_THINKING_TOKENS` | ✅ **`model_reasoning_effort`: `minimal`…`xhigh`** | ⚪ | ✅ thinking budget (Anthropic models) |
+| Verbosity dial | ⚠️ `outputStyle`, otherwise via prompt | ✅ **`model_verbosity`: `low`/`medium`/`high`** | ⚪ | ⚪ via prompt |
 | Diff-based edits | ✅ | ✅ `apply_patch` | ✅ | ✅ `replace_in_file` |
 | Model routing | ✅ per session/subagent | ✅ per session | ✅ per session | ✅ **Plan/Act: two models, one config** |
 | Subagents | ✅ | ✅ | ✅ with tool isolation | ❌ (`/newtask` is the manual equivalent) |
@@ -504,7 +510,13 @@ On Codex and Gemini, the most expensive cause (3.1 — oversized tool output)
 is fixed by **one line of configuration**. Installing an output compressor
 there buys complexity, a new failure mode, and its own token overhead to
 reach what `tool_output_token_limit` or `truncateToolOutputThreshold` already
-gives you for free.
+gives you for free. Claude Code has the equivalent dials too
+(`BASH_MAX_OUTPUT_LENGTH`, `MAX_MCP_OUTPUT_TOKENS`) — Cline is the only one of
+the four without any.
+
+Suggested values for every dial, across all four agents, are in
+[`CONFIG.md`](CONFIG.md). Set that tier before installing anything in the
+verdict table below.
 
 ### Verdict by tool
 

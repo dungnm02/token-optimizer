@@ -87,6 +87,10 @@ tích theo từng agent trong [`../HARNESS.md`](../HARNESS.md); tóm tắt:
 | Gemini CLI | Cả nén output *lẫn* cắt schema tool đều có sẵn (`truncateToolOutputThreshold`, hook trước khi chọn tool) |
 | Cline | Nén output và code map là khe hở thật — nhưng không có hook, nên mọi thứ dạng ruleset phải được xác minh là thực sự chạy |
 
+Hãy đặt xong các nút đó **trước khi** bước vào Tier 1. Giá trị đề xuất cho cả
+bốn agent, kèm những nút chỉnh quá tay sẽ làm hóa đơn tăng, nằm ở
+[`../CONFIG.md`](../CONFIG.md).
+
 ---
 
 ## Tier 1 — Công việc tùy chỉnh cần thiết
@@ -403,6 +407,10 @@ worked out per agent in [`../HARNESS.md`](../HARNESS.md); the short version:
 | Codex CLI | Output compression becomes a config line (`tool_output_token_limit`), as does verbosity (`model_verbosity`) |
 | Gemini CLI | Output compression *and* tool-schema trimming are both native (`truncateToolOutputThreshold`, pre-tool-selection hooks) |
 | Cline | Output compression and code maps are the real gaps — but no hooks, so verify anything ruleset-shaped actually fires |
+
+Set those dials **before** starting Tier 1. Suggested values for all four
+agents, plus the ones that raise your bill when over-tuned, are in
+[`../CONFIG.md`](../CONFIG.md).
 
 ---
 
