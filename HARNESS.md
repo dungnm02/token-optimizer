@@ -56,7 +56,7 @@ công cụ đều phát hành rất nhanh, hãy kiểm lại trước khi triể
 | Năng lực | Claude Code | Codex CLI | Gemini CLI | Cline |
 | --- | --- | --- | --- | --- |
 | Caching mặc định | ✅ tự động | ✅ cache tiền tố chính xác | ✅ implicit (auth bằng API key) | ✅ trên provider hỗ trợ |
-| Thấy được cache read | ✅ `/cost`, `/context` | ✅ `/status` | ✅ `/stats` | ✅ **theo từng task, ngay trên UI** |
+| Thấy được cache read | ✅ `/usage`, `/context` | ✅ `/status` | ✅ `/stats` | ✅ **theo từng task, ngay trên UI** |
 | Nén làm hỏng cache | ✅ có (tiền tố mới) | ✅ có | ✅ có | ✅ có |
 
 Nén *luôn* phá cache ở mọi harness: tiền tố mới nghĩa là lần đầu sau nén trả
@@ -360,7 +360,7 @@ re-check before you roll anything out.
 | Capability | Claude Code | Codex CLI | Gemini CLI | Cline |
 | --- | --- | --- | --- | --- |
 | Caching on by default | ✅ automatic | ✅ exact-prefix caching | ✅ implicit (API-key auth) | ✅ on supporting providers |
-| Cache reads visible | ✅ `/cost`, `/context` | ✅ `/status` | ✅ `/stats` | ✅ **per task, in the UI** |
+| Cache reads visible | ✅ `/usage`, `/context` | ✅ `/status` | ✅ `/stats` | ✅ **per task, in the UI** |
 | Compaction breaks the cache | ✅ yes (new prefix) | ✅ yes | ✅ yes | ✅ yes |
 
 Compaction breaks the cache on *every* harness: a new prefix means the first

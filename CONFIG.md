@@ -75,7 +75,7 @@ Các biến môi trường đặt trong khối `env` để chúng được áp d
 | --- | --- | --- | --- | --- |
 | `BASH_MAX_OUTPUT_LENGTH` | `30000` ký tự (tối đa `150000`) | `15000` | Log build/test là nguồn output rác lớn nhất | Agent chạy lại lệnh kèm `\| tail` — bạn vừa trả tiền hai lần (5.3) |
 | `MAX_MCP_OUTPUT_TOKENS` | `25000` token | `10000` | Bằng đúng ngưỡng cảnh báo cố định của Claude Code | Kết quả MCP bị cắt mất phần bạn cần |
-| `effortLevel` | không đặt | `medium` | `high`/`xhigh` cho việc sửa lặt vặt là 5.1 dạng thuần túy | Chất lượng tụt ở việc khó → nâng theo từng phiên, không đổi mặc định |
+| `effortLevel` | `high` | `medium` | Mặc định đã là `high` — tiết kiệm là chủ động hạ xuống, không phải “đừng nâng lên” (5.1) | Chất lượng tụt ở việc khó → nâng theo từng phiên, không đổi mặc định |
 | `autoCompactEnabled` | `true` | **giữ `true`** | Tắt đi chỉ dời chi phí sang phiên mới, không xóa nó | — |
 | `claudeMdExcludes` | không đặt | loại thư mục vendor | File memory bị nạp lại mỗi phiên (2.3) | Agent quên quy ước thật của dự án |
 | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` | tắt | `1` | Bỏ request nền không bắt buộc | Mất vài tiện ích hiển thị |
@@ -92,7 +92,7 @@ dao cùn — nó tiết kiệm token reasoning bằng cách đánh đổi lấy 
 Opus 4.6/Sonnet 4.6, `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` chuyển từ ngân
 sách thích ứng sang ngân sách cố định; adaptive thường đã là lựa chọn rẻ hơn.
 
-**Kiểm chứng:** `/context` cho thấy cái gì đang chiếm chỗ, `/cost` cho thấy tỷ
+**Kiểm chứng:** `/context` cho thấy cái gì đang chiếm chỗ, `/usage` cho thấy tỷ
 lệ cache read.
 
 ---
@@ -288,7 +288,7 @@ tầng đã đo được là **kích hoạt 0/10 phiên**. Hãy quan sát nó ch
    với giá trị bạn đặt.
 3. **Reasoning/verbosity:** giao cùng một tác vụ hai lần, hai giá trị khác
    nhau, so số token output.
-4. **Nói chung:** `/context` + `/cost` (Claude Code), `/status` (Codex),
+4. **Nói chung:** `/context` + `/usage` (Claude Code), `/status` (Codex),
    `/stats` (Gemini), thanh chi phí theo task (Cline).
 
 Quy trình đo lường đầy đủ:
@@ -391,7 +391,7 @@ session.
 | --- | --- | --- | --- | --- |
 | `BASH_MAX_OUTPUT_LENGTH` | `30000` chars (max `150000`) | `15000` | Build and test logs are the largest source of junk output | The agent re-runs the command with `\| tail` — you just paid twice (5.3) |
 | `MAX_MCP_OUTPUT_TOKENS` | `25000` tokens | `10000` | Matches Claude Code's own fixed warning threshold | MCP results get cut off before the part you needed |
-| `effortLevel` | unset | `medium` | `high`/`xhigh` on routine edits is cause 5.1 in its purest form | Quality drops on hard work → raise it per session, not as the default |
+| `effortLevel` | `high` | `medium` | The default is already `high` — saving means actively lowering it, not “don’t raise it” (5.1) | Quality drops on hard work → raise it per session, not as the default |
 | `autoCompactEnabled` | `true` | **leave `true`** | Turning it off relocates the cost to a new session, it doesn't remove it | — |
 | `claudeMdExcludes` | unset | exclude vendor trees | Memory files are re-read every session (2.3) | The agent forgets conventions that genuinely matter |
 | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` | off | `1` | Skips optional background requests | You lose some display niceties |
@@ -410,7 +410,7 @@ On Opus 4.6/Sonnet 4.6, `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` switches from
 an adaptive budget to a fixed one; adaptive is usually already the cheaper
 choice.
 
-**Verify with:** `/context` for what's occupying the window, `/cost` for the
+**Verify with:** `/context` for what's occupying the window, `/usage` for the
 cache-read ratio.
 
 ---
@@ -610,7 +610,7 @@ Watch it work.
    actually fired. Compare against the value you set.
 3. **Reasoning/verbosity:** give the same task twice at two different values
    and compare output token counts.
-4. **In general:** `/context` + `/cost` (Claude Code), `/status` (Codex),
+4. **In general:** `/context` + `/usage` (Claude Code), `/status` (Codex),
    `/stats` (Gemini), the per-task cost bar (Cline).
 
 Full measurement procedure:

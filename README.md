@@ -32,11 +32,12 @@ Kho này làm ba việc:
 | [`tools/`](tools/README.md) | Hồ sơ chi tiết từng công cụ — ý tưởng, cách hoạt động, cách cài, dùng lúc nào và khi nào thì đừng. Kèm [prompt demo](tools/demo-prompts.md) để tự nhìn thấy từng công cụ hoạt động. |
 | [`HARNESS.md`](HARNESS.md) | Harness là gì, nó tiêu token ở đâu, và bảng đối chiếu năng lực của Claude Code, Codex CLI, Gemini CLI và Cline. |
 | [`CONFIG.md`](CONFIG.md) | Đặt nút nào, ở giá trị nào — cấu hình đề xuất cho từng agent, kèm những nút chỉnh quá tay sẽ làm hóa đơn tăng. |
+| [`ROUTING.md`](ROUTING.md) | **Chọn model nào cho việc gì.** Bốn chiến lược định tuyến xếp theo mức phá cache, bảng chi phí mỗi tác vụ xuyên nhà cung cấp (kể cả model đời trước), và cách bật bằng tay lẫn tự động. |
 | [`WORKFLOW.md`](WORKFLOW.md) | Tầng cuối cùng: bạn làm gì ở mỗi phiên. Phạm vi, chỉ đường, nén có chủ đích, và lúc nào nên bắt đầu lại. |
 | [`PROOF.md`](PROOF.md) | **Cái gì đã thực sự được đo.** Đối chiếu tuyên bố quảng cáo với kết quả A/B có đối chứng — và loại những tuyên bố không trụ được. Đọc trước khi tin bất kỳ con số phần trăm nào trong kho này. |
 | [`MEASURE.md`](MEASURE.md) | Cách tự tạo ra bằng chứng đó: thiết kế ghép cặp, cần bao nhiêu lần chạy, và những thứ sẽ đánh lừa bạn. |
 | [`SUMMARY.md`](SUMMARY.md) | Bảng tra nhanh nguyên nhân → giải pháp → công cụ. |
-| [`slides/`](slides/index.html) | Bộ slide tiếng Việt (36 slide, một file HTML tự chứa) để trình bày nội dung kho này cho cả đội: harness, bốn công cụ, khuyến nghị theo từng agent, rồi setup + workflow. |
+| [`slides/`](slides/index.html) | Bộ slide tiếng Việt (40 slide, một file HTML tự chứa) để trình bày nội dung kho này cho cả đội: khái niệm token và harness, sáu nguồn rò rỉ, bốn công cụ, rồi setup, định tuyến model và workflow. |
 
 ## Dùng nó thế nào
 
@@ -131,11 +132,12 @@ This repo does three things:
 | [`tools/`](tools/README.md) | Deep profiles of individual tools — the idea, how it works, how to install, when to use it and when not to. Includes [demo prompts](tools/demo-prompts.md) for seeing each one work. |
 | [`HARNESS.md`](HARNESS.md) | What a harness is, where it spends your tokens, and a capability matrix across Claude Code, Codex CLI, Gemini CLI and Cline. |
 | [`CONFIG.md`](CONFIG.md) | Which dials to set and to what — recommended configuration per agent, plus the ones that raise your bill when over-tuned. |
+| [`ROUTING.md`](ROUTING.md) | **Which model for which task.** Four routing strategies ranked by cache damage, a cross-provider cost-per-task table (older models included), and how to wire it up manually or automatically. |
 | [`WORKFLOW.md`](WORKFLOW.md) | The last layer: what you do every session. Scoping, pointing, deliberate compaction, and when to start over. |
 | [`PROOF.md`](PROOF.md) | **What has actually been measured.** Advertised claims against controlled A/B results — and the claims that didn't survive. Read it before trusting any percentage in this repo. |
 | [`MEASURE.md`](MEASURE.md) | How to produce that evidence yourself: the paired design, how many runs it takes, and what will fool you. |
 | [`SUMMARY.md`](SUMMARY.md) | Quick cause → solution → tool lookup. |
-| [`slides/`](slides/index.html) | A Vietnamese slide deck (36 slides, one self-contained HTML file) for presenting this repo to a team: the harness, the four tools, per-agent verdicts, then setup + workflow. |
+| [`slides/`](slides/index.html) | A Vietnamese slide deck (40 slides, one self-contained HTML file) for presenting this repo to a team: tokens and the harness, six leak sources, the four tools, then setup, model routing and workflow. |
 
 ## How to use it
 
