@@ -1,0 +1,86 @@
+@nội dung
+Đây là nội dung trình bày. Với nội dung này, tôi muốn có 1 slide theo mô tả dưới để trình bày.
+
+Slide 1: Mở đầu,
+Slide 2: các nội dung sẽ trình bày
+Slide 3 Giới thiệu về token
+
+Cần một ví dụ để visualize quá trình mà từ 1 chữ/câu thành token
+VD: Từ "Data Platform"
+Lần 1 -> Qua các ký tự rời rạc D, a, t, a, _, p, l, a, t, f, o, r, m
+....
+Slide 4: Trình bày về vấn đề khoảng trắng trong lập trình
+Cần có ví dụ minh họa (So sánh giữa bản formatted bằng prettier với bản...)
+
+Slide 5: Agent xử lý token ntn? (Prefill vs Decode)
+
+Trong slide này cần thể hiện ra sự khác biệt giữa 2 quá trình, đặc điểm của mỗi quá trình
+Đưa thêm hình ảnh cho dễ hiểu
+
+Cuối cùng là kết luận lý do khiến cho token output lại đắt hơn 5 lần so với input token
+
+Slide 6: Nguyên nhân gây dò rỉ token chung (General)
+
+Slide 7: Nguyên nhân trong quá trình dev
+Chia làm 3 phần:
+Phần solution và design:
+- Để cho agent tự đọc và tìm dependencies, tự tìm hiểu cấu trúc, liên kết giữa các module,..
+- Yêu cầu output là diagram sử dụng ASCII thay vì dùng mermaid
+
+Phần Implementation:
+- Do MCP tool quá nhiều? 
+- Do command dump quá nhiều ra terminal
+
+Phần Review:
+- Khi đọc git diff thì lại bị thừa quá nhiều thông tin không cần thiết, do git diff phục phụ cho con người.
+
+Với mỗi phần, cần đưa ra ví dụ cụ thể, tại sao.
+
+Slide 8: Giới thiệu các tools
+Codegraph
+RTK
+Caveman
+
+Với mỗi tool, cần có nội dung:
+- Mục đích
+- Mechanism
+- Ví dụ trực quan, hình ảnh
+- Hiệu năng
+
+Sau đó, cần 1 slide để biểu diễn với 3 tools đã ảnh hưởng vào các quá trình liên quan đến token của Agent.
+Đầu vào tĩnh
+Đầu vào động
+Đầu ra đắt đỏ
+
+Biểu diễn theo dạng dựng đứng
+
+Slide 9: Tips, tricks, các usecase kết hợp để đạt hiệu quả
+
+Slide 10: Khi nào không nên dùng bộ 3 tools
+
+slide 11: Giới thiệu về KV Cache, prompt cache
+Simulate quá trình agent hoạt động trong 1 session:
+Lần đầu gọi prompt, lần 2 gọi prompt, ... Gọi prompt sau 1 khoảng thời gian, gọi prompt sau khi thay đổi rules, mcp tools, model,...
+
+Slide 12: Kết thúc, kết luận và Q&A.
+
+
+Feedback và hoàn thiện nội dung slide
+
+Tóm tắt:
+Output format: A single file .html
+Language: Vietnamese, keep technical terms in English
+Functionality: Built-in slide engine, to navigate,...
+
+Presentation Structure and Flow
+Slide 1: Start with a strong visual hook: a "$5.00" cost counter ticking up. 
+Slide 3 & 4 (Tokens & Whitespace): Include an interactive step-through of the BPE merge process. Show a live comparison of pretty JSON (19 tokens) vs minified JSON (11 tokens). 
+Slide 6 (Causes of Leaks): Use an interactive 2x3 grid of cards that expand on click 
+Slide 10, 11, 12 (The 3 Tools): Compare "Marketing claims' vs. "Real measured numbers on my machine" for CodeGraph, RTK, and Caveman. Embed actual terminal outputs statically. 
+Slide 13 (The Core Diagram): An animated vertical pipeline showing where tools fit: CodeGraph (Static Input) -> RTK (Dynamic Input) -> Prefill/Decode-> Caveman (Output). 
+Slide 14 (Tips & Tricks): List 13 actionable tips (e.g., order prompts by volatility, freeze system prompts, minify before sending). 
+Slide 15 (When NOT to use): Highlight edge cases (e.g. debugging flaky tests, human-read documents, stale indexes).
+Slide 17 (Caching Simulation): A custom animated "payload bar"" demonstrating cold starts, cache hits (-90%), TTL eviction
+after a 10-minute coffee break, and the penalty of dynamic data (like logs) placed at the top of a prompt.
+
+
