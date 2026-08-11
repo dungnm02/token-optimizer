@@ -37,7 +37,7 @@ Kho này làm ba việc:
 | [`PROOF.md`](PROOF.md) | **Cái gì đã thực sự được đo.** Đối chiếu tuyên bố quảng cáo với kết quả A/B có đối chứng — và loại những tuyên bố không trụ được. Đọc trước khi tin bất kỳ con số phần trăm nào trong kho này. |
 | [`MEASURE.md`](MEASURE.md) | Cách tự tạo ra bằng chứng đó: thiết kế ghép cặp, cần bao nhiêu lần chạy, và những thứ sẽ đánh lừa bạn. |
 | [`SUMMARY.md`](SUMMARY.md) | Bảng tra nhanh nguyên nhân → giải pháp → công cụ. |
-| [`slides/`](slides/index.html) | Bộ slide tiếng Việt (40 slide, một file HTML tự chứa) để trình bày nội dung kho này cho cả đội: khái niệm token và harness, sáu nguồn rò rỉ, bốn công cụ, rồi setup, định tuyến model và workflow. |
+| [`slides/`](slides/index.html) | Bộ slide tiếng Việt (38 slide, một file HTML tự chứa) để trình bày nội dung kho này cho cả đội: khái niệm token và harness, sáu nguồn rò rỉ, bốn công cụ, rồi setup, định tuyến model và workflow. |
 
 ## Dùng nó thế nào
 
@@ -137,7 +137,7 @@ This repo does three things:
 | [`PROOF.md`](PROOF.md) | **What has actually been measured.** Advertised claims against controlled A/B results — and the claims that didn't survive. Read it before trusting any percentage in this repo. |
 | [`MEASURE.md`](MEASURE.md) | How to produce that evidence yourself: the paired design, how many runs it takes, and what will fool you. |
 | [`SUMMARY.md`](SUMMARY.md) | Quick cause → solution → tool lookup. |
-| [`slides/`](slides/index.html) | A Vietnamese slide deck (40 slides, one self-contained HTML file) for presenting this repo to a team: tokens and the harness, six leak sources, the four tools, then setup, model routing and workflow. |
+| [`slides/`](slides/index.html) | A Vietnamese slide deck (38 slides, one self-contained HTML file) for presenting this repo to a team: tokens and the harness, six leak sources, the four tools, then setup, model routing and workflow. |
 
 ## How to use it
 
