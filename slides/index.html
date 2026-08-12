@@ -338,9 +338,10 @@
       nó do harness, do cách cửa sổ context bị lấp đầy, và do vài thiết lập bạn chưa bật. Buổi này đi theo ba câu hỏi.</div>
     <div class="g3 step stagger" style="margin-top:24px">
       <div class="card acc"><div class="t">Khái niệm cốt lõi <span class="pn">· phần 1</span></div>
-        <div class="d">Token, harness, và vì sao model <strong>không nhớ gì</strong> giữa các session</div></div>
+        <div class="d">Token, harness, và vì sao model <strong>không nhớ gì</strong> giữa các lượt —
+          vừa đủ để đọc được hóa đơn của chính mình.</div></div>
       <div class="card bad"><div class="t">Token rò rỉ ở đâu <span class="pn">· phần 2</span></div>
-        <div class="d">Sáu nguồn rò rỉ trong một session thật — và vì sao chúng
+        <div class="d">Sáu nguồn rò rỉ trong một phiên thật — và vì sao chúng
           <strong>nhân lên</strong> chứ không cộng vào nhau.</div></div>
       <div class="card good"><div class="t">Bịt thế nào <span class="pn">· phần 3–6</span></div>
         <div class="d">Xếp theo thứ tự nên làm: harness đã làm sẵn (miễn phí) → công cụ bên thứ ba (đã đo) →
@@ -395,7 +396,7 @@
           ba giai đoạn dev ba kiểu rò · cái gì phá cache mà không nằm trong prompt ·
           và vì sao rò rỉ <strong>nhân lên</strong> chứ không chỉ cộng lại.</div></div>
       <div class="card good"><div class="t">3 · Harness đã làm sẵn gì</div>
-        <div class="d">Tầng <strong>không tính phí</strong>, xét trước tiên. Bốn việc harness làm — và bốn harness
+        <div class="d">Tầng <strong>miễn phí</strong>, xét trước tiên. Bốn việc harness làm — và bốn harness
           làm từng việc tốt hay dở ra sao. Nó tự cắt output, tự cache, tự nén, nên nó lấy mất
           phần lớn khoảng tiết kiệm mà công cụ bên thứ ba định khai thác.</div></div>
       <div class="card warn"><div class="t">4 · Công cụ bên thứ ba</div>
@@ -407,7 +408,7 @@
           Bốn thiết lập theo đúng thứ tự, định tuyến model, và tên chính xác của từng thiết lập trên bốn agent.</div></div>
       <div class="card v" style="border-left:4px solid var(--vio)"><div class="t">6 · Workflow</div>
         <div class="d">Tầng chi phí cao <strong>lặp đi lặp lại</strong> — bốn thời điểm quyết định trong
-          một session, khi nào nên bỏ session, và mười thói quen xếp theo mức tốn kém.</div></div>
+          một phiên, khi nào nên bỏ phiên, và mười thói quen xếp theo mức tốn kém.</div></div>
     </div>
   </div>
   <div class="foot"><span class="sec">Mở đầu</span><span></span></div>
@@ -814,9 +815,9 @@
 </section>
 
 <section class="slide" data-sec="2 · Vì sao rò rỉ">
-  <div class="kicker w">Phần 2 · mô phỏng một session · <span style="color:var(--good)">■</span> đọc cache 0.1×
+  <div class="kicker w">Phần 2 · mô phỏng một phiên · <span style="color:var(--good)">■</span> đọc cache 0.1×
     &nbsp;<span style="color:var(--bad)">■</span> trả giá gốc</div>
-  <h2>Một session trông như thế nào</h2>
+  <h2>Một phiên trông như thế nào</h2>
   <div class="body top">
     <div style="display:flex;flex-direction:column;gap:9px;margin-top:4px">
       <div class="pbrow step"><span class="lb">Lượt 1 · nguội</span>
@@ -844,7 +845,7 @@
       bạn trả giá đầy đủ cho <em>mọi thứ</em> vẫn còn nằm trong context ở thời điểm đó.
     </div>
     <p style="color:var(--dim);font-size:13.5px;margin-top:8px">
-      Slide sau trả lời câu tiếp theo — khi nào nên nén; phần 6 trả lời khi nào nên bỏ session.</p>
+      Slide sau trả lời câu tiếp theo — khi nào nên nén; phần 6 trả lời khi nào nên bỏ phiên.</p>
   </div>
   <div class="foot"><span class="sec">2 · Vì sao rò rỉ</span><span></span></div>
 </section>
@@ -970,7 +971,7 @@
   <h2>Harness — lớp quyết định hóa đơn của bạn</h2>
   <div class="body">
     <p class="lead">Nhắc lại bốn việc harness làm ở phần 1 — nhưng lần này hỏi ngược lại:
-      <strong>mỗi việc làm hỏng thì tiền chảy đi đâu?</strong> Đây là dễ dàng nhất để cải thiện,
+      <strong>mỗi việc làm hỏng thì tiền chảy đi đâu?</strong> Đây là tầng dễ cải thiện nhất,
       vì bạn không phải cài gì cả.</p>
         <div class="g4 step stagger" style="margin-top:4px">
       <div class="card" style="padding:12px 14px"><div class="d"><span class="pill a">Việc 1 · tiền đi đâu</span><br>
@@ -1185,8 +1186,10 @@
       <div class="card bad">
         <div class="t">RTK — nén output của shell qua hook · <span style="color:var(--bad)">tăng 7.6% chi phí (p=0.004)</span></div>
         <div class="d" style="margin-top:8px">
-          <strong>Mức nén 60–90% là thật.</strong> Nhưng trên Claude Code: dữ liệu quá khổ <em>đã</em> được tự cắt; các tool đọc file chạy độc lập nên hook chỉ bắt được <strong>&lt;20%</strong> output; và cache giúp giá gửi lại chỉ còn ~1/10.<br>
-          <strong style="color:var(--bad)">Tác dụng ngược:</strong> Dữ liệu nén khiến model thiếu thông tin, phải xử lý bù: <strong style="color:var(--bad)">tăng 13.8%</strong> số lượt chạy và <strong style="color:var(--bad)">tăng 14.3%</strong> lượng cache đọc lại.
+          <strong>Mức nén 60–90% là thật.</strong> Nhưng trên Claude Code: dữ liệu quá khổ <em>đã</em> được tự cắt;
+          <code>Read</code>/<code>Grep</code>/<code>Glob</code> không đi qua shell nên hook chỉ bắt được <strong>&lt;20%</strong> ký tự kết quả tool;
+          và cache giúp giá gửi lại chỉ còn ~1/10.<br>
+          <strong style="color:var(--bad)">Tác dụng ngược:</strong> output bị nén khiến model <em>kém chắc chắn</em> nên phải làm nhiều việc hơn: <strong style="color:var(--bad)">tăng 13.8%</strong> số lượt chạy và <strong style="color:var(--bad)">tăng 14.3%</strong> lượng cache đọc lại.
         </div>
       </div>
     </div>
