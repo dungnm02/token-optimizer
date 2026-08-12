@@ -357,7 +357,7 @@
 
 <section class="slide" data-sec="Mở đầu">
   <div class="kicker b">Mở đầu · chuyện có thật</div>
-  <h2>Vài đường prompt nhẹ nhàng — bay 5 đô</h2>
+  <h2>Vài câu prompt nhẹ nhàng — bay 5 đô</h2>
   <div class="body">
     <p class="lead">Không có bước nào dưới đây là “dùng AI sai”. Đây là <strong>workflow mặc định</strong>
       của một phiên coding bình thường — và đây là chỗ tiền đi.</p>
@@ -392,7 +392,7 @@
           harness là gì và bốn việc nó làm · bạn gõ một câu thì model được gọi mấy lần ·
           vì sao model <strong>không có trí nhớ</strong> nên mới cần cache.</div></div>
       <div class="card bad"><div class="t">2 · Vì sao token rò rỉ</div>
-        <div class="d">Ai đang chiếm cửa sổ context trước khi bạn gõ chữ nào · sáu nguồn rò rỉ ·
+        <div class="d">Ai đang chiếm cửa sổ context trước khi bạn gõ chữ nào · sáu nguyên nhân rò rỉ ·
           ba giai đoạn dev ba kiểu rò · cái gì phá cache mà không nằm trong prompt ·
           và vì sao rò rỉ <strong>nhân lên</strong> chứ không chỉ cộng lại.</div></div>
       <div class="card good"><div class="t">3 · Harness đã làm sẵn gì</div>
@@ -400,9 +400,10 @@
           làm từng việc tốt hay dở ra sao. Nó tự cắt output, tự cache, tự nén, nên nó lấy mất
           phần lớn khoảng tiết kiệm mà công cụ bên thứ ba định khai thác.</div></div>
       <div class="card warn"><div class="t">4 · Công cụ bên thứ ba</div>
-        <div class="d">Quy tắc hai điều kiện trước khi cài bất cứ thứ gì · Ponytail, CodeGraph,
-          Caveman, RTK — con số đã đo, và vì sao hai cái hiệu quả thật, còn hai cái kia:
-          một cái hụt 8 lần so với quảng cáo, một cái nén đúng như hứa mà hóa đơn vẫn tăng.</div></div>
+        <div class="d">Quy tắc hai điều kiện trước khi cài bất cứ thứ gì · bốn công cụ, mỗi cái một slide:
+          Ponytail chặn việc thừa · CodeGraph thay việc mò file · Caveman nén văn bản tĩnh và phần model
+          viết ra · RTK nén log build và log test. Con số đã đo, và vì sao cùng một công cụ lại cho kết quả
+          khác nhau trên harness khác nhau.</div></div>
       <div class="card v" style="border-left:4px solid var(--vio)"><div class="t">5 · Setup harness</div>
         <div class="d">Tầng cấu hình — làm <strong>một lần</strong>, không cài gì, không thêm chỗ có thể hỏng.
           Bốn thiết lập theo đúng thứ tự, định tuyến model, và tên chính xác của từng thiết lập trên bốn agent.</div></div>
@@ -912,7 +913,7 @@
     <div style="display:flex;flex-direction:column;gap:9px">
       <div class="pbrow step"><span class="lb" style="color:var(--good)">Nén khi cache ấm</span>
         <span class="pb" style="width:88%"><i class="c" style="width:94%"></i><i class="n" style="width:6%"></i></span>
-        <span class="rt">đọc tiền tố từ cache<br><strong style="color:var(--good)">rẻ hơn nhiều so với kích thước context</strong></span></div>
+        <span class="rt">đọc tiền tố từ cache<br><strong style="color:var(--good)">gần như chỉ trả cho phần mới</strong></span></div>
       <div class="pbrow step"><span class="lb" style="color:var(--bad)">Nén sau khi nghỉ lâu</span>
         <span class="pb" style="width:88%"><i class="n" style="width:100%"></i></span>
         <span class="rt">cache đã hết hạn → xử lý lại toàn bộ<br><strong style="color:var(--bad)">đây là lúc /compact đắt nhất</strong></span></div>
@@ -971,7 +972,7 @@
   <h2>Harness — lớp quyết định hóa đơn của bạn</h2>
   <div class="body">
     <p class="lead">Nhắc lại bốn việc harness làm ở phần 1 — nhưng lần này hỏi ngược lại:
-      <strong>mỗi việc làm hỏng thì tiền chảy đi đâu?</strong> Đây là tầng dễ cải thiện nhất,
+      <strong>nếu làm hỏng từng việc thì tiền chảy đi đâu?</strong> Đây là tầng dễ cải thiện nhất,
       vì bạn không phải cài gì cả.</p>
         <div class="g4 step stagger" style="margin-top:4px">
       <div class="card" style="padding:12px 14px"><div class="d"><span class="pill a">Việc 1 · tiền đi đâu</span><br>
@@ -1108,7 +1109,7 @@
   <div class="body top">
     <div class="g21 step">
       <div>
-        <p style="margin-bottom:12px">Mọi công cụ khác <strong>nén công việc sau khi nó đã xảy ra</strong>.
+        <p style="margin-bottom:12px">Các công cụ khác <strong>xử lý token sau khi nó đã được sinh ra</strong>.
           Ponytail ngăn công việc xảy ra ngay từ đầu — nó can thiệp vào
           <strong>quyết định xây cái gì</strong>, trước khi có dòng code nào tồn tại.</p>
         <table class="sm stagger">
@@ -1139,8 +1140,8 @@
   <h2>Hỏi graph, đừng đọc 30 file</h2>
   <div class="body top">
     <p>Coding agent tiêu phần lớn token chỉ để <strong>tìm</strong> đúng đoạn code: grep, glob,
-      đọc 30 file rồi phát hiện 28 file không liên quan. Các phép đo đặt
-      <strong>67–76% ngân sách token</strong> vào việc đọc file. CodeGraph dựng chỉ mục tĩnh bằng
+      đọc 30 file rồi phát hiện 28 file không liên quan. Các phép đo cho thấy
+      <strong>67–76% ngân sách token</strong> của một phiên rơi vào khâu tìm và đọc code. CodeGraph dựng chỉ mục tĩnh bằng
       tree-sitter vào một <strong>SQLite local</strong>, rồi cho agent hỏi qua MCP thay vì mò file.</p>
     <div class="g3 step stagger" style="margin-top:9px">
       <div class="stat good"><div class="n">−89%</div><div class="l">lượt gọi tool</div></div>
@@ -1170,35 +1171,76 @@
 </section>
 
 <section class="slide" data-sec="4 · Công cụ">
-  <div class="kicker w">Công cụ 3 &amp; 4 · Caveman skill · RTK</div>
-  <h2>Vì sao các công cụ bóp nén token thường hụt hơi</h2>
+  <div class="kicker w">Công cụ 3 · Caveman</div>
+  <h2>Caveman — nén văn bản, và nhắm vào loại token đắt nhất</h2>
   <div class="body top">
-    <p class="lead">Về lý thuyết, ép model viết ngắn lại sẽ tiết kiệm nhất vì token sinh ra đắt gấp ~5 lần token đọc vào. <strong>Tuy nhiên, thực tế đo lường lại chứng minh điều ngược lại.</strong></p>
-    <div class="g2 step stagger" style="margin-top:10px">
+    <p>Cùng một cái tên nhưng là <strong>hai thứ khác nhau</strong> — đây là chỗ hay bị lẫn.
+      <strong>Thư viện</strong> <code>wilpel/caveman-compression</code> nén văn bản tĩnh <em>bạn</em> đưa vào;
+      <strong>skill</strong> “caveman mode” bảo agent viết cộc lốc, nhắm vào phần model <em>viết ra</em> —
+      loại token đắt gấp ~5 lần token đọc vào.</p>
+    <div class="g3 step stagger" style="margin-top:7px">
+      <div class="stat good" style="padding:11px 14px"><div class="n">−58%</div><div class="l">system prompt 171 → 72 token<br>thư viện · backend LLM</div></div>
+      <div class="stat good" style="padding:11px 14px"><div class="n">−42%</div><div class="l">tài liệu API 137 → 79 token<br>giữ nguyên 13/13 dữ kiện</div></div>
+      <div class="stat warn" style="padding:11px 14px"><div class="n">8.5%</div><div class="l">token viết ra, trên Claude Code<br>skill · 82 cặp tác vụ</div></div>
+    </div>
+    <div class="g2 step stagger" style="margin-top:8px">
+      <div class="card good">
+        <div class="t" style="color:var(--good)">✅ Thư viện — dùng cho văn bản bạn kiểm soát</div>
+        <ul style="margin-top:8px;gap:7px">
+          <li><strong>System prompt, tài liệu, chunk RAG</strong> — thứ viết một lần, gửi đi hàng nghìn lần</li>
+          <li><strong>Ba backend</strong>: LLM 40–58% · MLM 20–30% · NLP thuần 15–30%</li>
+          <li><strong>Tác giả khuyên tránh</strong>: nội dung người dùng đọc, <span style="white-space:nowrap">văn bản pháp lý</span></li>
+        </ul>
+      </div>
       <div class="card warn">
-        <div class="t">Caveman skill — yêu cầu model trả lời ngắn gọn · <span style="color:var(--warn)">quảng cáo 65% → thực tế 8.5%</span></div>
-        <div class="d" style="margin-top:8px">
-          <strong>Baseline đã làm sẵn phần lớn việc</strong> — system prompt của Claude Code vốn đã dập phần dẫn nhập và kể lể.<br>
-          <strong>Thử nghiệm ép skill luôn bật</strong>, nên 8.5% là <em>trần</em>; để nó tự kích hoạt theo ngữ cảnh thì mức tiết kiệm “ít hơn hoặc bằng không”.<br>
-          <strong style="color:var(--bad)">Rủi ro đuôi</strong> (hiếm khi xảy ra, nhưng xảy ra thì cực đắt): một tác vụ kiểm toán dependency vọt lên <strong style="color:var(--bad)">$8.29</strong> so với baseline <strong>$0.33</strong>.
-        </div>
+        <div class="t" style="color:var(--warn)">⚠️ Skill — chỉ ăn tiền ở harness chưa tự dập phần kể lể</div>
+        <ul style="margin-top:8px;gap:7px">
+          <li><strong>Chất lượng không đổi</strong> — 8 tốt hơn / 10 tệ hơn / 64 hòa: đây là tiết kiệm thật, không phải đánh đổi</li>
+          <li><strong>Chỉ còn 8.5% trên Claude Code</strong> vì system prompt vốn đã dập dẫn nhập và kể lể — benchmark lại ép skill luôn bật, nên <span style="white-space:nowrap">đó là <em>trần</em></span></li>
+          <li><strong>Codex đã có <code>model_verbosity</code></strong> — bật thiết lập sẵn có trước khi cài thêm</li>
+        </ul>
+      </div>
+    </div>
+    <ul class="note step" style="margin-top:6px">
+      <li>Ghi chú riêng cho skill: đợt đo có <strong>một</strong> tác vụ kiểm toán dependency vọt lên $8.29 so với $0.33 — hiếm, nhưng nên để mắt tới các tác vụ dài bất thường.</li>
+    </ul>
+  </div>
+  <div class="foot"><span class="sec">4 · Công cụ</span><span></span></div>
+</section>
+
+<section class="slide" data-sec="4 · Công cụ">
+  <div class="kicker w">Công cụ 4 · RTK</div>
+  <h2>RTK — bóp log build và log test trước khi chúng vào context</h2>
+  <div class="body top">
+    <p><code>rtk-ai/rtk</code> · Apache-2.0 · một binary Rust gắn qua hook, đứng chắn giữa lệnh shell và context:
+      kết quả thô chạy qua nó, chỉ bản rút gọn mới vào hội thoại. Đây là phía <strong>đọc vào</strong>,
+      khác hẳn Caveman vốn nhắm phần model viết ra.</p>
+    <div class="g3 step stagger" style="margin-top:7px">
+      <div class="stat good" style="padding:11px 14px"><div class="n">−90%</div><div class="l">log test<br>pytest · cargo test · go test</div></div>
+      <div class="stat good" style="padding:11px 14px"><div class="n">−80%</div><div class="l">log build và linter<br>cargo build · clippy · ruff</div></div>
+      <div class="stat acc" style="padding:11px 14px"><div class="n">hook</div><div class="l">gắn tất định — chạy mọi lần,<br>không chờ model nhớ gọi</div></div>
+    </div>
+    <div class="g2 step stagger" style="margin-top:8px">
+      <div class="card good">
+        <div class="t" style="color:var(--good)">✅ Ăn tiền khi harness còn để hở đúng khe đó</div>
+        <ul style="margin-top:8px;gap:7px">
+          <li><strong>Harness đổ nguyên kết quả tool vào context</strong> — không tự cắt thì cả 89% mức nén còn nguyên giá trị</li>
+          <li><strong>Việc nặng đi qua shell thật</strong> — build, test, linter chạy bằng lệnh, không qua tool đọc file riêng</li>
+          <li><strong>Không có prompt cache</strong> — gửi lại lần nào cũng trả giá gốc. Pipeline CI đổ log build vào một request API là ví dụ rõ nhất</li>
+        </ul>
       </div>
       <div class="card bad">
-        <div class="t">RTK — nén output của shell qua hook · <span style="color:var(--bad)">tăng 7.6% chi phí (p=0.004)</span></div>
-        <div class="d" style="margin-top:8px">
-          <strong>Mức nén 60–90% là thật.</strong> Nhưng trên Claude Code: dữ liệu quá khổ <em>đã</em> được tự cắt;
-          <code>Read</code>/<code>Grep</code>/<code>Glob</code> không đi qua shell nên hook chỉ bắt được <strong>&lt;20%</strong> ký tự kết quả tool;
-          và cache giúp giá gửi lại chỉ còn ~1/10.<br>
-          <strong style="color:var(--bad)">Tác dụng ngược:</strong> output bị nén khiến model <em>kém chắc chắn</em> nên phải làm nhiều việc hơn: <strong style="color:var(--bad)">tăng 13.8%</strong> số lượt chạy và <strong style="color:var(--bad)">tăng 14.3%</strong> lượng cache đọc lại.
-        </div>
+        <div class="t" style="color:var(--bad)">❌ Trên Claude Code thì ngược lại — đo được +7.6% (p=0.004)</div>
+        <ul style="margin-top:8px;gap:7px">
+          <li><strong>Cả ba điều kiện trên đều sai</strong>: kết quả quá khổ đã tự cắt · <code>Read</code>/<code>Grep</code>/<code>Glob</code> không qua shell nên hook chỉ chạm <strong>&lt;20%</strong> ký tự kết quả tool · cache hạ giá gửi lại còn ~1/10</li>
+          <li><strong>Tác dụng ngược</strong>: kết quả bị nén khiến model <em>kém chắc chắn</em> nên làm nhiều hơn — <strong>+13.8%</strong> số lượt, <strong>+14.3%</strong> cache đọc lại</li>
+          <li><strong>Ở effort cao thì hoà</strong> — +0.1% (p=0.99): không hại, chỉ là không còn gì để cắt</li>
+        </ul>
       </div>
     </div>
-    <div class="quote b step" style="margin-top:14px;font-size:16.5px">
-      <strong>Cùng một công cụ, hai kết quả ngược nhau — harness quyết định bạn tiết kiệm hay tốn thêm.</strong>
-      Ba câu hỏi: harness có cắt output sẵn không · có tool đọc file riêng không · có bật prompt caching không?
-      Claude Code trả lời <em>có / có / bật</em> — trường hợp xấu nhất. Script CI đổ log build vào một request API là
-      <em>không / không / tắt</em> — tốt nhất.
-    </div>
+    <ul class="note step" style="margin-top:6px">
+      <li>README của RTK trung thực: 60–90% là <strong>tỉ lệ nén văn bản</strong>, không phải mức giảm hóa đơn. Chưa ai đo trên Cline, Codex hay Gemini.</li>
+    </ul>
   </div>
   <div class="foot"><span class="sec">4 · Công cụ</span><span></span></div>
 </section>
@@ -1215,18 +1257,18 @@
       <tr><td class="k">CodeGraph<br><span style="color:var(--dim);font-weight:400">graph qua MCP</span></td>
         <td class="ok">✅ −60%, repo &gt;1.000 file</td><td class="unk">⚪ MCP hỗ trợ, chưa đo</td>
         <td class="unk">⚪ MCP hỗ trợ, chưa đo</td><td class="mid">⚠️ qua skill, phải gọi thủ công</td></tr>
-      <tr><td class="k">Caveman<br><span style="color:var(--dim);font-weight:400">skill viết cộc lốc</span></td>
-        <td class="mid">⚠️ 8.5%, rủi ro đuôi nặng</td><td class="no">❌ dùng <code>model_verbosity</code> có sẵn</td>
+      <tr><td class="k">Caveman<br><span style="color:var(--dim);font-weight:400">cắt token viết ra</span></td>
+        <td class="mid">⚠️ 8.5% khi ép bật; tự bật thì ≈ 0</td><td class="no">❌ dùng <code>model_verbosity</code> có sẵn</td>
         <td class="unk">⚪ chưa đo</td><td class="unk">⚪ chưa đo</td></tr>
-      <tr><td class="k">RTK<br><span style="color:var(--dim);font-weight:400">nén output shell</span></td>
+      <tr><td class="k">RTK<br><span style="color:var(--dim);font-weight:400">cắt token đọc vào</span></td>
         <td class="no">❌ đã đo +7.6%</td><td class="no">❌ dùng <code>tool_output_token_limit</code></td>
         <td class="no">❌ dùng <code>truncateToolOutput…</code></td><td class="mid">⚠️ khe hở thật, tầng gắn yếu — đo trước</td></tr>
     </table>
     <div class="quote g step" style="margin-top:12px">
       <strong>Quy luật xuyên suốt cả bốn: token rẻ nhất là token không bao giờ được sinh ra.</strong>
-      <span style="font-size:15px;color:var(--mut)">Hai công cụ hiệu quả thật chặn token từ trước khi nó được sinh ra;
-      hai công cụ còn lại bóp nhỏ token sau khi đã sinh ra — Caveman chỉ đạt 8.5% trên 65% quảng cáo,
-      còn RTK nén đúng như quảng cáo mà hóa đơn vẫn tăng.</span>
+      <span style="font-size:15px;color:var(--mut)">Ponytail và CodeGraph thắng vì chặn hẳn công việc thừa.
+      Caveman và RTK đều nén thật — thư viện Caveman −58% một system prompt, RTK −90% một log test —
+      nhưng trên Claude Code phần lớn khoản đó harness đã cắt sẵn, nên mức cải thiện <em>thêm</em> còn rất ít.</span>
     </div>
     <div class="quote step" style="margin-top:10px;font-size:15px">
       Cách đọc bảng: ô ❌ kèm tên thiết lập nghĩa là <strong>harness đã tự làm được việc này</strong> — bật thiết lập
@@ -1251,7 +1293,7 @@
           <tr><td class="k"><code>medium</code></td><td><strong>giảm token cho việc thường ngày</strong>, chấp nhận đánh đổi một phần</td></tr>
           <tr><td class="k"><code>high</code> ← mặc định API</td><td>cân bằng token và chất lượng</td></tr>
           <tr><td class="k ok"><code>xhigh</code> ← mặc định Claude Code</td><td>suy luận sâu hơn, tốn token hơn — <em>bạn đang ở đây sẵn rồi</em></td></tr>
-          <tr><td class="k"><code>max</code></td><td>có thể lợi ích giảm dần và <em>nghĩ quá đà</em> — thử trước khi dùng rộng</td></tr>
+          <tr><td class="k"><code>max</code></td><td>khi <code>xhigh</code> vẫn chưa đủ — coi chừng lợi ích giảm dần và <em>nghĩ quá đà</em></td></tr>
         </table>
         <p style="font-size:13px;color:var(--dim);margin-top:9px">
           Thang effort được hiệu chỉnh <strong>riêng cho từng model</strong> — cùng tên mức không có nghĩa cùng một giá trị.</p>
@@ -1295,7 +1337,7 @@
       <tr style="background:rgba(210,153,34,.07)"><td class="k">4</td><td class="k">Tắt server MCP không dùng</td><td>schema tool</td>
         <td>Không nằm trong file cấu hình nào. Trên Cline thường là khoản tiết kiệm lớn nhất</td></tr>
     </table>
-    <h3 style="color:var(--bad);margin-top:14px">⚠️ Bẫy đơn vị: cùng một con số, bốn ý nghĩa</h3>
+    <h3 style="color:var(--bad);margin-top:14px">⚠️ Bẫy đơn vị: cùng một con số, hai đơn vị khác nhau</h3>
     <table class="sm stagger step">
       <tr><th style="width:44%">Agent</th><th style="width:26%">Trần output đếm bằng</th><th><code>20000</code> nghĩa là</th></tr>
       <tr><td class="k">Claude Code · <code>BASH_MAX_OUTPUT_LENGTH</code></td><td class="mid">ký tự</td><td>~5.000 token</td></tr>
@@ -1360,7 +1402,7 @@
       <tr><td class="k">Hạ reasoning xuống <code>minimal</code> cho việc khó</td><td>Đáp án sai, phải sửa lại</td>
         <td class="no">Ba lượt model rẻ cộng lại đắt hơn một lượt model mạnh</td></tr>
     </table>
-    <h3 style="color:var(--warn);margin-bottom:0">Và nhóm thiết lập <em>trông như</em> tiết kiệm nhưng không</h3>
+    <h3 style="color:var(--warn);margin-bottom:0">Và nhóm thiết lập <em>trông như</em> tiết kiệm mà thực ra không</h3>
     <table class="sm stagger step">
       <tr><th style="width:40%">Thiết lập</th><th>Nó thực sự làm gì</th></tr>
       <tr><td class="k"><code>hide_agent_reasoning</code> (Codex)</td><td>Ẩn reasoning khỏi màn hình. <strong>Token vẫn được sinh ra và tính tiền</strong></td></tr>
@@ -1430,9 +1472,9 @@
         <table class="sm stagger">
           <tr><th style="width:38%">Model</th><th>SWE-bench</th><th>$/1M vào·ra</th><th>$ / tác vụ</th></tr>
           <tr><td class="k">Gemini 3 Flash</td><td>78.0%</td><td>0.50 · 3.00</td><td class="ok">0.078</td></tr>
-          <tr><td class="k">Claude Haiku 4.5 <span style="color:var(--dim)">cũ</span></td><td>73.3%</td><td>1.00 · 5.00</td><td class="mid">0.150</td></tr>
-          <tr><td class="k">GPT-5.1 <span style="color:var(--dim)">cũ</span></td><td>76.3%</td><td>1.25 · 10.00</td><td class="mid">0.239</td></tr>
-          <tr><td class="k">Claude Opus 4.5 <span style="color:var(--dim)">cũ</span></td><td class="ok">80.9%</td><td>5.00 · 25.00</td><td class="no">0.680</td></tr>
+          <tr><td class="k">Claude Haiku 4.5</td><td>73.3%</td><td>1.00 · 5.00</td><td class="mid">0.150</td></tr>
+          <tr><td class="k">GPT-5.1 <span style="color:var(--dim)">đời trước</span></td><td>76.3%</td><td>1.25 · 10.00</td><td class="mid">0.239</td></tr>
+          <tr><td class="k">Claude Opus 4.5 <span style="color:var(--dim)">đời trước</span></td><td class="ok">80.9%</td><td>5.00 · 25.00</td><td class="no">0.680</td></tr>
         </table>
         <div class="card good" style="margin-top:9px;padding:10px 13px"><div class="t" style="font-size:14px">Lựa chọn hời nhất nằm ngay trong nhóm model bạn đã có</div>
           <div class="d" style="font-size:12.5px">Gemini 3 Flash kém Opus 4.5 <strong>2.9 điểm</strong> với khoảng
@@ -1610,9 +1652,10 @@
         <ol class="num" style="gap:10px">
           <li><strong>Harness đã bịt sẵn phần lớn khe hở</strong> — nó tự cắt output, tự cache, tự nén.
             Trước khi cài gì, hãy xem harness của bạn còn hở ở việc nào trong bốn việc.</li>
-          <li><strong>Chặn token từ trước hiệu quả hơn nén lại sau.</strong> Ponytail <span class="ok">−10.3%</span>,
-            CodeGraph <span class="ok">−60%</span> vì chúng chặn token từ trước khi nó được sinh ra;
-            Caveman <span class="mid">8.5%</span> kèm rủi ro đuôi và RTK <span class="no">+7.6%</span> vì chỉ nén thứ đã sinh ra.</li>
+          <li><strong>Con số của một công cụ là con số của cặp công cụ + harness.</strong> Ponytail <span class="ok">−10.3%</span>
+            và CodeGraph <span class="ok">−60%</span> vì chúng chặn hẳn việc thừa. Caveman và RTK nén thật, nhưng trên
+            Claude Code harness đã cắt sẵn phần đó nên chỉ còn <span class="mid">8.5%</span> và <span class="no">+7.6%</span> —
+            trên harness còn để hở, cùng công cụ đó cho kết quả khác.</li>
           <li><strong>Mọi con số đều đo trên Claude Code.</strong> Trên Codex, Gemini và Cline,
             hãy coi chúng là giả thuyết — tự đo trước khi tin.</li>
           <li><strong>Thiết lập cấu hình và kỷ luật phiên là nơi chắc ăn nhất</strong> — miễn phí,
