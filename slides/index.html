@@ -401,7 +401,8 @@
           phần lớn khoảng tiết kiệm mà công cụ bên thứ ba định khai thác.</div></div>
       <div class="card warn"><div class="t">4 · Công cụ bên thứ ba</div>
         <div class="d">Quy tắc hai điều kiện trước khi cài bất cứ thứ gì · Ponytail, CodeGraph,
-          Caveman, RTK — con số đã đo, và vì sao hai cái hiệu quả thật còn hai cái chỉ đạt 1/5–1/10 mức quảng cáo.</div></div>
+          Caveman, RTK — con số đã đo, và vì sao hai cái hiệu quả thật, còn hai cái kia:
+          một cái hụt 8 lần so với quảng cáo, một cái nén đúng như hứa mà hóa đơn vẫn tăng.</div></div>
       <div class="card v" style="border-left:4px solid var(--vio)"><div class="t">5 · Setup harness</div>
         <div class="d">Tầng cấu hình — làm <strong>một lần</strong>, không cài gì, không thêm chỗ có thể hỏng.
           Bốn thiết lập theo đúng thứ tự, định tuyến model, và tên chính xác của từng thiết lập trên bốn agent.</div></div>
@@ -616,20 +617,20 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="pbrow step"><span class="lb">Gọi API #1</span>
-        <span class="pb" style="width:30%"><i class="n" style="width:100%"></i></span>
+        <span class="pb" style="width:41%"><i class="n" style="width:100%"></i></span>
         <span class="rt">8.0k · gói khởi động + câu hỏi<br>model trả về: <em>đọc auth.ts</em></span></div>
       <div class="pbrow step"><span class="lb">#2</span>
-        <span class="pb" style="width:40%"><i class="c" style="width:77%"></i><i class="n" style="width:23%"></i></span>
-        <span class="rt">+2.4k nội dung file<br>model trả về: <em>grep refreshToken</em></span></div>
+        <span class="pb" style="width:53%"><i class="c" style="width:77%"></i><i class="n" style="width:23%"></i></span>
+        <span class="rt">10.4k · +2.4k nội dung file<br>model trả về: <em>grep refreshToken</em></span></div>
       <div class="pbrow step"><span class="lb">#3</span>
-        <span class="pb" style="width:46%"><i class="c" style="width:87%"></i><i class="n" style="width:13%"></i></span>
-        <span class="rt">+0.6k kết quả grep<br>model trả về: <em>sửa auth.ts</em></span></div>
+        <span class="pb" style="width:56%"><i class="c" style="width:95%"></i><i class="n" style="width:5%"></i></span>
+        <span class="rt">11.0k · +0.6k kết quả grep<br>model trả về: <em>sửa auth.ts</em></span></div>
       <div class="pbrow step"><span class="lb">#4</span>
-        <span class="pb" style="width:52%"><i class="c" style="width:92%"></i><i class="n" style="width:8%"></i></span>
-        <span class="rt">+0.4k xác nhận sửa<br>model trả về: <em>chạy npm test</em></span></div>
+        <span class="pb" style="width:58%"><i class="c" style="width:96%"></i><i class="n" style="width:4%"></i></span>
+        <span class="rt">11.4k · +0.4k xác nhận sửa<br>model trả về: <em>chạy npm test</em></span></div>
       <div class="pbrow step"><span class="lb" style="color:var(--good)">#5</span>
-        <span class="pb" style="width:64%"><i class="c" style="width:84%"></i><i class="n" style="width:16%"></i></span>
-        <span class="rt">+1.2k output test<br><strong style="color:var(--good)">model trả lời bạn</strong></span></div>
+        <span class="pb" style="width:64%"><i class="c" style="width:90%"></i><i class="n" style="width:10%"></i></span>
+        <span class="rt">12.6k · +1.2k output test<br><strong style="color:var(--good)">model trả lời bạn</strong></span></div>
     </div>
     <div class="quote step" style="margin-top:14px;font-size:17px">
       Đây là lý do <strong>một dòng log bạn dán vào lượt 5 không bị tính một lần.</strong>
@@ -828,9 +829,9 @@
       <div class="pbrow step"><span class="lb">Lượt 3–5</span>
         <span class="pb" style="width:92%"><i class="c" style="width:97%"></i><i class="n" style="width:3%"></i></span>
         <span class="rt">context phình lên 24.000<br>nhưng phần lặp lại vẫn rẻ</span></div>
-      <div class="pbrow step"><span class="lb" style="color:var(--warn)">☕ nghỉ 10 phút</span>
+      <div class="pbrow step"><span class="lb" style="color:var(--warn)">☕ nghỉ lâu hơn TTL</span>
         <span class="pb" style="width:92%;background:repeating-linear-gradient(45deg,#161b22,#161b22 8px,#1c2430 8px,#1c2430 16px)"></span>
-        <span class="rt">quá TTL → server <strong>xoá cache</strong><br>để nhường VRAM cho người khác</span></div>
+        <span class="rt">quá TTL → server <strong>xoá cache</strong><br>API key 5 phút · thuê bao 1 giờ</span></div>
       <div class="pbrow step"><span class="lb" style="color:var(--bad)">Lượt 6 · nguội lại</span>
         <span class="pb" style="width:100%"><i class="n" style="width:100%"></i></span>
         <span class="rt"><strong style="color:var(--bad)">26.000 token trả giá gốc</strong><br>“hình phạt hết hạn”</span></div>
@@ -1047,7 +1048,7 @@
 </section>
 
 <section class="slide" data-sec="3 · Harness">
-  <div class="kicker">Đối chiếu năng lực · việc 3 và 4/4</div>
+  <div class="kicker">Đối chiếu năng lực · việc 3 &amp; 4 · 8/2026</div>
   <h2>Việc 3 — Vòng đời context · Việc 4 — Kiểm soát lượng viết ra</h2>
   <div class="body top">
     <h3 style="color:var(--acc);margin-top:0;margin-bottom:5px">Việc 3 — Vòng đời context</h3>
@@ -1066,11 +1067,11 @@
     <table class="sm stagger step">
       <tr><th style="width:28%">Năng lực</th><th>Claude Code</th><th>Codex CLI</th><th>Gemini CLI</th><th>Cline</th></tr>
       <tr><td class="k">Mức reasoning effort</td><td>✅ <code>/effort</code> · mặc định <code>xhigh</code></td>
-        <td class="ok">✅ <code>minimal</code>…<code>xhigh</code></td><td class="unk">⚪</td><td>✅ ngân sách thinking</td></tr>
+        <td>✅ <code>minimal</code>…<code>xhigh</code></td><td class="unk">⚪</td><td>✅ ngân sách thinking</td></tr>
       <tr><td class="k">Mức verbosity</td><td class="mid">⚠️ <code>outputStyle</code></td>
-        <td class="ok">✅ <code>model_verbosity</code></td><td class="unk">⚪</td><td class="unk">⚪ qua prompt</td></tr>
+        <td>✅ <code>model_verbosity</code></td><td class="unk">⚪</td><td class="unk">⚪ qua prompt</td></tr>
       <tr><td class="k">Định tuyến model</td><td>✅ theo phiên/subagent</td><td>✅ profile</td><td>✅ theo phiên</td>
-        <td class="ok">✅ Plan/Act — hai model, một cấu hình</td></tr>
+        <td>✅ Plan/Act — hai model, một cấu hình</td></tr>
     </table>
   </div>
   <div class="foot"><span class="sec">3 · Harness</span><span></span></div>
@@ -1226,7 +1227,8 @@
     <div class="quote g step" style="margin-top:12px">
       <strong>Quy luật xuyên suốt cả bốn: token rẻ nhất là token không bao giờ được sinh ra.</strong>
       <span style="font-size:15px;color:var(--mut)">Hai công cụ hiệu quả thật chặn token từ trước khi nó được sinh ra;
-      hai công cụ còn lại bóp nhỏ token sau khi đã sinh ra — và đều chỉ đạt 1/5–1/10 mức quảng cáo.</span>
+      hai công cụ còn lại bóp nhỏ token sau khi đã sinh ra — Caveman chỉ đạt 8.5% trên 65% quảng cáo,
+      còn RTK nén đúng như quảng cáo mà hóa đơn vẫn tăng.</span>
     </div>
     <div class="quote step" style="margin-top:10px;font-size:15px">
       Cách đọc bảng: ô ❌ kèm tên thiết lập nghĩa là <strong>harness đã tự làm được việc này</strong> — bật thiết lập
@@ -1257,11 +1259,11 @@
           Thang effort được hiệu chỉnh <strong>riêng cho từng model</strong> — cùng tên mức không có nghĩa cùng một giá trị.</p>
       </div>
       <div class="step stagger" style="display:flex;flex-direction:column;gap:11px">
-        <div class="stat bad"><div class="n">7×</div>
-          <div class="l">token sinh ra nhiều hơn<br>khi nâng mức effort</div></div>
-        <div class=”card bad” style=”padding:11px 15px”><div class=”t” style=”font-size:14px”>Mặc định <em>đã cao sẵn</em></div>
-          <div class=”d” style=”font-size:12.5px”>Claude Code đặt <code>xhigh</code>, API đặt <code>high</code> —
-            kiểm tra máy bạn bằng <span class=”cmd”>/effort</span>. Hướng tiết kiệm không phải
+        <div class="stat bad"><div class="n">5×</div>
+          <div class="l">effort điều khiển đúng loại token<br>đắt nhất — token model <em>viết ra</em></div></div>
+        <div class="card bad" style="padding:11px 15px"><div class="t" style="font-size:14px">Mặc định <em>đã cao sẵn</em></div>
+          <div class="d" style="font-size:12.5px">Claude Code đặt <code>xhigh</code>, API đặt <code>high</code> —
+            kiểm tra máy bạn bằng <span style="white-space:nowrap"><span class="cmd">/effort</span>.</span> Hướng tiết kiệm không phải
             “đừng nâng lên” mà là <strong>chủ động hạ xuống <code>medium</code></strong> cho việc lặt vặt.</div></div>
         <div class="card warn" style="padding:11px 15px"><div class="t" style="font-size:14px">“think hard” không phải phép thuật</div>
           <div class="d" style="font-size:12.5px">Chỉ <code>ultrathink</code> được nhận là từ khóa. “think”, “think hard”,
@@ -1423,8 +1425,8 @@
           <tr><td class="k">Review trước khi chốt</td><td>một model <em>khác</em> đọc lại</td><td>Sonnet 5</td></tr>
         </table>
         <div class="card acc" style="margin-top:9px;padding:10px 13px"><div class="d" style="font-size:12.5px">
-          Hai dòng đầu chiếm <strong>67–76% ngân sách</strong> một phiên — và đó đúng là nhóm việc
-          model rẻ làm ngang model đắt.</div></div>
+          Riêng dòng đầu — tìm file, grep, đọc bố cục — đã chiếm <strong>67–76% ngân sách</strong> một phiên,
+          và đó đúng là nhóm việc model rẻ làm ngang model đắt.</div></div>
       </div>
       <div class="step">
         <table class="sm stagger">
@@ -1589,7 +1591,8 @@
       <tr><td class="k">7</td><td class="k">Sửa rules giữa phiên</td><td>Xây lại cache toàn phiên</td></tr>
       <tr><td class="k">8</td><td class="k">Reasoning tối đa cho việc lặt vặt</td><td>Token sinh ra là loại đắt nhất</td></tr>
       <tr><td class="k">9</td><td class="k">Hỏi thứ bạn chạy được</td><td>Một lượt LLM cho việc compiler làm miễn phí</td></tr>
-      <tr><td class="k">10</td><td class="k">Chạy nhiều agent song song khi cache còn nguội</td><td>N bản sao cùng trả giá đầy đủ</td></tr>
+      <tr><td class="k">10</td><td class="k">Chạy nhiều agent song song khi cache còn nguội</td>
+        <td>N bản sao cùng trả giá đầy đủ — đội agent chạy chế độ plan đo được <strong>~7×</strong> token một phiên thường</td></tr>
       </tbody>
     </table>
     <div class="quote step" style="margin-top:16px;font-size:16.5px">
